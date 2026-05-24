@@ -1,0 +1,105 @@
+import { useQuery } from "@tanstack/react-query";
+import { createChart } from "lightweight-charts";
+import { useEffect, useRef } from "react";
+import { api } from "../lib/api";
+
+function asNumber(value: string | number | undefined): number {
+  if (value === undefined) {
+    return 0;
+  }
+  if (typeof value === "number") {
+    return value;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatMoney(value: string | number | undefined, currency?: string): string {
+  const n = asNumber(value);
+  const normalized = (currency || "").trim().toUpperCase();
+  if (!normalized) {
+    return n.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  if (normalized === "MIX") {
+    return `${n.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${normalized}`;
+  }
+  try {
+    return new Intl.NumberFormat("it-IT", { style: "currency", currency: normalized }).format(n);
+  } catch {
+    return `${n.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${normalized}`;
+  }
+}
+
+function ChartPanel() {
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!ref.current) {
+      return;
+    }
+    const chart = createChart(ref.current, {
+      width: ref.current.clientWidth,
+      height: 280,
+      layout: { background: { color: "#111827" }, textColor: "#94a3b8" },
+      grid: { vertLines: { color: "#1e293b" }, horzLines: { color: "#1e293b" } },
+    });
+    const series = chart.addAreaSeries({
+      lineColor: "#2dd4bf",
+      topColor: "rgba(45,212,191,0.25)",
+      bottomColor: "rgba(45,212,191,0.04)",
+    });
+    series.setData([
+      { time: "2026-05-15", value: 10000 },
+      { time: "2026-05-16", value: 10080 },
+      { time: "2026-05-19", value: 10040 },
+      { time: "2026-05-20", value: 10220 },
+      { time: "2026-05-21", value: 10340 },
+      { time: "2026-05-22", value: 10310 },
+    ]);
+
+    const resize = () => chart.applyOptions({ width: ref.current?.clientWidth ?? 700 });
+    window.addEventListener("resize", resize);
+    return () => {
+      window.removeEventListener("resize", resize);
+      chart.remove();
+    };
+  }, []);
+
+  return <div ref={ref} className="card w-full overflow-hidden" />;
+}
+
+export function DashboardPage() {
+  const { data } = useQuery({
+    queryKey: ["kpis"],
+    queryFn: () => api<any>("/api/dashboard/kpis"),
+  });
+
+  const kpiCurrency = data?.kpi_currency;
+
+  const cards = [
+    { label: "Trades", value: data?.trade_count ?? 0 },
+    { label: "Open", value: data?.open_positions ?? 0 },
+    { label: "Realized PnL", value: formatMoney(data?.realized_pnl ?? "0", kpiCurrency) },
+    { label: "Total PnL", value: formatMoney(data?.total_pnl ?? "0", kpiCurrency) },
+    { label: "Capital gain tax", value: formatMoney(data?.capital_gain_tax_estimate ?? "0", data?.capital_gain_currency) },
+    { label: "Minus offsets", value: formatMoney(data?.capital_gain_loss_offset ?? "0", data?.capital_gain_currency) },
+  ];
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <p className="text-sm text-slate-400">KPI principali con distinzione realized e MTM.</p>
+      </div>
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {cards.map((card) => (
+          <article key={card.label} className="card p-4">
+            <div className="text-sm text-slate-400">{card.label}</div>
+            <div className="mt-2 text-2xl font-semibold text-teal-200">{card.value}</div>
+          </article>
+        ))}
+      </section>
+      <ChartPanel />
+    </div>
+  );
+}

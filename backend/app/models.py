@@ -1,0 +1,162 @@
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Optional
+
+from sqlalchemy import Date, DateTime, ForeignKey, Numeric, String, Text, UniqueConstraint, func
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.database import Base
+
+
+class TimestampMixin:
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
+class User(TimestampMixin, Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    username: Mapped[str] = mapped_column(String(120), unique=True, index=True)
+    hashed_password: Mapped[str] = mapped_column(String(255))
+    role: Mapped[str] = mapped_column(String(20), default="user")
+    preferences: Mapped[dict[str, object]] = mapped_column(JSONB, default=dict)
+
+    accounts: Mapped[list["Account"]] = relationship(back_populates="owner")
+    brokers: Mapped[list["Broker"]] = relationship(back_populates="owner")
+
+
+class Broker(TimestampMixin, Base):
+    __tablename__ = "brokers"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    fee_mode: Mapped[str] = mapped_column(String(16), default="fixed")
+    fee_value: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("0"))
+    fee_currency: Mapped[str] = mapped_column(String(8), default="EUR")
+    capital_gain_mode: Mapped[str] = mapped_column(String(16), default="immediate")
+    capital_gain_rate: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("26"))
+
+    owner: Mapped[User] = relationship(back_populates="brokers")
+    accounts: Mapped[list["Account"]] = relationship(back_populates="broker")
+
+
+class Account(TimestampMixin, Base):
+    __tablename__ = "accounts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    broker_id: Mapped[Optional[int]] = mapped_column(ForeignKey("brokers.id"), index=True, nullable=True)
+    name: Mapped[str] = mapped_column(String(120))
+    base_currency: Mapped[str] = mapped_column(String(8), default="EUR")
+    cash_balance: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0"))
+
+    owner: Mapped[User] = relationship(back_populates="accounts")
+    broker: Mapped[Optional[Broker]] = relationship(back_populates="accounts")
+    trades: Mapped[list["Trade"]] = relationship(back_populates="account")
+
+
+class Trade(TimestampMixin, Base):
+    __tablename__ = "trades"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id"), index=True)
+    market: Mapped[str] = mapped_column(String(80), default="Euronext")
+    symbol: Mapped[str] = mapped_column(String(32), index=True)
+    isin: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    instrument_type: Mapped[str] = mapped_column(String(32), default="stock")
+    side: Mapped[str] = mapped_column(String(10), default="long")
+    status: Mapped[str] = mapped_column(String(16), default="open", index=True)
+    strategy_name: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    tags: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    target_price: Mapped[Optional[Decimal]] = mapped_column(Numeric(18, 6), nullable=True)
+    stop_loss: Mapped[Optional[Decimal]] = mapped_column(Numeric(18, 6), nullable=True)
+    confidence_score: Mapped[Optional[int]] = mapped_column(nullable=True)
+    journal_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    close_reason: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    closed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    account: Mapped[Account] = relationship(back_populates="trades")
+    executions: Mapped[list["TradeExecution"]] = relationship(
+        back_populates="trade", cascade="all, delete-orphan"
+    )
+    images: Mapped[list["TradeImage"]] = relationship(
+        back_populates="trade", cascade="all, delete-orphan"
+    )
+
+
+class TradeExecution(TimestampMixin, Base):
+    __tablename__ = "trade_executions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    trade_id: Mapped[int] = mapped_column(ForeignKey("trades.id"), index=True)
+    action: Mapped[str] = mapped_column(String(8))
+    executed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6))
+    price: Mapped[Decimal] = mapped_column(Numeric(18, 6))
+    fee: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("0"))
+    currency: Mapped[str] = mapped_column(String(8), default="EUR")
+    venue: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    trade: Mapped[Trade] = relationship(back_populates="executions")
+
+
+class TradeImage(TimestampMixin, Base):
+    __tablename__ = "trade_images"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    trade_id: Mapped[int] = mapped_column(ForeignKey("trades.id"), index=True)
+    original_path: Mapped[str] = mapped_column(String(255))
+    annotated_path: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    mime_type: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+
+    trade: Mapped[Trade] = relationship(back_populates="images")
+
+
+class DailyNote(TimestampMixin, Base):
+    __tablename__ = "daily_notes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    note_date: Mapped[date] = mapped_column(Date, index=True)
+    mood: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    market_condition: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    market_volatility: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    short_summary: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    rich_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+
+class PositionDailySnapshot(TimestampMixin, Base):
+    __tablename__ = "position_daily_snapshots"
+    __table_args__ = (
+        UniqueConstraint("account_id", "symbol", "snapshot_date", name="uq_snapshot_key"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id"), index=True)
+    symbol: Mapped[str] = mapped_column(String(32), index=True)
+    snapshot_date: Mapped[date] = mapped_column(Date, index=True)
+    position_qty: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("0"))
+    close_price: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("0"))
+    market_value: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("0"))
+    realized_pnl: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("0"))
+    unrealized_pnl: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("0"))
+
+
+class CashLedgerEntry(TimestampMixin, Base):
+    __tablename__ = "cash_ledger_entries"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id"), index=True)
+    entry_type: Mapped[str] = mapped_column(String(20))
+    amount: Mapped[Decimal] = mapped_column(Numeric(18, 2))
+    description: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
