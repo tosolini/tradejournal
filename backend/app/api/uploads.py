@@ -2,13 +2,14 @@ import shutil
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Query, Request, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
 from app.deps import get_current_user
+from app.i18n import localized_error
 from app.models import Trade, TradeImage, User
 
 router = APIRouter(prefix="/api/uploads", tags=["uploads"])
@@ -17,13 +18,14 @@ router = APIRouter(prefix="/api/uploads", tags=["uploads"])
 @router.post("/trade/{trade_id}")
 def upload_trade_image(
     trade_id: int,
+    request: Request,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     trade = db.get(Trade, trade_id)
     if not trade or trade.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Trade not found")
+        raise localized_error(status_code=404, code="errors.trade_not_found", request=request)
 
     media_root = Path(settings.media_root)
     media_root.mkdir(parents=True, exist_ok=True)
@@ -54,17 +56,18 @@ def upload_trade_image(
 @router.post("/trade-images/{image_id}/annotated")
 def save_annotated_trade_image(
     image_id: int,
+    request: Request,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     image = db.get(TradeImage, image_id)
     if not image:
-        raise HTTPException(status_code=404, detail="Image not found")
+        raise localized_error(status_code=404, code="errors.image_not_found", request=request)
 
     trade = db.get(Trade, image.trade_id)
     if not trade or trade.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Trade not found")
+        raise localized_error(status_code=404, code="errors.trade_not_found", request=request)
 
     media_root = Path(settings.media_root)
     media_root.mkdir(parents=True, exist_ok=True)
@@ -89,28 +92,29 @@ def save_annotated_trade_image(
 @router.get("/trade-images/{image_id}/content")
 def get_trade_image_content(
     image_id: int,
+    request: Request,
     variant: str = Query(default="original"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     image = db.get(TradeImage, image_id)
     if not image:
-        raise HTTPException(status_code=404, detail="Image not found")
+        raise localized_error(status_code=404, code="errors.image_not_found", request=request)
 
     trade = db.get(Trade, image.trade_id)
     if not trade or trade.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Trade not found")
+        raise localized_error(status_code=404, code="errors.trade_not_found", request=request)
 
     if variant not in {"original", "annotated"}:
-        raise HTTPException(status_code=400, detail="Invalid variant")
+        raise localized_error(status_code=400, code="errors.invalid_variant", request=request)
 
     path = image.original_path if variant == "original" else image.annotated_path
     if not path:
-        raise HTTPException(status_code=404, detail="Requested image variant not found")
+        raise localized_error(status_code=404, code="errors.image_variant_not_found", request=request)
 
     file_path = Path(path)
     if not file_path.exists():
-        raise HTTPException(status_code=404, detail="Image file not found")
+        raise localized_error(status_code=404, code="errors.image_file_not_found", request=request)
 
     media_type = image.mime_type or "application/octet-stream"
     if variant == "annotated":

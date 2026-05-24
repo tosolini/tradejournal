@@ -1,4 +1,4 @@
-<img src="screen/bull_vect.svg" alt="TradeJournal logo" width="60" height="60" style="vertical-align:middle"> <span style="vertical-align:middle; font-size: 1.5em; font-weight: bold;">TradeJournal MVP</span>
+<img src="screen/bull_vect.svg" alt="TradeJournal logo" width="60" height="60" style="vertical-align:middle"> <span style="vertical-align:middle; font-size: 4.4em; font-weight: bold; color:rgb(94 234 212 / var(--tw-text-opacity, 1));"> TradeJournal MVP</span>
 
 #
 
@@ -20,7 +20,7 @@ This is still an MVP with known limitations and trade-offs. It is intended for l
 
 Do not use this code as-is in production without hardening, security review, and broader test coverage.
 
-The entire project is meant to be used on localhost or private networks. **Do not expose on internet.**
+The entire project is meant to be used on localhost or private networks. **Do not expose microservices on internet.**
 
 ## Current version
 

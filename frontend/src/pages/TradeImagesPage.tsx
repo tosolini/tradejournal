@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { ImageAnnotationEditor } from "../components/ImageAnnotationEditor";
 import { TradeDetail, api, fetchTradeImageBlobUrl } from "../lib/api";
 
 export function TradeImagesPage() {
+  const { t } = useTranslation();
   const params = useParams<{ tradeId: string }>();
   const tradeId = Number(params.tradeId || 0);
   const [file, setFile] = useState<File | null>(null);
@@ -25,7 +27,7 @@ export function TradeImagesPage() {
   const uploadMutation = useMutation({
     mutationFn: async () => {
       if (!file) {
-        throw new Error("Nessun file selezionato");
+        throw new Error(t("trade_images.errors.no_file"));
       }
       const token = localStorage.getItem("token");
       const form = new FormData();
@@ -44,11 +46,11 @@ export function TradeImagesPage() {
       qc.invalidateQueries({ queryKey: ["trade-detail", tradeId] });
       setFile(null);
       setError(null);
-      setMessage("Immagine caricata.");
+      setMessage(t("trade_images.success_uploaded"));
     },
     onError: () => {
       setMessage(null);
-      setError("Upload immagine non riuscito.");
+      setError(t("trade_images.errors.upload_failed"));
     },
   });
 
@@ -154,7 +156,7 @@ export function TradeImagesPage() {
 
   const saveAnnotated = async (blob: Blob) => {
     if (!selectedImageId) {
-      throw new Error("Seleziona un'immagine prima di salvare");
+      throw new Error(t("trade_images.errors.select_image_before_save"));
     }
     const token = localStorage.getItem("token");
     const form = new FormData();
@@ -177,26 +179,26 @@ export function TradeImagesPage() {
   };
 
   if (!tradeId) {
-    return <div className="text-sm text-red-400">Trade non valido.</div>;
+    return <div className="text-sm text-red-400">{t("trade_images.invalid_trade")}</div>;
   }
 
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-semibold">Immagini Trade #{tradeId}</h1>
-        <p className="text-sm text-slate-400">Carica screenshot e usa l'editor annotazioni.</p>
+        <h1 className="text-2xl font-semibold">{t("trade_images.title", { id: tradeId })}</h1>
+        <p className="text-sm text-slate-400">{t("trade_images.subtitle")}</p>
         <div className="mt-3">
           <Link
             to={`/trades/${tradeId}`}
             className="inline-flex rounded bg-slate-700 px-3 py-2 text-sm font-semibold text-white"
           >
-            Torna alla scheda trade
+              {t("trade_images.back_to_trade")}
           </Link>
         </div>
       </div>
 
       <section className="card space-y-3 p-4">
-        <h2 className="text-lg font-semibold">Upload immagine</h2>
+          <h2 className="text-lg font-semibold">{t("trade_images.upload_title")}</h2>
         <input
           type="file"
           onChange={(event) => setFile(event.target.files?.[0] || null)}
@@ -208,16 +210,16 @@ export function TradeImagesPage() {
           disabled={uploadMutation.isPending || !file}
           className="w-fit rounded bg-sky-500 px-3 py-2 text-sm font-semibold text-slate-950"
         >
-          {uploadMutation.isPending ? "Uploading..." : "Upload"}
+          {uploadMutation.isPending ? t("trade_images.uploading") : t("trade_images.upload")}
         </button>
         {message ? <div className="text-sm text-emerald-300">{message}</div> : null}
         {error ? <div className="text-sm text-red-400">{error}</div> : null}
       </section>
 
       <section className="card overflow-x-auto">
-        <div className="border-b border-slate-700/80 px-4 py-3 text-lg font-semibold">Immagini registrate</div>
+        <div className="border-b border-slate-700/80 px-4 py-3 text-lg font-semibold">{t("trade_images.registered_title")}</div>
         {isLoading ? (
-          <div className="px-4 py-3 text-sm text-slate-400">Caricamento...</div>
+          <div className="px-4 py-3 text-sm text-slate-400">{t("trade_images.loading")}</div>
         ) : data?.images?.length ? (
           <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
             {data.images.map((image) => (
@@ -249,22 +251,22 @@ export function TradeImagesPage() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full items-center justify-center text-xs text-slate-500">Preview non disponibile</div>
+                    <div className="flex h-full items-center justify-center text-xs text-slate-500">{t("trade_images.preview_unavailable")}</div>
                   )}
                 </div>
                 <div className="px-2 py-1 text-xs text-slate-300">
-                  #{image.id} {image.annotated_path ? "(annotata)" : "(originale)"}
+                  #{image.id} {image.annotated_path ? t("trade_images.annotated") : t("trade_images.original")}
                 </div>
               </button>
             ))}
           </div>
         ) : (
-          <div className="px-4 py-3 text-sm text-slate-400">Nessuna immagine.</div>
+          <div className="px-4 py-3 text-sm text-slate-400">{t("trade_images.empty")}</div>
         )}
       </section>
 
       <section className="card p-4">
-        <h2 className="mb-3 text-lg font-semibold">Editor annotazioni</h2>
+        <h2 className="mb-3 text-lg font-semibold">{t("trade_images.annotation_editor")}</h2>
         {selectedImageUrl ? (
           <ImageAnnotationEditor
             initialImageSrc={selectedImageUrl}
@@ -272,7 +274,7 @@ export function TradeImagesPage() {
             showFileLoader={false}
           />
         ) : (
-          <div className="text-sm text-slate-400">Seleziona un'immagine dalla galleria per iniziare.</div>
+          <div className="text-sm text-slate-400">{t("trade_images.select_from_gallery")}</div>
         )}
       </section>
 
@@ -287,7 +289,7 @@ export function TradeImagesPage() {
               }}
               className="absolute right-2 top-2 rounded bg-slate-800 px-3 py-2 text-sm text-white"
             >
-              Chiudi
+              {t("common.close")}
             </button>
             <img src={zoomImageUrl} alt="Zoom trade image" className="max-h-[88vh] w-full rounded object-contain" />
           </div>

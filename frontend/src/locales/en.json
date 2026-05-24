@@ -1,0 +1,380 @@
+{
+    "layout": {
+        "nav": {
+            "dashboard": "Dashboard",
+            "calendar": "Calendar",
+            "accounts": "Accounts",
+            "trades": "Trades",
+            "stats": "Stats",
+            "notes": "Notes",
+            "settings": "Settings"
+        },
+        "actions": {
+            "new_trade": "New Trade",
+            "new_note": "New Note"
+        },
+        "version": "Version",
+        "tosolini_site_aria": "Tosolini Website",
+        "copyright": "All rights reserved."
+    },
+    "login": {
+        "subtitle": "Sign in to open your dashboard.",
+        "username_or_email": "Username or email",
+        "password": "Password",
+        "submit": "Login",
+        "errors": {
+            "invalid_credentials": "Invalid credentials",
+            "api_connection": "API connection error. Check backend status and CORS configuration."
+        }
+    },
+    "settings": {
+        "title": "Settings",
+        "language": {
+            "title": "Language",
+            "description": "Choose the application language.",
+            "label": "Language",
+            "en": "English",
+            "it": "Italian"
+        },
+        "registry": {
+            "title": "Data Registry",
+            "description": "Manage master data used by operational forms.",
+            "brokers_button": "Manage Brokers"
+        },
+        "session": {
+            "title": "Session",
+            "description": "Local JWT logout.",
+            "logout": "Logout"
+        }
+    },
+    "brokers": {
+        "page_title": "Settings - Brokers",
+        "page_subtitle": "Manage the broker registry linked to accounts.",
+        "new_title": "New Broker",
+        "list_title": "Broker List",
+        "create": "Add broker",
+        "saving": "Saving...",
+        "loading": "Loading brokers...",
+        "empty": "No brokers available.",
+        "success_added": "Broker added.",
+        "success_updated": "Broker updated.",
+        "success_deleted": "Broker deleted.",
+        "error_generic": "Operation failed",
+        "error_invalid_name": "Enter a valid broker name",
+        "confirm_delete": "Delete broker #{{id}} ({{name}})?"
+    },
+    "accounts": {
+        "page_title": "Accounts and Portfolios",
+        "page_subtitle": "Create and manage portfolios used for trades.",
+        "new_title": "New Portfolio",
+        "list_title": "Portfolio List",
+        "create": "Create account",
+        "saving": "Saving...",
+        "loading": "Loading accounts...",
+        "empty": "No accounts available.",
+        "success_updated": "Account updated.",
+        "success_deleted": "Account deleted.",
+        "error_generic": "Operation failed",
+        "error_create": "Account creation failed.",
+        "error_invalid_cash": "Invalid capital",
+        "error_invalid_data": "Invalid account data",
+        "confirm_delete": "Delete account #{{id}} ({{name}})?"
+    },
+    "common": {
+        "cancel": "Cancel",
+        "close": "Close",
+        "saving": "Saving..."
+    },
+    "dashboard": {
+        "title": "Dashboard",
+        "subtitle": "Main KPIs with realized and MTM split.",
+        "cards": {
+            "trades": "Trades",
+            "open": "Open",
+            "realized_pnl": "Realized PnL",
+            "total_pnl": "Total PnL",
+            "capital_gain_tax": "Capital gain tax",
+            "minus_offsets": "Minus offsets"
+        }
+    },
+    "calendar": {
+        "title": "Calendar",
+        "prev_month": "Previous month",
+        "today": "Today",
+        "next_month": "Next month",
+        "loading": "Loading calendar...",
+        "unavailable": "Calendar not available.",
+        "open_notes": "Open notes",
+        "latest_executions": "Latest executions",
+        "notes": "Notes",
+        "note_fallback": "Note",
+        "more_notes": "notes"
+    },
+    "trade_images": {
+        "title": "Trade Images #{{id}}",
+        "subtitle": "Upload screenshots and use the annotation editor.",
+        "back_to_trade": "Back to trade",
+        "upload_title": "Image upload",
+        "uploading": "Uploading...",
+        "upload": "Upload",
+        "registered_title": "Registered images",
+        "loading": "Loading...",
+        "preview_unavailable": "Preview unavailable",
+        "annotated": "(annotated)",
+        "original": "(original)",
+        "empty": "No images.",
+        "annotation_editor": "Annotation editor",
+        "select_from_gallery": "Select an image from the gallery to start.",
+        "success_uploaded": "Image uploaded.",
+        "invalid_trade": "Invalid trade.",
+        "errors": {
+            "no_file": "No file selected",
+            "upload_failed": "Image upload failed.",
+            "select_image_before_save": "Select an image before saving"
+        }
+    },
+    "trade_edit": {
+        "title": "Edit Trade #{{id}}",
+        "subtitle": "Update trade data and first execution.",
+        "invalid_trade": "Invalid trade.",
+        "loading": "Loading trade data...",
+        "save_error": "Save failed.",
+        "save": "Save changes",
+        "options": {
+            "long": "Long",
+            "short": "Short",
+            "open": "Open",
+            "partial": "Partial",
+            "close": "Close"
+        },
+        "fields": {
+            "symbol": "Symbol",
+            "executed_at": "Execution date/time",
+            "open_picker": "Open date/time picker",
+            "direction": "Direction",
+            "execution_type": "Execution type",
+            "quantity": "Quantity",
+            "entry_price": "Entry price",
+            "auto_fee": "Auto fee",
+            "auto_fee_hint": "Estimated value: backend always applies broker rules.",
+            "take_profit": "Take Profit",
+            "tp_pct": "TP %:",
+            "stop_loss": "Stop Loss",
+            "sl_pct": "SL %:"
+        }
+    },
+    "trade_detail": {
+        "title": "Trade #{{id}}",
+        "subtitle": "Detailed read-only view.",
+        "invalid_trade": "Invalid trade.",
+        "loading": "Loading trade...",
+        "unavailable": "Trade detail unavailable.",
+        "edit": "Edit",
+        "images": "Images",
+        "close_summary": "Close Summary",
+        "close_trade": "Close trade",
+        "exit_datetime": "Exit date/time",
+        "exit_price": "Real exit price",
+        "close_reason_label": "Close reason",
+        "note": "Note",
+        "optional": "Optional",
+        "closing": "Closing...",
+        "close_failed": "Trade close failed.",
+        "close_hint": "Exit fee is automatically calculated by broker; net close result appears after confirmation.",
+        "executions": "Executions",
+        "no_executions": "No executions.",
+        "trade_images": "Trade Images",
+        "preview_unavailable": "Preview unavailable",
+        "annotated": "(annotated)",
+        "original": "(original)",
+        "no_images": "No images uploaded for this trade.",
+        "close_reason": {
+            "manual": "Manual",
+            "take_profit": "Take Profit",
+            "stop_loss": "Stop Loss"
+        },
+        "fields": {
+            "symbol": "Symbol",
+            "direction": "Direction",
+            "status": "Status",
+            "account": "Account",
+            "take_profit": "Take Profit",
+            "tp_pct": "Estimated TP %",
+            "stop_loss": "Stop Loss",
+            "sl_pct": "Estimated SL %",
+            "tp_abs": "Absolute TP (potential)",
+            "tp_net": "Net TP",
+            "sl_abs": "Absolute SL (risk)",
+            "sl_net": "Net SL after fees",
+            "return": "Return",
+            "return_pct": "Return %",
+            "closed_at": "Closed at",
+            "reason": "Reason",
+            "exit_action": "Exit action",
+            "exit_price": "Exit price",
+            "exit_fee": "Exit fee",
+            "gross_pnl": "Gross PnL",
+            "total_fees": "Total fees",
+            "net_pnl_after_fees": "Net PnL after fees",
+            "capital_gain": "Capital gain",
+            "tax_estimate": "Tax estimate",
+            "net_pnl_after_tax": "Net PnL after tax"
+        },
+        "columns": {
+            "date": "Date",
+            "action": "Action",
+            "qty": "Qty",
+            "price": "Price",
+            "fee": "Fee"
+        }
+    },
+    "trades": {
+        "title": "Trades",
+        "subtitle": "Simplified operations list with quick actions.",
+        "request_failed": "Request failed.",
+        "search_recent_placeholder": "Search by trade, symbol or action",
+        "no_recent_executions": "No executions available with current filters.",
+        "search_placeholder": "Search by id, symbol, side, status",
+        "all_statuses": "All statuses",
+        "recent_executions": "Latest Executions",
+        "columns": {
+            "date": "Date",
+            "trade": "Trade",
+            "action": "Action",
+            "qty": "Qty",
+            "price": "Price",
+            "fee": "Fee",
+            "symbol": "Symbol",
+            "status": "Status",
+            "side": "Side",
+            "actions": "Actions"
+        },
+        "status": {
+            "open": "Open",
+            "partial": "Partial",
+            "close": "Close",
+            "take_profit": "Take Profit",
+            "stop_loss": "Stop Loss"
+        },
+        "visible_columns": "Visible columns",
+        "show_hide": "Show/Hide",
+        "quick_close_title": "Quick close trade #{{id}} ({{symbol}})",
+        "exit_price": "Exit price",
+        "manual": "Manual",
+        "note_optional": "Note (optional)",
+        "invalid_exit_price": "Enter a valid exit price.",
+        "closing": "Closing...",
+        "confirm_close": "Confirm close",
+        "view_detail": "View detail",
+        "edit_trade": "Edit trade",
+        "manage_images": "Manage images",
+        "quick_close": "Quick close trade",
+        "delete_confirm": "Delete trade #{{id}} ({{symbol}})?",
+        "delete_trade": "Delete trade",
+        "no_trades": "No trades found with current filters.",
+        "new_trade": {
+            "title": "New Trade",
+            "subtitle": "Create trade and first execution in a single step.",
+            "close": "Close",
+            "cancel": "Cancel",
+            "save": "Save Trade",
+            "saving": "Saving...",
+            "estimated_fee_note": "Estimated value: final value is calculated by the backend.",
+            "labels": {
+                "account": "Account",
+                "symbol": "Symbol",
+                "quantity": "Quantity",
+                "direction": "Direction",
+                "execution": "Execution",
+                "entry_price": "Entry price",
+                "auto_fee": "Automatic fee",
+                "take_profit": "Take Profit",
+                "stop_loss": "Stop Loss"
+            },
+            "placeholders": {
+                "select_account": "Select account",
+                "symbol": "AAPL"
+            },
+            "options": {
+                "direction": {
+                    "long": "Long",
+                    "short": "Short"
+                },
+                "execution": {
+                    "open": "Open",
+                    "partial": "Partial",
+                    "close": "Close"
+                }
+            },
+            "metrics": {
+                "tp_pct": "TP %:",
+                "sl_pct": "SL %:"
+            },
+            "errors": {
+                "fix_fields": "Fix highlighted fields before saving.",
+                "create_failed": "Trade creation failed."
+            },
+            "validation": {
+                "account_required": "Select a valid account.",
+                "symbol_required": "Enter symbol.",
+                "quantity_positive": "Quantity must be greater than 0.",
+                "entry_price_positive": "Entry price must be greater than 0.",
+                "take_profit_positive": "Take Profit must be greater than 0.",
+                "stop_loss_positive": "Stop Loss must be greater than 0."
+            },
+            "tooltips": {
+                "account": "Select the account where trade and execution will be recorded.",
+                "symbol": "Instrument ticker, for example AAPL or ENEL.",
+                "quantity": "Number of units/lots executed in this operation.",
+                "direction": "Long: profit if price rises. Short: profit if price falls.",
+                "execution_type": "Open creates a position, Partial closes part of it, Close closes it completely.",
+                "entry_price": "Execution unit price for this operation.",
+                "auto_fee": "Calculated from broker fee rule (fixed or percentage).",
+                "take_profit": "Leave empty if you do not want to set it now.",
+                "stop_loss": "Leave empty if you do not want to set it now."
+            }
+        }
+    },
+    "notes": {
+        "title": "Calendar Notes",
+        "new_note": "New Note",
+        "edit_note": "Edit Note",
+        "update_note": "Update Note",
+        "save_note": "Save Note",
+        "filters_saving": "Saving filters...",
+        "filters_saved": "Filters saved",
+        "filters_error": "Error saving filters",
+        "filters_synced": "Filters synced",
+        "reset_filters": "Reset filters",
+        "active_date_filter": "Active day filter: {{date}}",
+        "remove_date_filter": "Remove day filter",
+        "search_placeholder": "Search notes, summary, tags...",
+        "no_tags_available": "No tags available",
+        "show_less": "Show less",
+        "tag_management": "Tag management",
+        "tag_management_search": "Search tags to manage",
+        "rename": "Rename",
+        "delete": "Delete",
+        "no_tag_found": "No tags found",
+        "delete_note_confirm": "Delete this note?",
+        "mood": "Mood",
+        "mood_up": "Up",
+        "mood_down": "Down",
+        "mood_stale": "Stale",
+        "volatility": "Volatility",
+        "volatility_low": "Low",
+        "volatility_medium": "Medium",
+        "volatility_high": "High",
+        "market_condition_tags": "Market Condition Tags",
+        "market_condition": "Market Condition",
+        "short_summary": "Short Summary",
+        "no_summary": "No summary",
+        "notes": "Notes",
+        "no_details": "No details",
+        "no_notes_yet": "No notes yet.",
+        "no_notes_match": "No notes match current filters.",
+        "tag_input_placeholder": "Add tag and press enter",
+        "rename_tag_prompt": "New tag name",
+        "delete_tag_confirm": "Delete tag \"{{tag}}\" from all notes?"
+    }
+}

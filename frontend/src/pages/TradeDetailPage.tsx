@@ -2,13 +2,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { z } from "zod";
 import { Account, Broker, TradeDetail, api, fetchTradeImageBlobUrl } from "../lib/api";
 
 const closeTradeSchema = z.object({
   executed_at: z.string().min(1),
-  price: z.coerce.number().positive("Inserisci un prezzo di uscita valido"),
+  price: z.coerce.number().positive(),
   close_reason: z.enum(["manual", "take_profit", "stop_loss"]),
   note: z.string().optional(),
 });
@@ -123,6 +124,7 @@ function datetimeLocalToIso(value: string): string {
 }
 
 export function TradeDetailPage() {
+  const { t } = useTranslation();
   const params = useParams<{ tradeId: string }>();
   const tradeId = Number(params.tradeId || 0);
   const qc = useQueryClient();
@@ -243,9 +245,9 @@ export function TradeDetailPage() {
   const broker = account?.broker_id ? brokers?.find((item) => item.id === account.broker_id) : undefined;
   const capitalGainRate = asNumber(broker?.capital_gain_rate ?? 26);
   const closeReasonLabel = {
-    manual: "Manuale",
-    take_profit: "Take Profit",
-    stop_loss: "Stop Loss",
+    manual: t("trade_detail.close_reason.manual"),
+    take_profit: t("trade_detail.close_reason.take_profit"),
+    stop_loss: t("trade_detail.close_reason.stop_loss"),
   } as const;
 
   const estimatedTpFee = useMemo(() => estimateExecutionFee(broker?.fee_mode, broker?.fee_value, openQty, tpValue), [broker?.fee_mode, broker?.fee_value, openQty, tpValue]);
@@ -265,15 +267,15 @@ export function TradeDetailPage() {
     : null;
 
   if (!tradeId) {
-    return <div className="text-sm text-red-400">Trade non valido.</div>;
+    return <div className="text-sm text-red-400">{t("trade_detail.invalid_trade")}</div>;
   }
 
   if (isLoading) {
-    return <div className="text-sm text-slate-400">Caricamento trade...</div>;
+    return <div className="text-sm text-slate-400">{t("trade_detail.loading")}</div>;
   }
 
   if (error || !data) {
-    return <div className="text-sm text-red-400">Dettaglio trade non disponibile.</div>;
+    return <div className="text-sm text-red-400">{t("trade_detail.unavailable")}</div>;
   }
 
   const trade = data.trade;
@@ -283,76 +285,76 @@ export function TradeDetailPage() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Trade #{trade.id}</h1>
-          <p className="text-sm text-slate-400">Vista dettagliata in sola lettura.</p>
+          <h1 className="text-2xl font-semibold">{t("trade_detail.title", { id: trade.id })}</h1>
+          <p className="text-sm text-slate-400">{t("trade_detail.subtitle")}</p>
         </div>
         <div className="flex gap-2">
           <Link to={`/trades/${trade.id}/edit`} className="rounded bg-sky-500 px-3 py-2 text-sm font-semibold text-slate-950">
-            Modifica
+            {t("trade_detail.edit")}
           </Link>
           <Link to={`/trades/${trade.id}/images`} className="rounded bg-indigo-500 px-3 py-2 text-sm font-semibold text-white">
-            Immagini
+            {t("trade_detail.images")}
           </Link>
         </div>
       </div>
 
       <section className="card grid gap-3 p-4 md:grid-cols-4">
         <div>
-          <div className="text-xs text-slate-400">Symbol</div>
+          <div className="text-xs text-slate-400">{t("trade_detail.fields.symbol")}</div>
           <div className="font-semibold text-teal-200">{trade.symbol}</div>
         </div>
         <div>
-          <div className="text-xs text-slate-400">Direction</div>
+          <div className="text-xs text-slate-400">{t("trade_detail.fields.direction")}</div>
           <div>{trade.side}</div>
         </div>
         <div>
-          <div className="text-xs text-slate-400">Status</div>
+          <div className="text-xs text-slate-400">{t("trade_detail.fields.status")}</div>
           <div>{trade.status}</div>
         </div>
         <div>
-          <div className="text-xs text-slate-400">Account</div>
+          <div className="text-xs text-slate-400">{t("trade_detail.fields.account")}</div>
           <div>{trade.account_id}</div>
         </div>
         <div>
-          <div className="text-xs text-slate-400">Take Profit</div>
+          <div className="text-xs text-slate-400">{t("trade_detail.fields.take_profit")}</div>
           <div>{formatMoney(trade.target_price, trade.account_currency)}</div>
         </div>
         <div>
-          <div className="text-xs text-slate-400">TP % Ipotizzato</div>
+          <div className="text-xs text-slate-400">{t("trade_detail.fields.tp_pct")}</div>
           <div className="text-emerald-300">{tpPct === null ? "-" : `${tpPct.toFixed(2)}%`}</div>
         </div>
         <div>
-          <div className="text-xs text-slate-400">Stop Loss</div>
+          <div className="text-xs text-slate-400">{t("trade_detail.fields.stop_loss")}</div>
           <div className="text-red-300">{formatMoney(trade.stop_loss, trade.account_currency)}</div>
         </div>
         <div>
-          <div className="text-xs text-slate-400">SL % Ipotizzato</div>
+          <div className="text-xs text-slate-400">{t("trade_detail.fields.sl_pct")}</div>
           <div className="text-red-300">{slPct === null ? "-" : `${slPct.toFixed(2)}%`}</div>
         </div>
         <div>
-          <div className="text-xs text-slate-400">TP Assoluto (potenziale)</div>
+          <div className="text-xs text-slate-400">{t("trade_detail.fields.tp_abs")}</div>
           <div className="text-emerald-300">{tpAbs === null ? "-" : formatMoney(tpAbs, trade.account_currency)}</div>
         </div>
         <div>
-          <div className="text-xs text-slate-400">TP netto</div>
+          <div className="text-xs text-slate-400">{t("trade_detail.fields.tp_net")}</div>
           <div className="text-emerald-300">{netTpAfterFees === null ? "-" : formatMoney(netTpAfterFees, trade.account_currency)}</div>
         </div>
         <div>
-          <div className="text-xs text-slate-400">SL Assoluto (rischio)</div>
+          <div className="text-xs text-slate-400">{t("trade_detail.fields.sl_abs")}</div>
           <div className="text-red-300">{slAbs === null ? "-" : formatMoney(slAbs, trade.account_currency)}</div>
         </div>
         <div>
-          <div className="text-xs text-slate-400">SL netto dopo fee</div>
+          <div className="text-xs text-slate-400">{t("trade_detail.fields.sl_net")}</div>
           <div className="text-red-300">{netSlAfterFees === null ? "-" : formatMoney(netSlAfterFees, trade.account_currency)}</div>
         </div>
         <div>
-          <div className="text-xs text-slate-400">Return</div>
+          <div className="text-xs text-slate-400">{t("trade_detail.fields.return")}</div>
           <div className={Number(trade.net_return || 0) >= 0 ? "text-emerald-300" : "text-red-400"}>
             {formatMoney(trade.net_return, trade.account_currency)}
           </div>
         </div>
         <div>
-          <div className="text-xs text-slate-400">Return %</div>
+          <div className="text-xs text-slate-400">{t("trade_detail.fields.return_pct")}</div>
           <div className={Number(trade.return_pct || 0) >= 0 ? "text-emerald-300" : "text-red-400"}>
             {formatMetric(trade.return_pct)}%
           </div>
@@ -361,52 +363,52 @@ export function TradeDetailPage() {
 
       {trade.status === "close" && closeSummary ? (
         <section className="card p-4">
-          <div className="mb-3 text-lg font-semibold">Riepilogo Chiusura</div>
+          <div className="mb-3 text-lg font-semibold">{t("trade_detail.close_summary")}</div>
           <div className="grid gap-3 md:grid-cols-4">
             <div>
-              <div className="text-xs text-slate-400">Chiuso il</div>
+              <div className="text-xs text-slate-400">{t("trade_detail.fields.closed_at")}</div>
               <div>{new Date(closeSummary.closed_at).toLocaleString()}</div>
             </div>
             <div>
-              <div className="text-xs text-slate-400">Motivo</div>
+              <div className="text-xs text-slate-400">{t("trade_detail.fields.reason")}</div>
               <div>{closeReasonLabel[(closeSummary.close_reason || "manual") as keyof typeof closeReasonLabel] ?? closeSummary.close_reason ?? "-"}</div>
             </div>
             <div>
-              <div className="text-xs text-slate-400">Exit action</div>
+              <div className="text-xs text-slate-400">{t("trade_detail.fields.exit_action")}</div>
               <div>{closeSummary.exit_action}</div>
             </div>
             <div>
-              <div className="text-xs text-slate-400">Exit price</div>
+              <div className="text-xs text-slate-400">{t("trade_detail.fields.exit_price")}</div>
               <div>{formatMoney(closeSummary.exit_price, closeSummary.exit_currency)}</div>
             </div>
             <div>
-              <div className="text-xs text-slate-400">Exit fee</div>
+              <div className="text-xs text-slate-400">{t("trade_detail.fields.exit_fee")}</div>
               <div>{formatMoney(closeSummary.exit_fee, closeSummary.exit_currency)}</div>
             </div>
             <div>
-              <div className="text-xs text-slate-400">Gross PnL</div>
+              <div className="text-xs text-slate-400">{t("trade_detail.fields.gross_pnl")}</div>
               <div className="text-teal-200">{formatMoney(closeSummary.gross_pnl, trade.account_currency)}</div>
             </div>
             <div>
-              <div className="text-xs text-slate-400">Fee totali</div>
+              <div className="text-xs text-slate-400">{t("trade_detail.fields.total_fees")}</div>
               <div>{formatMoney(closeSummary.total_fees, trade.account_currency)}</div>
             </div>
             <div>
-              <div className="text-xs text-slate-400">Net PnL post fee</div>
+              <div className="text-xs text-slate-400">{t("trade_detail.fields.net_pnl_after_fees")}</div>
               <div className={Number(closeSummary.net_pnl || 0) >= 0 ? "text-emerald-300" : "text-red-300"}>
                 {formatMoney(closeSummary.net_pnl, trade.account_currency)}
               </div>
             </div>
             <div>
-              <div className="text-xs text-slate-400">Capital gain</div>
+              <div className="text-xs text-slate-400">{t("trade_detail.fields.capital_gain")}</div>
               <div>{closeSummary.capital_gain_mode} {Number(closeSummary.capital_gain_rate || 0).toFixed(2)}%</div>
             </div>
             <div>
-              <div className="text-xs text-slate-400">Tax estimate</div>
+              <div className="text-xs text-slate-400">{t("trade_detail.fields.tax_estimate")}</div>
               <div>{closeSummary.capital_gain_tax_estimate === null || closeSummary.capital_gain_tax_estimate === undefined ? "-" : formatMoney(closeSummary.capital_gain_tax_estimate, trade.account_currency)}</div>
             </div>
             <div>
-              <div className="text-xs text-slate-400">Net PnL post tax</div>
+              <div className="text-xs text-slate-400">{t("trade_detail.fields.net_pnl_after_tax")}</div>
               <div className={closeNetAfterTax === null ? "" : closeNetAfterTax >= 0 ? "text-emerald-300" : "text-red-300"}>
                 {closeNetAfterTax === null ? "-" : formatMoney(closeNetAfterTax, trade.account_currency)}
               </div>
@@ -418,27 +420,27 @@ export function TradeDetailPage() {
 
       {trade.status !== "close" ? (
         <section className="card p-4">
-          <div className="mb-3 text-lg font-semibold">Chiudi Trade</div>
+          <div className="mb-3 text-lg font-semibold">{t("trade_detail.close_trade")}</div>
           <form className="grid gap-3 md:grid-cols-4" onSubmit={closeForm.handleSubmit((values) => closeTrade.mutate(values))}>
             <label className="text-sm text-slate-300">
-              Data/Ora uscita
+              {t("trade_detail.exit_datetime")}
               <input type="datetime-local" {...closeForm.register("executed_at")} className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" />
             </label>
             <label className="text-sm text-slate-300">
-              Prezzo reale di uscita
+              {t("trade_detail.exit_price")}
               <input type="number" step="0.000001" {...closeForm.register("price")} className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" />
             </label>
             <label className="text-sm text-slate-300">
-              Motivo chiusura
+              {t("trade_detail.close_reason_label")}
               <select {...closeForm.register("close_reason")} className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2">
-                <option value="manual">Manuale</option>
-                <option value="take_profit">Take Profit</option>
-                <option value="stop_loss">Stop Loss</option>
+                <option value="manual">{t("trade_detail.close_reason.manual")}</option>
+                <option value="take_profit">{t("trade_detail.close_reason.take_profit")}</option>
+                <option value="stop_loss">{t("trade_detail.close_reason.stop_loss")}</option>
               </select>
             </label>
             <label className="text-sm text-slate-300">
-              Note
-              <input {...closeForm.register("note")} className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder="Opzionale" />
+              {t("trade_detail.note")}
+              <input {...closeForm.register("note")} className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" placeholder={t("trade_detail.optional")} />
             </label>
             <div className="md:col-span-4 flex justify-end gap-2">
               <button
@@ -446,27 +448,27 @@ export function TradeDetailPage() {
                 disabled={closeTrade.isPending}
                 className="rounded bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950"
               >
-                {closeTrade.isPending ? "Chiusura in corso..." : "Chiudi trade"}
+                {closeTrade.isPending ? t("trade_detail.closing") : t("trade_detail.close_trade")}
               </button>
             </div>
           </form>
-          {closeTrade.error ? <div className="mt-3 text-sm text-red-300">Chiusura trade non riuscita.</div> : null}
+          {closeTrade.error ? <div className="mt-3 text-sm text-red-300">{t("trade_detail.close_failed")}</div> : null}
           <div className="mt-3 text-xs text-slate-400">
-            La fee di uscita viene calcolata automaticamente dal broker; il netto della chiusura viene mostrato nel riepilogo dopo la conferma.
+            {t("trade_detail.close_hint")}
           </div>
         </section>
       ) : null}
 
       <section className="card overflow-x-auto">
-        <div className="border-b border-slate-700/80 px-4 py-3 text-lg font-semibold">Eseguiti</div>
+        <div className="border-b border-slate-700/80 px-4 py-3 text-lg font-semibold">{t("trade_detail.executions")}</div>
         <table className="min-w-full text-sm">
           <thead>
             <tr className="border-b border-slate-700 text-left text-slate-400">
-              <th className="px-3 py-2">Data</th>
-              <th className="px-3 py-2">Action</th>
-              <th className="px-3 py-2">Qty</th>
-              <th className="px-3 py-2">Price</th>
-              <th className="px-3 py-2">Fee</th>
+              <th className="px-3 py-2">{t("trade_detail.columns.date")}</th>
+              <th className="px-3 py-2">{t("trade_detail.columns.action")}</th>
+              <th className="px-3 py-2">{t("trade_detail.columns.qty")}</th>
+              <th className="px-3 py-2">{t("trade_detail.columns.price")}</th>
+              <th className="px-3 py-2">{t("trade_detail.columns.fee")}</th>
             </tr>
           </thead>
           <tbody>
@@ -482,7 +484,7 @@ export function TradeDetailPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={5} className="px-3 py-2 text-slate-400">Nessun eseguito.</td>
+                <td colSpan={5} className="px-3 py-2 text-slate-400">{t("trade_detail.no_executions")}</td>
               </tr>
             )}
           </tbody>
@@ -490,7 +492,7 @@ export function TradeDetailPage() {
       </section>
 
       <section className="card p-4">
-        <div className="mb-3 text-lg font-semibold">Immagini Trade</div>
+        <div className="mb-3 text-lg font-semibold">{t("trade_detail.trade_images")}</div>
         {data.images.length ? (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {data.images.map((image) => (
@@ -519,17 +521,17 @@ export function TradeDetailPage() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full items-center justify-center text-xs text-slate-500">Preview non disponibile</div>
+                    <div className="flex h-full items-center justify-center text-xs text-slate-500">{t("trade_detail.preview_unavailable")}</div>
                   )}
                 </div>
                 <div className="px-2 py-1 text-xs text-slate-300">
-                  #{image.id} {image.annotated_path ? "(annotata)" : "(originale)"}
+                  #{image.id} {image.annotated_path ? t("trade_detail.annotated") : t("trade_detail.original")}
                 </div>
               </button>
             ))}
           </div>
         ) : (
-          <div className="text-sm text-slate-400">Nessuna immagine caricata su questo trade.</div>
+          <div className="text-sm text-slate-400">{t("trade_detail.no_images")}</div>
         )}
       </section>
 
@@ -544,7 +546,7 @@ export function TradeDetailPage() {
               }}
               className="absolute right-2 top-2 rounded bg-slate-800 px-3 py-2 text-sm text-white"
             >
-              Chiudi
+              {t("common.close")}
             </button>
             <img src={zoomImageUrl} alt="Zoom trade image" className="max-h-[88vh] w-full rounded object-contain" />
           </div>

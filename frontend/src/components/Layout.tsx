@@ -1,18 +1,9 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { PropsWithChildren, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TradeCreateModal } from "./TradeCreateModal";
 import packageJson from "../../package.json";
 import bullVectLogo from "../assets/bull_vect.svg";
-
-const links = [
-  { to: "/", label: "Dashboard" },
-  { to: "/calendar", label: "Calendar" },
-  { to: "/accounts", label: "Accounts" },
-  { to: "/trades", label: "Trades" },
-  { to: "/stats", label: "Stats" },
-  { to: "/notes", label: "Notes" },
-  { to: "/settings", label: "Settings" },
-];
 
 const LIGHT_THEME_LOGO_URL = "https://www.tosolini.info/wp-content/uploads/2021/01/tosolini-logo-200.png";
 const DARK_THEME_LOGO_URL = "https://www.tosolini.info/wp-content/uploads/2021/01/tosolini_nero_200.png";
@@ -25,8 +16,20 @@ function prefersLightTheme(): boolean {
 }
 
 export function Layout({ children }: PropsWithChildren) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [isLightTheme, setIsLightTheme] = useState(prefersLightTheme);
+
+  const links = [
+    { to: "/", label: t("layout.nav.dashboard") },
+    { to: "/calendar", label: t("layout.nav.calendar") },
+    { to: "/accounts", label: t("layout.nav.accounts") },
+    { to: "/trades", label: t("layout.nav.trades") },
+    { to: "/stats", label: t("layout.nav.stats") },
+    { to: "/notes", label: t("layout.nav.notes") },
+    { to: "/settings", label: t("layout.nav.settings") },
+  ];
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -50,7 +53,7 @@ export function Layout({ children }: PropsWithChildren) {
         <aside className="flex flex-col border-r border-slate-700/60 bg-slate-950/70 p-5 backdrop-blur">
           <div className="mb-8 flex items-center gap-2.5 text-xl font-semibold tracking-wide text-teal-300">
             <img src={bullVectLogo} alt="Bull logo" className="h-6 w-6 object-contain" loading="eager" />
-            <span>TradeJournal</span>
+            <span className="titlelogo">TradeJournal</span>
           </div>
           <nav className="space-y-2">
             {links.map((link) => (
@@ -75,17 +78,26 @@ export function Layout({ children }: PropsWithChildren) {
               onClick={() => setIsTradeModalOpen(true)}
               className="w-full rounded-lg bg-teal-500 px-3 py-2 text-sm font-semibold text-slate-900"
             >
-              New Trade
+              {t("layout.actions.new_trade")}
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/notes?new=1")}
+              className="mt-2 w-full rounded-lg border border-teal-500/60 bg-slate-900 px-3 py-2 text-sm font-semibold text-teal-200 hover:bg-teal-500/10"
+            >
+              {t("layout.actions.new_note")}
             </button>
           </div>
           <div className="mt-auto border-t border-slate-700/60 pt-4">
-            <div className="text-xs text-slate-400">Versione v{appVersion}</div>
+            <div className="text-xs text-slate-400">
+              {t("layout.version")} v{appVersion}
+            </div>
             <div className="mt-3">
               <a
                 href="https://www.tosolini.info"
                 target="_blank"
                 rel="noreferrer"
-                aria-label="Sito Tosolini"
+                aria-label={t("layout.tosolini_site_aria")}
               >
                 <img
                   src={logoUrl}
@@ -95,7 +107,9 @@ export function Layout({ children }: PropsWithChildren) {
                 />
               </a>
             </div>
-            <div className="mt-2 text-xs text-slate-500">© {currentYear} Tosolini. All rights reserved.</div>
+            <div className="mt-2 text-xs text-slate-500">
+              © {currentYear} Tosolini. {t("layout.copyright")}
+            </div>
           </div>
         </aside>
         <main className="p-4 md:p-8">{children}</main>

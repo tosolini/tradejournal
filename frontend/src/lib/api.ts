@@ -1,4 +1,42 @@
+import i18n from "./i18n";
+
 const API_BASE = import.meta.env.DEV ? "" : import.meta.env.VITE_API_BASE_URL || "http://localhost:18000";
+
+export class ApiError extends Error {
+  status: number;
+  code?: string;
+
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
+type ErrorPayload = {
+  detail?: string | { code?: string; message?: string };
+};
+
+async function parseApiError(response: Response): Promise<ApiError> {
+  const status = response.status;
+  const text = await response.text();
+
+  try {
+    const parsed = JSON.parse(text) as ErrorPayload;
+    if (typeof parsed.detail === "string") {
+      return new ApiError(parsed.detail, status);
+    }
+    if (parsed.detail && typeof parsed.detail === "object") {
+      const message = parsed.detail.message || "API error";
+      return new ApiError(message, status, parsed.detail.code);
+    }
+  } catch {
+    // Keep plain-text fallback when response body is not JSON.
+  }
+
+  return new ApiError(text || "API error", status);
+}
 
 export type Trade = {
   id: number;
@@ -96,16 +134,25 @@ export type Broker = {
 
 export async function api<T>(path: string, options?: RequestInit): Promise<T> {
   const token = localStorage.getItem("token");
+  const locale = i18n.resolvedLanguage || i18n.language || "en";
   const response = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
+      "Accept-Language": locale,
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options?.headers || {}),
     },
   });
   if (!response.ok) {
-    throw new Error(await response.text());
+    // If token is stale/invalid, force a clean auth state.
+    if (response.status === 401) {
+      localStorage.removeItem("token");
+      if (!window.location.pathname.startsWith("/login")) {
+        window.location.replace("/login");
+      }
+    }
+    throw await parseApiError(response);
   }
   return response.json() as Promise<T>;
 }

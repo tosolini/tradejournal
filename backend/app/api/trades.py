@@ -1,12 +1,13 @@
 from datetime import UTC, datetime
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.deps import get_current_user
+from app.i18n import localized_error, translate
 from app.models import Account, Broker, Trade, TradeExecution, TradeImage, User
 from app.schemas import (
     ExecutionCreate,
@@ -54,17 +55,25 @@ def _close_action(side: str) -> str:
     return "SELL" if side == "long" else "BUY"
 
 
-def _capital_gain_tax(net_pnl: Decimal, broker: Broker | None) -> tuple[str, Decimal, Decimal | None, str | None]:
+def _capital_gain_tax(
+    net_pnl: Decimal,
+    broker: Broker | None,
+    request: Request | None = None,
+) -> tuple[str, Decimal, Decimal | None, str | None]:
     mode = str(broker.capital_gain_mode or "immediate").lower() if broker else "immediate"
     rate = Decimal(str(broker.capital_gain_rate or Decimal("26"))) if broker else Decimal("26")
     if mode == "year_end":
-        return mode, rate, None, "Calcolo fiscale rinviato a fine anno nel dashboard"
+        return mode, rate, None, translate("notes.tax_deferred_dashboard", request=request)
     taxable = net_pnl if net_pnl > 0 else Decimal("0")
     tax = _quantize((taxable * rate) / Decimal("100"))
     return mode, rate, tax, None
 
 
-def _trade_closure_summary(trade: Trade, executions: list[TradeExecution]) -> TradeClosureSummary | None:
+def _trade_closure_summary(
+    trade: Trade,
+    executions: list[TradeExecution],
+    request: Request | None = None,
+) -> TradeClosureSummary | None:
     if not executions or trade.status != "close":
         return None
 
@@ -72,7 +81,7 @@ def _trade_closure_summary(trade: Trade, executions: list[TradeExecution]) -> Tr
     exit_execution = sorted(executions, key=lambda item: item.executed_at)[-1]
     broker = trade.account.broker if trade.account and trade.account.broker else None
     capital_gain_mode, capital_gain_rate, capital_gain_tax_estimate, tax_note = _capital_gain_tax(
-        pnl.net_realized_pnl, broker
+        pnl.net_realized_pnl, broker, request=request
     )
     gross_pnl = _quantize(pnl.net_realized_pnl + pnl.total_fees)
 
@@ -157,12 +166,13 @@ def _trade_response_with_metrics(trade: Trade, executions: list[TradeExecution])
 @router.post("", response_model=TradeResponse)
 def create_trade(
     payload: TradeCreate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     account = db.get(Account, payload.account_id)
     if not account or account.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Account not found")
+        raise localized_error(status_code=404, code="errors.account_not_found", request=request)
 
     trade = Trade(user_id=current_user.id, **payload.model_dump())
     db.add(trade)
@@ -212,18 +222,19 @@ def list_trades(
 @router.get("/{trade_id}", response_model=TradeDetailResponse)
 def trade_detail(
     trade_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     trade = db.get(Trade, trade_id)
     if not trade or trade.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Trade not found")
+        raise localized_error(status_code=404, code="errors.trade_not_found", request=request)
     executions = db.execute(
         select(TradeExecution).where(TradeExecution.trade_id == trade.id)
     ).scalars().all()
     images = db.execute(select(TradeImage).where(TradeImage.trade_id == trade.id)).scalars().all()
     pnl = compute_weighted_average_pnl(executions) if executions else None
-    closure = _trade_closure_summary(trade, executions)
+    closure = _trade_closure_summary(trade, executions, request=request)
     return {
         "trade": _trade_response_with_metrics(trade, executions),
         "executions": [ExecutionResponse.model_validate(ex) for ex in executions],
@@ -237,12 +248,13 @@ def trade_detail(
 def add_execution(
     trade_id: int,
     payload: ExecutionCreate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     trade = db.get(Trade, trade_id)
     if not trade or trade.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Trade not found")
+        raise localized_error(status_code=404, code="errors.trade_not_found", request=request)
 
     data = payload.model_dump()
     quantity = Decimal(str(data["quantity"]))
@@ -260,21 +272,22 @@ def add_execution(
 def close_trade(
     trade_id: int,
     payload: TradeCloseRequest,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     trade = db.get(Trade, trade_id)
     if not trade or trade.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Trade not found")
+        raise localized_error(status_code=404, code="errors.trade_not_found", request=request)
     if trade.status == "close":
-        raise HTTPException(status_code=400, detail="Trade already closed")
+        raise localized_error(status_code=400, code="errors.trade_already_closed", request=request)
 
     executions = db.execute(
         select(TradeExecution).where(TradeExecution.trade_id == trade.id)
     ).scalars().all()
     pnl = compute_weighted_average_pnl(executions) if executions else None
     if not pnl or pnl.position_qty <= 0:
-        raise HTTPException(status_code=400, detail="No open position to close")
+        raise localized_error(status_code=400, code="errors.no_open_position_to_close", request=request)
 
     closing_quantity = pnl.position_qty
     closing_action = _close_action(trade.side)
@@ -298,25 +311,26 @@ def close_trade(
     db.refresh(trade)
     db.refresh(closing_execution)
 
-    return trade_detail(trade_id, db=db, current_user=current_user)
+    return trade_detail(trade_id, request=request, db=db, current_user=current_user)
 
 
 @router.patch("/{trade_id}", response_model=TradeResponse)
 def update_trade(
     trade_id: int,
     payload: TradeUpdate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     trade = db.get(Trade, trade_id)
     if not trade or trade.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Trade not found")
+        raise localized_error(status_code=404, code="errors.trade_not_found", request=request)
 
     updates = payload.model_dump(exclude_unset=True)
     if "account_id" in updates and updates["account_id"] is not None:
         account = db.get(Account, updates["account_id"])
         if not account or account.user_id != current_user.id:
-            raise HTTPException(status_code=400, detail="Account not found")
+            raise localized_error(status_code=400, code="errors.account_not_found", request=request)
 
     for field, value in updates.items():
         setattr(trade, field, value)
@@ -334,16 +348,17 @@ def update_execution(
     trade_id: int,
     execution_id: int,
     payload: ExecutionUpdate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     trade = db.get(Trade, trade_id)
     if not trade or trade.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Trade not found")
+        raise localized_error(status_code=404, code="errors.trade_not_found", request=request)
 
     execution = db.get(TradeExecution, execution_id)
     if not execution or execution.trade_id != trade.id:
-        raise HTTPException(status_code=404, detail="Execution not found")
+        raise localized_error(status_code=404, code="errors.execution_not_found", request=request)
 
     updates = payload.model_dump(exclude_unset=True)
 
@@ -392,12 +407,13 @@ def recent_executions(
 @router.delete("/{trade_id}")
 def delete_trade(
     trade_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     trade = db.get(Trade, trade_id)
     if not trade or trade.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Trade not found")
+        raise localized_error(status_code=404, code="errors.trade_not_found", request=request)
 
     db.delete(trade)
     db.commit()

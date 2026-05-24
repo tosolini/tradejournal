@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.deps import get_current_user
+from app.i18n import localized_error
 from app.models import Account, Broker, Trade, User
 from app.schemas import AccountCreate, AccountResponse, AccountUpdate
 
@@ -13,6 +14,7 @@ router = APIRouter(prefix="/api/accounts", tags=["accounts"])
 @router.post("", response_model=AccountResponse)
 def create_account(
     payload: AccountCreate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -20,7 +22,7 @@ def create_account(
     if payload.broker_id is not None:
         broker = db.get(Broker, payload.broker_id)
         if not broker or broker.user_id != current_user.id:
-            raise HTTPException(status_code=400, detail="Broker non valido")
+            raise localized_error(status_code=400, code="errors.broker_invalid", request=request)
 
     account = Account(
         user_id=current_user.id,
@@ -54,18 +56,19 @@ def list_accounts(
 def update_account(
     account_id: int,
     payload: AccountUpdate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     account = db.get(Account, account_id)
     if not account or account.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Account not found")
+        raise localized_error(status_code=404, code="errors.account_not_found", request=request)
 
     updates = payload.model_dump(exclude_unset=True)
     if "broker_id" in updates and updates["broker_id"] is not None:
         broker = db.get(Broker, updates["broker_id"])
         if not broker or broker.user_id != current_user.id:
-            raise HTTPException(status_code=400, detail="Broker non valido")
+            raise localized_error(status_code=400, code="errors.broker_invalid", request=request)
 
     for field, value in updates.items():
         setattr(account, field, value)
@@ -81,18 +84,20 @@ def update_account(
 @router.delete("/{account_id}")
 def delete_account(
     account_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     account = db.get(Account, account_id)
     if not account or account.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Account not found")
+        raise localized_error(status_code=404, code="errors.account_not_found", request=request)
 
     linked_trade = db.execute(select(Trade.id).where(Trade.account_id == account_id)).scalar_one_or_none()
     if linked_trade is not None:
-        raise HTTPException(
+        raise localized_error(
             status_code=400,
-            detail="Cannot delete account with linked trades. Delete or move trades first.",
+            code="errors.account_has_trades",
+            request=request,
         )
 
     db.delete(account)

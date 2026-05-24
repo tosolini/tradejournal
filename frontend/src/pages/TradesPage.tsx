@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { RecentExecution, Trade, api } from "../lib/api";
+import { ApiError, RecentExecution, Trade, api } from "../lib/api";
 
 function asNumber(value: string | number | undefined): number {
   if (value === undefined) {
@@ -279,6 +280,7 @@ function getTradeSortValue(trade: Trade, key: SortableTradeColumnKey): number | 
 }
 
 export function TradesPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -359,18 +361,13 @@ export function TradesPage() {
   });
 
   const parseApiError = (err: unknown): string => {
+    if (err instanceof ApiError) {
+      return err.message || t("trades.request_failed");
+    }
     if (!(err instanceof Error)) {
-      return "Richiesta non completata.";
+      return t("trades.request_failed");
     }
-    try {
-      const parsed = JSON.parse(err.message);
-      if (parsed?.detail) {
-        return String(parsed.detail);
-      }
-    } catch {
-      return err.message || "Richiesta non completata.";
-    }
-    return err.message || "Richiesta non completata.";
+    return err.message || t("trades.request_failed");
   };
 
   const filteredRecentExecutions = useMemo(() => {
@@ -582,18 +579,18 @@ export function TradesPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-semibold">Trades</h1>
-        <p className="text-sm text-slate-400">Lista operazioni semplificata con azioni rapide.</p>
+        <h1 className="text-2xl font-semibold">{t("trades.title")}</h1>
+        <p className="text-sm text-slate-400">{t("trades.subtitle")}</p>
       </div>
 
       <section className="card overflow-x-auto">
         <div className="flex flex-col gap-2 border-b border-slate-700/80 px-4 py-3 md:flex-row md:items-center md:justify-between">
-          <div className="text-lg font-semibold">Ultimi Eseguiti</div>
+          <div className="text-lg font-semibold">{t("trades.recent_executions")}</div>
           <input
             value={recentSearch}
             onChange={(event) => setRecentSearch(event.target.value)}
             className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm md:max-w-xs"
-            placeholder="Cerca per trade, simbolo o action"
+            placeholder={t("trades.search_recent_placeholder")}
           />
         </div>
         <table className="min-w-full text-sm">
@@ -601,24 +598,24 @@ export function TradesPage() {
             <tr className="border-b border-slate-700 text-left text-slate-400">
               <th className="px-3 py-2">
                 <button type="button" onClick={() => toggleRecentSort("date")} className="text-left hover:text-slate-200">
-                  Date{recentSortIndicator("date")}
+                  {t("trades.columns.date")}{recentSortIndicator("date")}
                 </button>
               </th>
-              <th className="px-3 py-2">Trade</th>
-              <th className="px-3 py-2">Action</th>
+              <th className="px-3 py-2">{t("trades.columns.trade")}</th>
+              <th className="px-3 py-2">{t("trades.columns.action")}</th>
               <th className="px-3 py-2">
                 <button type="button" onClick={() => toggleRecentSort("qty")} className="text-left hover:text-slate-200">
-                  Qty{recentSortIndicator("qty")}
+                  {t("trades.columns.qty")}{recentSortIndicator("qty")}
                 </button>
               </th>
               <th className="px-3 py-2">
                 <button type="button" onClick={() => toggleRecentSort("price")} className="text-left hover:text-slate-200">
-                  Price{recentSortIndicator("price")}
+                  {t("trades.columns.price")}{recentSortIndicator("price")}
                 </button>
               </th>
               <th className="px-3 py-2">
                 <button type="button" onClick={() => toggleRecentSort("fee")} className="text-left hover:text-slate-200">
-                  Fee{recentSortIndicator("fee")}
+                  {t("trades.columns.fee")}{recentSortIndicator("fee")}
                 </button>
               </th>
             </tr>
@@ -646,7 +643,7 @@ export function TradesPage() {
             ) : (
               <tr>
                 <td colSpan={6} className="px-3 py-2 text-slate-400">
-                  Nessun eseguito disponibile con questi filtri.
+                  {t("trades.no_recent_executions")}
                 </td>
               </tr>
             )}
@@ -656,23 +653,23 @@ export function TradesPage() {
 
       <section className="card overflow-x-auto">
         <div className="flex flex-col gap-2 border-b border-slate-700/80 px-4 py-3 md:flex-row md:items-center md:justify-between">
-          <div className="text-lg font-semibold">Trades</div>
+          <div className="text-lg font-semibold">{t("trades.title")}</div>
           <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row">
             <input
               value={tradeSearch}
               onChange={(event) => setTradeSearch(event.target.value)}
               className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm md:w-64"
-              placeholder="Cerca per id, simbolo, side, status"
+              placeholder={t("trades.search_placeholder")}
             />
             <select
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
               className="rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
             >
-              <option value="all">Tutti gli status</option>
-              <option value="open">Open</option>
-              <option value="partial">Partial</option>
-              <option value="close">Close</option>
+              <option value="all">{t("trades.all_statuses")}</option>
+              <option value="open">{t("trades.status.open")}</option>
+              <option value="partial">{t("trades.status.partial")}</option>
+              <option value="close">{t("trades.status.close")}</option>
             </select>
             <div className="relative" ref={columnsMenuRef}>
               <button
@@ -680,11 +677,11 @@ export function TradesPage() {
                 onClick={() => setShowColumnsMenu((value) => !value)}
                 className="rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200"
               >
-                Colonne visibili
+                {t("trades.visible_columns")}
               </button>
               {showColumnsMenu ? (
                 <div className="absolute right-0 top-full z-20 mt-2 w-72 rounded border border-slate-700 bg-slate-950 p-3 shadow-2xl">
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Mostra/Nascondi</div>
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{t("trades.show_hide")}</div>
                   <div className="grid max-h-64 gap-2 overflow-y-auto md:grid-cols-2">
                     {OPTIONAL_TRADE_COLUMNS.map((column) => (
                       <label key={column.key} className="flex items-center gap-2 text-xs text-slate-200">
@@ -710,7 +707,7 @@ export function TradesPage() {
         {quickCloseTrade ? (
           <div className="border-b border-slate-700/80 bg-slate-900/40 px-4 py-3">
             <div className="mb-2 text-sm font-semibold text-amber-200">
-              Chiusura rapida trade #{quickCloseTrade.id} ({quickCloseTrade.symbol})
+              {t("trades.quick_close_title", { id: quickCloseTrade.id, symbol: quickCloseTrade.symbol })}
             </div>
             <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto_auto]">
               <input
@@ -719,22 +716,22 @@ export function TradesPage() {
                 value={quickClosePrice}
                 onChange={(event) => setQuickClosePrice(event.target.value)}
                 className="rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
-                placeholder="Prezzo uscita"
+                placeholder={t("trades.exit_price")}
               />
               <select
                 value={quickCloseReason}
                 onChange={(event) => setQuickCloseReason(event.target.value as "manual" | "take_profit" | "stop_loss")}
                 className="rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
               >
-                <option value="manual">Manuale</option>
-                <option value="take_profit">Take Profit</option>
-                <option value="stop_loss">Stop Loss</option>
+                <option value="manual">{t("trades.manual")}</option>
+                <option value="take_profit">{t("trades.status.take_profit")}</option>
+                <option value="stop_loss">{t("trades.status.stop_loss")}</option>
               </select>
               <input
                 value={quickCloseNote}
                 onChange={(event) => setQuickCloseNote(event.target.value)}
                 className="rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
-                placeholder="Note (opzionale)"
+                placeholder={t("trades.note_optional")}
               />
               <button
                 type="button"
@@ -742,7 +739,7 @@ export function TradesPage() {
                   setQuickCloseError(null);
                   const parsedPrice = Number(quickClosePrice);
                   if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
-                    setQuickCloseError("Inserisci un prezzo di uscita valido.");
+                    setQuickCloseError(t("trades.invalid_exit_price"));
                     return;
                   }
                   try {
@@ -759,7 +756,7 @@ export function TradesPage() {
                 disabled={closeTrade.isPending}
                 className="rounded bg-amber-500 px-3 py-2 text-sm font-semibold text-slate-950"
               >
-                {closeTrade.isPending ? "Chiusura..." : "Conferma chiusura"}
+                {closeTrade.isPending ? t("trades.closing") : t("trades.confirm_close")}
               </button>
               <button
                 type="button"
@@ -769,7 +766,7 @@ export function TradesPage() {
                 }}
                 className="rounded bg-slate-700 px-3 py-2 text-sm text-white"
               >
-                Annulla
+                {t("common.cancel")}
               </button>
             </div>
             {quickCloseError ? <div className="mt-2 text-sm text-red-400">{quickCloseError}</div> : null}
@@ -780,22 +777,22 @@ export function TradesPage() {
             <tr className="border-b border-slate-700 text-left text-slate-400">
               <th className="px-3 py-2">
                 <button type="button" onClick={() => toggleSort("date")} className="text-left hover:text-slate-200">
-                  Date{sortIndicator("date")}
+                  {t("trades.columns.date")}{sortIndicator("date")}
                 </button>
               </th>
               <th className="px-3 py-2">
                 <button type="button" onClick={() => toggleSort("symbol")} className="text-left hover:text-slate-200">
-                  Symbol{sortIndicator("symbol")}
+                  {t("trades.columns.symbol")}{sortIndicator("symbol")}
                 </button>
               </th>
               <th className="px-3 py-2">
                 <button type="button" onClick={() => toggleSort("status")} className="text-left hover:text-slate-200">
-                  Status{sortIndicator("status")}
+                  {t("trades.columns.status")}{sortIndicator("status")}
                 </button>
               </th>
               <th className="px-3 py-2">
                 <button type="button" onClick={() => toggleSort("side")} className="text-left hover:text-slate-200">
-                  Side{sortIndicator("side")}
+                  {t("trades.columns.side")}{sortIndicator("side")}
                 </button>
               </th>
               {visibleOptionalColumns.avgEntry ? (
@@ -882,7 +879,7 @@ export function TradesPage() {
                   </button>
                 </th>
               ) : null}
-              <th className="px-3 py-2">Actions</th>
+              <th className="px-3 py-2">{t("trades.columns.actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -945,8 +942,8 @@ export function TradesPage() {
                       type="button"
                       onClick={() => navigate(`/trades/${trade.id}`)}
                       className="rounded bg-slate-700 p-2 text-white"
-                      title="Vedi dettaglio"
-                      aria-label="Vedi dettaglio"
+                      title={t("trades.view_detail")}
+                      aria-label={t("trades.view_detail")}
                     >
                       <ViewIcon />
                     </button>
@@ -954,8 +951,8 @@ export function TradesPage() {
                       type="button"
                       onClick={() => navigate(`/trades/${trade.id}/edit`)}
                       className="rounded bg-sky-500 p-2 text-slate-950"
-                      title="Modifica trade"
-                      aria-label="Modifica trade"
+                      title={t("trades.edit_trade")}
+                      aria-label={t("trades.edit_trade")}
                     >
                       <EditIcon />
                     </button>
@@ -963,8 +960,8 @@ export function TradesPage() {
                       type="button"
                       onClick={() => navigate(`/trades/${trade.id}/images`)}
                       className="rounded bg-indigo-500 p-2 text-white"
-                      title="Gestisci immagini"
-                      aria-label="Gestisci immagini"
+                      title={t("trades.manage_images")}
+                      aria-label={t("trades.manage_images")}
                     >
                       <ImageIcon />
                     </button>
@@ -980,8 +977,8 @@ export function TradesPage() {
                       }}
                       disabled={trade.status === "close"}
                       className="rounded bg-amber-500 p-2 text-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
-                      title="Chiusura rapida trade"
-                      aria-label="Chiusura rapida trade"
+                      title={t("trades.quick_close")}
+                      aria-label={t("trades.quick_close")}
                     >
                       <CloseIcon />
                     </button>
@@ -989,7 +986,7 @@ export function TradesPage() {
                       type="button"
                       onClick={async () => {
                         setDeleteError(null);
-                        const confirmed = window.confirm(`Delete trade #${trade.id} (${trade.symbol})?`);
+                        const confirmed = window.confirm(t("trades.delete_confirm", { id: trade.id, symbol: trade.symbol }));
                         if (!confirmed) {
                           return;
                         }
@@ -1001,8 +998,8 @@ export function TradesPage() {
                         }
                       }}
                       className="rounded bg-red-500 p-2 text-white"
-                      title="Cancella trade"
-                      aria-label="Cancella trade"
+                      title={t("trades.delete_trade")}
+                      aria-label={t("trades.delete_trade")}
                     >
                       <DeleteIcon />
                     </button>
@@ -1013,7 +1010,7 @@ export function TradesPage() {
             {!filteredTrades.length ? (
               <tr>
                 <td colSpan={5 + visibleOptionalCount} className="px-3 py-2 text-slate-400">
-                  Nessun trade trovato con i filtri attuali.
+                  {t("trades.no_trades")}
                 </td>
               </tr>
             ) : null}

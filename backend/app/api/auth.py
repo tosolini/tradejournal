@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.deps import get_current_user
+from app.i18n import localized_error
 from app.models import User
 from app.schemas import (
     LoginRequest,
@@ -34,7 +35,7 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
         select(User).where(or_(User.email == payload.email, User.username == payload.username))
     ).scalar_one_or_none()
     if existing:
-        raise HTTPException(status_code=400, detail="User already exists")
+        raise localized_error(status_code=400, code="errors.user_already_exists")
 
     user = User(
         email=payload.email,
@@ -49,7 +50,7 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(payload: LoginRequest, db: Session = Depends(get_db)):
+def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)):
     user = db.execute(
         select(User).where(
             or_(
@@ -59,9 +60,10 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
         )
     ).scalar_one_or_none()
     if not user or not verify_password(payload.password, user.hashed_password):
-        raise HTTPException(
+        raise localized_error(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
+            code="errors.invalid_credentials",
+            request=request,
         )
     return TokenResponse(access_token=create_access_token(user.username))
 
