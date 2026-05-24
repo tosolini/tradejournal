@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES}
+      APP_TIMEZONE: ${APP_TIMEZONE}
+      MARKET_CLOSE_CUTOFF: ${MARKET_CLOSE_CUTOFF}
+      MEDIA_ROOT: ${MEDIA_ROOT}
+    depends_on:
+      - db
+    ports:
+      - "18000:8000"
+    volumes:
+      - ./backend:/app
+      - media_data:/app/media
+
+  frontend:
+    build:
+      context: ./frontend
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    ports:
+      - "15173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  db_data:
+  media_data:
