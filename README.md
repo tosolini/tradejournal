@@ -1,4 +1,4 @@
-<img src="screen/bull_vect.svg" alt="TradeJournal logo" width="60" height="60" style="vertical-align:middle"> <span style="vertical-align:middle; font-size: 4.4em; font-weight: bold; color:rgb(94 234 212 / var(--tw-text-opacity, 1));"> TradeJournal MVP</span>
+![Logo](screen/tjlogo.png)
 
 #
 
