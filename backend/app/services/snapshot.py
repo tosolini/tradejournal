@@ -6,11 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.models import PositionDailySnapshot, Trade, TradeExecution
 from app.services.pnl import compute_weighted_average_pnl
-
-
-def get_mock_close_price(symbol: str, snapshot_date: date) -> Decimal:
-    seed = (sum(ord(ch) for ch in symbol) + snapshot_date.toordinal()) % 150
-    return Decimal("90") + Decimal(seed) / Decimal("10")
+from app.services.price_provider import get_mock_close_price
 
 
 def recompute_daily_snapshots(db: Session, snapshot_date: date) -> int:

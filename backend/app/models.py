@@ -30,6 +30,8 @@ class User(TimestampMixin, Base):
 
     accounts: Mapped[list["Account"]] = relationship(back_populates="owner")
     brokers: Mapped[list["Broker"]] = relationship(back_populates="owner")
+    assets: Mapped[list["Asset"]] = relationship(back_populates="owner")
+    holdings: Mapped[list["Holding"]] = relationship(back_populates="owner")
 
 
 class Broker(TimestampMixin, Base):
@@ -61,6 +63,7 @@ class Account(TimestampMixin, Base):
     owner: Mapped[User] = relationship(back_populates="accounts")
     broker: Mapped[Optional[Broker]] = relationship(back_populates="accounts")
     trades: Mapped[list["Trade"]] = relationship(back_populates="account")
+    holdings: Mapped[list["Holding"]] = relationship(back_populates="account")
 
 
 class Trade(TimestampMixin, Base):
@@ -160,3 +163,56 @@ class CashLedgerEntry(TimestampMixin, Base):
     entry_type: Mapped[str] = mapped_column(String(20))
     amount: Mapped[Decimal] = mapped_column(Numeric(18, 2))
     description: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+
+
+class Asset(TimestampMixin, Base):
+    __tablename__ = "assets"
+    __table_args__ = (
+        UniqueConstraint("user_id", "symbol", name="uq_asset_user_symbol"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    symbol: Mapped[str] = mapped_column(String(32), index=True)
+    name: Mapped[str] = mapped_column(String(255))
+    isin: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    instrument_type: Mapped[str] = mapped_column(String(32), default="etf")
+    exchange: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    currency: Mapped[str] = mapped_column(String(8), default="EUR")
+
+    owner: Mapped[User] = relationship(back_populates="assets")
+
+
+class Holding(TimestampMixin, Base):
+    __tablename__ = "holdings"
+    __table_args__ = (
+        UniqueConstraint("account_id", "asset_id", name="uq_holding_account_asset"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id"), index=True)
+    asset_id: Mapped[int] = mapped_column(ForeignKey("assets.id"), index=True)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("0"))
+    avg_cost: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("0"))
+    entry_date: Mapped[date] = mapped_column(Date, nullable=False)
+    exit_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+
+    owner: Mapped[User] = relationship(back_populates="holdings")
+    account: Mapped[Account] = relationship(back_populates="holdings")
+    asset: Mapped[Asset] = relationship()
+
+
+class PortfolioSnapshot(TimestampMixin, Base):
+    __tablename__ = "portfolio_snapshots"
+    __table_args__ = (
+        UniqueConstraint("account_id", "snapshot_date", name="uq_portfolio_snapshot_key"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id"), index=True)
+    snapshot_date: Mapped[date] = mapped_column(Date, index=True)
+    total_value: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0"))
+    total_cost: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0"))
+    total_return: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0"))
+    total_return_pct: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"))

@@ -1,111 +1,19 @@
 {
-    "model": {
-        "name": "qwen2.5-coder-14b-instruct-mlx",
-        "vendor": "Alibaba Cloud",
-        "description": "A large language model capable of performing instruction-based coding tasks.",
-        "version": "2.5",
-        "architecture": {
-            "type": "Transformer-based",
-            "layers": 14,
-            "heads": 32, // Example number of attention heads
-            "hidden_size": 4096 // Example hidden size
-        },
-        "parameters": {
-            "total": 14000000000, // Example parameter count in billions
-            "quantization": {
-                "bits": 4, // Example quantization bits
-                "method": "MLX" // Example quantization method
-            }
-        },
-        "resources": {
-            "gpu": {
-                "type": "Apple M4",
-                "memory": "8GB" // Assuming the GPU memory, can vary
+    "$schema": "https://opencode.ai/config.json",
+    "provider": {
+        "local-mlx": {
+            "npm": "@ai-sdk/openai-compatible",
+            "name": "Local MLX",
+            "options": {
+                "baseURL": "http://192.168.178.100:1234/v1"
             },
-            "cpu": {
-                "cores": 8,
-                "threads_per_core": 4
-            },
-            "ram": {
-                "size": "24GB"
+            "models": {
+                "qwen2.5-coder-14b-instruct-mlx": {
+                    "name": "Qwen2.5 Coder 14B Instruct MLX"
+                }
             }
-        },
-        "performance": {
-            "inference_time": 0.7, // Example inference time in seconds
-            "throughput": 96 // Example throughput in samples per second
-        },
-        "capabilities": [
-            "code_generation",
-            "language_translation",
-            "text_summarization"
-        ],
-        "supported_languages": [
-            "Python",
-            "Java",
-            "C++",
-            "JavaScript"
-        ],
-        "license": "Apache 2.0",
-        "repository": {
-            "url": "https://github.com/alibaba/LM-Studio",
-            "branch": "main"
         }
     },
-    "configuration": {
-        "model_path": "/models/qwen2.5-coder-14b-instruct-mlx",
-        "tokenizer_path": "/tokenizers/qwen2.5-coder-14b-instruct-mlx",
-        "settings": {
-            "max_length": 512,
-            "temperature": 0.7,
-            "top_p": 0.9
-        }
-    },
-    "environment": {
-        "os": "macOS Tahoe",
-        "python_version": "3.14.3",
-        "dependencies": [
-            "transformers==4.25.1",
-            "torch==1.10.0+cpu" // Using CPU version for M-series Macs
-        ]
-    },
-    "instructions": [
-        {
-            "step": "Install Dependencies",
-            "command": "pip install -r requirements.txt"
-        },
-        {
-            "step": "Load Model",
-            "command": "lm-studio load model /models/qwen2.5-coder-14b-instruct-mlx"
-        },
-        {
-            "step": "Run Inference",
-            "command": "lm-studio infer 'Write a Python function to reverse a string.'"
-        }
-    ],
-    "examples": [
-        {
-            "input": "Write a Python function to reverse a string.",
-            "output": "def reverse_string(s):\n    return s[::-1]"
-        },
-        {
-            "input": "Translate the following sentence to French: 'Hello, world!'",
-            "output": "Bonjour, le monde !"
-        }
-    ],
-    "metrics": [
-        {
-            "name": "accuracy",
-            "type": "ratio",
-            "description": "Percentage of correctly generated code snippets."
-        },
-        {
-            "name": "coverage",
-            "type": "ratio",
-            "description": "Ratio of supported languages vs total languages."
-        }
-    ],
-    "notes": [
-        "Ensure that the dependencies are properly installed.",
-        "The model may utilize CPU acceleration through PyTorch."
-    ]
+    "model": "local-mlx/qwen2.5-coder-14b-instruct-mlx",
+    "small_model": "local-mlx/qwen2.5-coder-14b-instruct-mlx"
 }

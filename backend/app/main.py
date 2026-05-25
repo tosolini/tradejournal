@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import inspect, text
 
-from app.api import accounts, auth, brokers, calendar, dashboard, notes, snapshots, trades, uploads
+from app.api import accounts, assets, auth, brokers, calendar, dashboard, holdings, notes, portfolio, snapshots, trades, uploads
 from app.bootstrap import ensure_seed_admin
 from app.config import settings
 from app.database import Base, engine
@@ -102,6 +102,9 @@ def health() -> dict[str, str]:
 app.include_router(auth.router)
 app.include_router(accounts.router)
 app.include_router(brokers.router)
+app.include_router(assets.router)
+app.include_router(holdings.router)
+app.include_router(portfolio.router)
 app.include_router(trades.router)
 app.include_router(notes.router)
 app.include_router(uploads.router)

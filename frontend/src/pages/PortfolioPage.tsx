@@ -1,0 +1,541 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createChart } from "lightweight-charts";
+import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  Account,
+  Asset,
+  HoldingDetail,
+  PortfolioSummary,
+  api,
+  fetchAccounts,
+  fetchPortfolioDetails,
+  fetchPortfolioHistory,
+  fetchPortfolioSummary,
+} from "../lib/api";
+
+function asNumber(value: string | number | undefined): number {
+  if (value === undefined) return 0;
+  if (typeof value === "number") return value;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatMoney(value: string | number | undefined, currency?: string): string {
+  const n = asNumber(value);
+  const ccy = (currency || "EUR").trim().toUpperCase();
+  try {
+    return new Intl.NumberFormat("en-US", { style: "currency", currency: ccy }).format(n);
+  } catch {
+    return `${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${ccy}`;
+  }
+}
+
+function EditIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+    </svg>
+  );
+}
+
+function DeleteIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M19 6l-1 14H6L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+    </svg>
+  );
+}
+
+function formatPct(value: string | number | undefined): string {
+  const n = asNumber(value);
+  return `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
+}
+
+function colorForPct(value: string | number | undefined): string {
+  const n = asNumber(value);
+  if (n > 0) return "text-green-400";
+  if (n < 0) return "text-red-400";
+  return "text-slate-300";
+}
+
+function ChartPanel({ history }: { history: { date: string; value: number }[] }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!ref.current || history.length === 0) return;
+    const chart = createChart(ref.current, {
+      width: ref.current.clientWidth,
+      height: 280,
+      layout: { background: { color: "#111827" }, textColor: "#94a3b8" },
+      grid: { vertLines: { color: "#1e293b" }, horzLines: { color: "#1e293b" } },
+    });
+    const series = chart.addAreaSeries({
+      lineColor: "#2dd4bf",
+      topColor: "rgba(45,212,191,0.25)",
+      bottomColor: "rgba(45,212,191,0.04)",
+    });
+    series.setData(history.map((p) => ({ time: p.date, value: p.value })));
+
+    const resize = () => chart.applyOptions({ width: ref.current?.clientWidth ?? 700 });
+    window.addEventListener("resize", resize);
+    return () => {
+      window.removeEventListener("resize", resize);
+      chart.remove();
+    };
+  }, [history]);
+
+  return <div ref={ref} className="card w-full overflow-hidden" />;
+}
+
+function HoldingFormModal({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const { data: accounts } = useQuery({ queryKey: ["accounts"], queryFn: fetchAccounts });
+  const { data: assets } = useQuery<Asset[]>({ queryKey: ["assets"], queryFn: () => api<Asset[]>("/api/assets") });
+
+  const [accountId, setAccountId] = useState("");
+  const [assetId, setAssetId] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [avgCost, setAvgCost] = useState("");
+  const [entryDate, setEntryDate] = useState("");
+  const [exitDate, setExitDate] = useState("");
+
+  const createMutation = useMutation({
+    mutationFn: () =>
+      api("/api/holdings", {
+        method: "POST",
+        body: JSON.stringify({
+          account_id: Number(accountId),
+          asset_id: Number(assetId),
+          quantity,
+          avg_cost: avgCost,
+          entry_date: entryDate,
+          exit_date: exitDate || null,
+        }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["portfolio"] });
+      onClose();
+      setAccountId("");
+      setAssetId("");
+      setQuantity("");
+      setAvgCost("");
+      setEntryDate("");
+      setExitDate("");
+    },
+    onError: (err: Error) => {
+      console.error("Holding creation error:", err);
+      alert(`Error: ${err.message}`);
+    },
+  });
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
+        <h2 className="mb-4 text-lg font-semibold text-teal-200">{t("portfolio.add_holding")}</h2>
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1 block text-xs text-slate-400">{t("portfolio.account")}</label>
+            <select
+              value={accountId}
+              onChange={(e) => setAccountId(e.target.value)}
+              className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2 text-sm text-slate-200"
+            >
+              <option value="">{t("portfolio.select_account")}</option>
+              {accounts?.map((a: Account) => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-slate-400">{t("portfolio.asset")}</label>
+            <select
+              value={assetId}
+              onChange={(e) => setAssetId(e.target.value)}
+              className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2 text-sm text-slate-200"
+            >
+              <option value="">{t("portfolio.select_asset")}</option>
+              {assets?.map((a: any) => (
+                <option key={a.id} value={a.id}>{a.symbol} — {a.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-slate-400">{t("portfolio.quantity")}</label>
+            <input
+              type="text"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2 text-sm text-slate-200"
+              placeholder="100"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-slate-400">{t("portfolio.avg_cost")}</label>
+            <input
+              type="text"
+              value={avgCost}
+              onChange={(e) => setAvgCost(e.target.value)}
+              className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2 text-sm text-slate-200"
+              placeholder="120.50"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-slate-400">{t("portfolio.entry_date")}</label>
+            <input
+              type="date"
+              value={entryDate}
+              onChange={(e) => setEntryDate(e.target.value)}
+              className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2 text-sm text-slate-200"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-slate-400">{t("portfolio.exit_date")}</label>
+            <input
+              type="date"
+              value={exitDate}
+              onChange={(e) => setExitDate(e.target.value)}
+              className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2 text-sm text-slate-200"
+            />
+          </div>
+        </div>
+        <div className="mt-5 flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
+          >
+            {t("portfolio.cancel")}
+          </button>
+          <button
+            onClick={() => createMutation.mutate()}
+            disabled={!accountId || !assetId || !quantity || createMutation.isPending}
+            className="rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-400 disabled:opacity-50"
+          >
+            {createMutation.isPending ? t("portfolio.saving") : t("portfolio.save")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HoldingEditFormModal({
+  open,
+  holding,
+  onClose,
+}: {
+  open: boolean;
+  holding: HoldingDetail | null;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  const [accountId, setAccountId] = useState("");
+  const [assetId, setAssetId] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [avgCost, setAvgCost] = useState("");
+  const [entryDate, setEntryDate] = useState("");
+  const [exitDate, setExitDate] = useState("");
+
+  useEffect(() => {
+    if (holding) {
+      setAccountId(String(holding.account_id));
+      setAssetId(String(holding.asset_id));
+      setQuantity(holding.quantity);
+      setAvgCost(holding.avg_cost);
+      setEntryDate(holding.entry_date);
+      setExitDate(holding.exit_date ?? "");
+    }
+  }, [holding]);
+
+  const updateMutation = useMutation({
+    mutationFn: () =>
+      api(`/api/holdings/${holding!.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          quantity,
+          avg_cost: avgCost,
+          entry_date: entryDate,
+          exit_date: exitDate || null,
+        }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["portfolio"] });
+      onClose();
+    },
+    onError: (err: Error) => {
+      console.error("Holding update error:", err);
+      alert(`Error: ${err.message}`);
+    },
+  });
+
+  if (!open || !holding) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
+        <h2 className="mb-4 text-lg font-semibold text-teal-200">{t("portfolio.edit_holding")}</h2>
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1 block text-xs text-slate-400">{t("portfolio.quantity")}</label>
+            <input
+              type="text"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2 text-sm text-slate-200"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-slate-400">{t("portfolio.avg_cost")}</label>
+            <input
+              type="text"
+              value={avgCost}
+              onChange={(e) => setAvgCost(e.target.value)}
+              className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2 text-sm text-slate-200"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-slate-400">{t("portfolio.entry_date")}</label>
+            <input
+              type="date"
+              value={entryDate}
+              onChange={(e) => setEntryDate(e.target.value)}
+              className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2 text-sm text-slate-200"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-slate-400">{t("portfolio.exit_date")}</label>
+            <input
+              type="date"
+              value={exitDate}
+              onChange={(e) => setExitDate(e.target.value)}
+              className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2 text-sm text-slate-200"
+            />
+          </div>
+        </div>
+        <div className="mt-5 flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
+          >
+            {t("portfolio.cancel")}
+          </button>
+          <button
+            onClick={() => updateMutation.mutate()}
+            disabled={updateMutation.isPending}
+            className="rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-400 disabled:opacity-50"
+          >
+            {updateMutation.isPending ? t("portfolio.saving") : t("portfolio.save")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function PortfolioPage() {
+  const { t } = useTranslation();
+  const [showAddHolding, setShowAddHolding] = useState(false);
+  const [editHolding, setEditHolding] = useState<HoldingDetail | null>(null);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const queryClient = useQueryClient();
+
+  const { data: summaries } = useQuery({
+    queryKey: ["portfolio", "summary"],
+    queryFn: () => fetchPortfolioSummary(),
+  });
+
+  const { data: details } = useQuery({
+    queryKey: ["portfolio", "details"],
+    queryFn: () => fetchPortfolioDetails(),
+  });
+
+  const { data: history } = useQuery({
+    queryKey: ["portfolio", "history"],
+    queryFn: () => fetchPortfolioHistory(),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api(`/api/holdings/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["portfolio"] });
+      setDeleteId(null);
+    },
+  });
+
+  const totalValue = summaries?.reduce((s: number, a: PortfolioSummary) => s + asNumber(a.total_value), 0) ?? 0;
+  const totalCost = summaries?.reduce((s: number, a: PortfolioSummary) => s + asNumber(a.total_cost), 0) ?? 0;
+  const totalReturn = totalValue - totalCost;
+  const totalReturnPct = totalCost > 0 ? (totalReturn / totalCost) * 100 : 0;
+
+  const kpiCards = [
+    { label: t("portfolio.kpi_total_value"), value: formatMoney(totalValue) },
+    { label: t("portfolio.kpi_total_cost"), value: formatMoney(totalCost) },
+    {
+      label: t("portfolio.kpi_total_return"),
+      value: formatMoney(totalReturn),
+      color: colorForPct(totalReturn),
+    },
+    {
+      label: t("portfolio.kpi_return_pct"),
+      value: formatPct(totalReturnPct),
+      color: colorForPct(totalReturnPct),
+    },
+  ];
+
+  const chartHistory = (history ?? []).map((p: { date: string; value: number }) => ({
+    date: p.date,
+    value: p.value,
+  }));
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">{t("portfolio.title")}</h1>
+          <p className="text-sm text-slate-400">{t("portfolio.subtitle")}</p>
+        </div>
+        <button
+          onClick={() => setShowAddHolding(true)}
+          className="rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-400"
+        >
+          {t("portfolio.add_holding")}
+        </button>
+      </div>
+
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {kpiCards.map((card) => (
+          <article key={card.label} className="card p-4">
+            <div className="text-sm text-slate-400">{card.label}</div>
+            <div className={`mt-2 text-2xl font-semibold ${card.color ?? "text-teal-200"}`}>
+              {card.value}
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <ChartPanel history={chartHistory} />
+
+      <section>
+        <h2 className="mb-3 text-lg font-semibold text-teal-200">{t("portfolio.holdings_title")}</h2>
+        <div className="card overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-slate-700 text-xs uppercase text-slate-400">
+                <th className="p-3">{t("portfolio.col_symbol")}</th>
+                <th className="p-3">{t("portfolio.col_name")}</th>
+                <th className="p-3">{t("portfolio.col_type")}</th>
+                <th className="p-3 text-right">{t("portfolio.col_qty")}</th>
+                <th className="p-3 text-right">{t("portfolio.col_avg_cost")}</th>
+                <th className="p-3 text-right">{t("portfolio.col_entry_date")}</th>
+                <th className="p-3 text-right">{t("portfolio.col_exit_date")}</th>
+                <th className="p-3 text-right">{t("portfolio.col_hold_duration")}</th>
+                <th className="p-3 text-right">{t("portfolio.col_price")}</th>
+                <th className="p-3 text-right">{t("portfolio.col_market_value")}</th>
+                <th className="p-3 text-right">{t("portfolio.col_return")}</th>
+                <th className="p-3 text-right">{t("portfolio.col_return_pct")}</th>
+                <th className="p-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {(details ?? []).length === 0 && (
+                <tr>
+                  <td colSpan={13} className="p-6 text-center text-slate-500">
+                    {t("portfolio.no_holdings")}
+                  </td>
+                </tr>
+              )}
+              {(details ?? []).map((h: HoldingDetail) => (
+                <tr key={h.id} className="border-b border-slate-800 hover:bg-slate-800/40">
+                  <td className="p-3 font-medium text-teal-300">{h.asset_symbol}</td>
+                  <td className="p-3 text-slate-300">{h.asset_name}</td>
+                  <td className="p-3 text-slate-400">{h.instrument_type}</td>
+                  <td className="p-3 text-right text-slate-200">{Number(h.quantity).toFixed(4)}</td>
+                  <td className="p-3 text-right text-slate-200">{formatMoney(h.avg_cost)}</td>
+                  <td className="p-3 text-right text-slate-300 text-xs">{h.entry_date}</td>
+                  <td className="p-3 text-right text-slate-300 text-xs">{h.exit_date ?? "—"}</td>
+                  <td className="p-3 text-right text-slate-300 text-xs">
+                    {h.hold_duration_days != null ? `${h.hold_duration_days}d` : "—"}
+                  </td>
+                  <td className="p-3 text-right text-slate-200">{formatMoney(h.current_price)}</td>
+                  <td className="p-3 text-right text-slate-200">{formatMoney(h.market_value)}</td>
+                  <td className={`p-3 text-right ${colorForPct(h.return_value)}`}>
+                    {formatMoney(h.return_value)}
+                  </td>
+                  <td className={`p-3 text-right ${colorForPct(h.return_pct)}`}>
+                    {formatPct(h.return_pct)}
+                  </td>
+                  <td className="p-3 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => setEditHolding(h)}
+                        className="rounded bg-sky-500 p-2 text-slate-950"
+                        title={t("portfolio.edit_holding")}
+                        aria-label={t("portfolio.edit_holding")}
+                      >
+                        <EditIcon />
+                      </button>
+                      <button
+                        onClick={() => setDeleteId(h.id)}
+                        className="rounded bg-red-500 p-2 text-white"
+                        title={t("portfolio.delete_holding")}
+                        aria-label={t("portfolio.delete_holding")}
+                      >
+                        <DeleteIcon />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <HoldingFormModal open={showAddHolding} onClose={() => setShowAddHolding(false)} />
+
+      <HoldingEditFormModal
+        open={editHolding !== null}
+        holding={editHolding}
+        onClose={() => setEditHolding(null)}
+      />
+
+      {deleteId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
+            <p className="mb-4 text-slate-200">{t("portfolio.confirm_delete")}</p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteId(null)}
+                className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
+              >
+                {t("portfolio.cancel")}
+              </button>
+              <button
+                onClick={() => deleteMutation.mutate(deleteId)}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500"
+              >
+                {t("portfolio.delete")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

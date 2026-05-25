@@ -25,6 +25,8 @@ export function Layout({ children }: PropsWithChildren) {
     { to: "/", label: t("layout.nav.dashboard") },
     { to: "/calendar", label: t("layout.nav.calendar") },
     { to: "/accounts", label: t("layout.nav.accounts") },
+    { to: "/portfolio", label: t("layout.nav.portfolio") },
+    { to: "/assets", label: t("layout.nav.assets") },
     { to: "/trades", label: t("layout.nav.trades") },
     { to: "/stats", label: t("layout.nav.stats") },
     { to: "/notes", label: t("layout.nav.notes") },

@@ -293,3 +293,109 @@ class SnapshotResponse(BaseModel):
     unrealized_pnl: Decimal
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class AssetCreate(BaseModel):
+    symbol: str
+    name: str
+    isin: str | None = None
+    instrument_type: str = "etf"
+    exchange: str | None = None
+    currency: str = "EUR"
+
+
+class AssetUpdate(BaseModel):
+    symbol: str | None = None
+    name: str | None = None
+    isin: str | None = None
+    instrument_type: str | None = None
+    exchange: str | None = None
+    currency: str | None = None
+
+
+class AssetResponse(BaseModel):
+    id: int
+    symbol: str
+    name: str
+    isin: str | None
+    instrument_type: str
+    exchange: str | None
+    currency: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class HoldingCreate(BaseModel):
+    account_id: int
+    asset_id: int
+    quantity: Decimal
+    avg_cost: Decimal = Decimal("0")
+    entry_date: date
+    exit_date: date | None = None
+
+
+class HoldingUpdate(BaseModel):
+    quantity: Decimal | None = None
+    avg_cost: Decimal | None = None
+    entry_date: date | None = None
+    exit_date: date | None = None
+
+
+class HoldingResponse(BaseModel):
+    id: int
+    account_id: int
+    asset_id: int
+    quantity: Decimal
+    avg_cost: Decimal
+    entry_date: date
+    exit_date: date | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class HoldingDetailResponse(BaseModel):
+    id: int
+    account_id: int
+    asset_id: int
+    asset_symbol: str
+    asset_name: str
+    instrument_type: str
+    asset_currency: str
+    quantity: Decimal
+    avg_cost: Decimal
+    entry_date: date
+    exit_date: date | None = None
+    hold_duration_days: int | None = None
+    current_price: Decimal = Decimal("0")
+    market_value: Decimal = Decimal("0")
+    return_value: Decimal = Decimal("0")
+    return_pct: Decimal = Decimal("0")
+
+
+class PortfolioSummaryResponse(BaseModel):
+    account_id: int
+    account_name: str
+    total_value: Decimal = Decimal("0")
+    total_cost: Decimal = Decimal("0")
+    total_return: Decimal = Decimal("0")
+    total_return_pct: Decimal = Decimal("0")
+    holdings_count: int = 0
+
+
+class PortfolioSnapshotResponse(BaseModel):
+    id: int
+    account_id: int
+    snapshot_date: date
+    total_value: Decimal
+    total_cost: Decimal
+    total_return: Decimal
+    total_return_pct: Decimal
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PortfolioHistoryPoint(BaseModel):
+    date: str
+    value: float
+    cost: float
+    return_pct: float
