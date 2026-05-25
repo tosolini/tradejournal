@@ -1,0 +1,82 @@
+msgid ""
+msgstr ""
+"Language: it\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "errors.user_already_exists"
+msgstr "Utente gia esistente"
+
+msgid "errors.invalid_credentials"
+msgstr "Credenziali non valide"
+
+msgid "errors.fee_mode_invalid"
+msgstr "fee_mode deve essere 'fixed' o 'percent'"
+
+msgid "errors.fee_currency_required"
+msgstr "fee_currency obbligatoria"
+
+msgid "errors.fee_currency_too_long"
+msgstr "fee_currency troppo lunga"
+
+msgid "errors.capital_gain_mode_invalid"
+msgstr "capital_gain_mode deve essere 'immediate' o 'year_end'"
+
+msgid "errors.broker_name_required"
+msgstr "Nome broker obbligatorio"
+
+msgid "errors.fee_value_negative"
+msgstr "fee_value non puo essere negativo"
+
+msgid "errors.capital_gain_rate_negative"
+msgstr "capital_gain_rate non puo essere negativo"
+
+msgid "errors.broker_not_found"
+msgstr "Broker non trovato"
+
+msgid "errors.broker_has_accounts"
+msgstr "Impossibile eliminare broker associato ad account esistenti"
+
+msgid "errors.broker_invalid"
+msgstr "Broker non valido"
+
+msgid "errors.account_not_found"
+msgstr "Account non trovato"
+
+msgid "errors.account_has_trades"
+msgstr "Impossibile eliminare account con trade collegati. Elimina o sposta prima i trade."
+
+msgid "errors.trade_not_found"
+msgstr "Trade non trovato"
+
+msgid "errors.trade_already_closed"
+msgstr "Trade gia chiuso"
+
+msgid "errors.no_open_position_to_close"
+msgstr "Nessuna posizione aperta da chiudere"
+
+msgid "errors.execution_not_found"
+msgstr "Esecuzione non trovata"
+
+msgid "errors.note_not_found"
+msgstr "Nota non trovata"
+
+msgid "errors.note_tags_old_new_required"
+msgstr "old_tag e new_tag sono entrambi obbligatori"
+
+msgid "errors.note_tag_required"
+msgstr "tag obbligatorio"
+
+msgid "errors.image_not_found"
+msgstr "Immagine non trovata"
+
+msgid "errors.invalid_variant"
+msgstr "Variante non valida"
+
+msgid "errors.image_variant_not_found"
+msgstr "Variante immagine richiesta non trovata"
+
+msgid "errors.image_file_not_found"
+msgstr "File immagine non trovato"
+
+msgid "notes.tax_deferred_dashboard"
+msgstr "Calcolo fiscale rinviato a fine anno nel dashboard"

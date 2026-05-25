@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
 import { Account, Broker, TradeDetail, api } from "../lib/api";
@@ -59,6 +60,9 @@ function datetimeLocalToIso(value: string): string {
 }
 
 export function TradeEditPage() {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage === "it" ? "it-IT" : "en-US";
+
   const params = useParams<{ tradeId: string }>();
   const tradeId = Number(params.tradeId || 0);
   const navigate = useNavigate();
@@ -202,18 +206,18 @@ export function TradeEditPage() {
   };
 
   if (!tradeId) {
-    return <div className="text-sm text-red-400">Trade non valido.</div>;
+    return <div className="text-sm text-red-400">{t("trade_edit.invalid_trade")}</div>;
   }
 
   if (isLoading || !data) {
-    return <div className="text-sm text-slate-400">Caricamento dati trade...</div>;
+    return <div className="text-sm text-slate-400">{t("trade_edit.loading")}</div>;
   }
 
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-semibold">Modifica Trade #{tradeId}</h1>
-        <p className="text-sm text-slate-400">Aggiorna dati trade e prima execution.</p>
+        <h1 className="text-2xl font-semibold">{t("trade_edit.title", { id: tradeId })}</h1>
+        <p className="text-sm text-slate-400">{t("trade_edit.subtitle")}</p>
       </div>
 
       <form
@@ -222,11 +226,11 @@ export function TradeEditPage() {
       >
         <div className="grid gap-3 md:grid-cols-4">
           <label className="text-sm text-slate-300">
-            Simbolo
+            {t("trade_edit.fields.symbol")}
             <input {...form.register("symbol")} className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" />
           </label>
           <label className="text-sm text-slate-300">
-            Data/Ora esecuzione
+            {t("trade_edit.fields.executed_at")}
             <div className="relative mt-1">
               <input
                 type="datetime-local"
@@ -241,8 +245,8 @@ export function TradeEditPage() {
                 type="button"
                 onClick={openDateTimePicker}
                 className="absolute right-1 top-1/2 -translate-y-1/2 rounded bg-slate-800 px-2 py-1 text-xs text-slate-200 hover:bg-slate-700"
-                title="Apri calendario e selettore ora"
-                aria-label="Apri calendario e selettore ora"
+                title={t("trade_edit.fields.open_picker")}
+                aria-label={t("trade_edit.fields.open_picker")}
               >
                 <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -254,71 +258,71 @@ export function TradeEditPage() {
             </div>
           </label>
           <label className="text-sm text-slate-300">
-            Direzione
+            {t("trade_edit.fields.direction")}
             <select {...form.register("direction")} className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2">
-              <option value="long">Long</option>
-              <option value="short">Short</option>
+              <option value="long">{t("trade_edit.options.long")}</option>
+              <option value="short">{t("trade_edit.options.short")}</option>
             </select>
           </label>
           <label className="text-sm text-slate-300">
-            Eseguito
+            {t("trade_edit.fields.execution_type")}
             <select {...form.register("execution_type")} className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2">
-              <option value="open">Open</option>
-              <option value="partial">Partial</option>
-              <option value="close">Close</option>
+              <option value="open">{t("trade_edit.options.open")}</option>
+              <option value="partial">{t("trade_edit.options.partial")}</option>
+              <option value="close">{t("trade_edit.options.close")}</option>
             </select>
           </label>
           <label className="text-sm text-slate-300">
-            Quantita
+            {t("trade_edit.fields.quantity")}
             <input type="number" step="0.000001" {...form.register("quantity")} className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" />
           </label>
         </div>
 
         <div className="grid gap-3 md:grid-cols-4">
           <label className="text-sm text-slate-300">
-            Prezzo ingresso
+            {t("trade_edit.fields.entry_price")}
             <input type="number" step="0.000001" {...form.register("entry_price")} className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" />
           </label>
           <div className="text-sm text-slate-300">
-            Fee automatica
+            {t("trade_edit.fields.auto_fee")}
             <div className="mt-1 rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200">
               {estimatedFee === null
                 ? "-"
-                : `${estimatedFee.value.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 6 })} ${estimatedFee.currency}`}
+                : `${estimatedFee.value.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 6 })} ${estimatedFee.currency}`}
             </div>
-            <span className="mt-1 block text-xs text-slate-400">Valore stimato: il backend applica sempre la regola del broker.</span>
+            <span className="mt-1 block text-xs text-slate-400">{t("trade_edit.fields.auto_fee_hint")}</span>
           </div>
           <label className="text-sm text-slate-300">
-            Take Profit
+            {t("trade_edit.fields.take_profit")}
             <input type="number" step="0.000001" {...form.register("take_profit")} className="mt-1 w-full rounded border border-emerald-500/50 bg-emerald-500/10 px-3 py-2 text-emerald-200" />
           </label>
           <div className="rounded border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
-            TP %: {tpPct === null ? "-" : `${tpPct.toFixed(2)}%`}
+            {t("trade_edit.fields.tp_pct")} {tpPct === null ? "-" : `${tpPct.toFixed(2)}%`}
           </div>
         </div>
 
         <div className="grid gap-3 md:grid-cols-4">
           <label className="text-sm text-slate-300">
-            Stop Loss
+            {t("trade_edit.fields.stop_loss")}
             <input type="number" step="0.000001" {...form.register("stop_loss")} className="mt-1 w-full rounded border border-red-500/50 bg-red-500/10 px-3 py-2 text-red-200" />
           </label>
           <div className="rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-            SL %: {slPct === null ? "-" : `${slPct.toFixed(2)}%`}
+            {t("trade_edit.fields.sl_pct")} {slPct === null ? "-" : `${slPct.toFixed(2)}%`}
           </div>
         </div>
 
         {saveMutation.error ? (
           <div className="rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-            Salvataggio non riuscito.
+            {t("trade_edit.save_error")}
           </div>
         ) : null}
 
         <div className="flex justify-end gap-2">
           <button type="button" onClick={() => navigate(`/trades/${tradeId}`)} className="rounded bg-slate-700 px-4 py-2 text-sm font-semibold text-slate-200">
-            Annulla
+            {t("common.cancel")}
           </button>
           <button type="submit" disabled={saveMutation.isPending} className="rounded bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-900">
-            {saveMutation.isPending ? "Saving..." : "Salva modifiche"}
+            {saveMutation.isPending ? t("common.saving") : t("trade_edit.save")}
           </button>
         </div>
       </form>

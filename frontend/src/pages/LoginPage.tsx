@@ -3,7 +3,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
-import { login } from "../lib/api";
+import { useTranslation } from "react-i18next";
+import { ApiError, login } from "../lib/api";
 
 const schema = z.object({
   username_or_email: z.string().min(1),
@@ -13,6 +14,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export function LoginPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const { register, handleSubmit } = useForm<FormData>({
@@ -26,12 +28,11 @@ export function LoginPage() {
       localStorage.setItem("token", result.access_token);
       navigate("/");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "";
-      if (message.includes("Invalid credentials")) {
-        setError("Credenziali non valide");
+      if (err instanceof ApiError && err.code === "errors.invalid_credentials") {
+        setError(t("login.errors.invalid_credentials"));
         return;
       }
-      setError("Errore di connessione API. Verifica backend attivo e configurazione CORS.");
+      setError(t("login.errors.api_connection"));
     }
   };
 
@@ -39,22 +40,22 @@ export function LoginPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <form onSubmit={handleSubmit(onSubmit)} className="card w-full max-w-md p-6">
         <h1 className="mb-2 text-2xl font-semibold text-teal-200">TradeJournal</h1>
-        <p className="mb-6 text-sm text-slate-400">Accedi per aprire la tua dashboard.</p>
+        <p className="mb-6 text-sm text-slate-400">{t("login.subtitle")}</p>
         <div className="space-y-4">
           <input
             {...register("username_or_email")}
             className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2"
-            placeholder="Username o email"
+            placeholder={t("login.username_or_email")}
           />
           <input
             type="password"
             {...register("password")}
             className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2"
-            placeholder="Password"
+            placeholder={t("login.password")}
           />
           {error ? <div className="text-sm text-red-400">{error}</div> : null}
           <button className="w-full rounded-lg bg-teal-500 px-3 py-2 font-medium text-slate-900">
-            Login
+            {t("login.submit")}
           </button>
         </div>
       </form>

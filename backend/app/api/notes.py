@@ -1,11 +1,12 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.deps import get_current_user
+from app.i18n import localized_error
 from app.models import DailyNote, User
 from app.schemas import (
     DailyNoteCreate,
@@ -87,6 +88,7 @@ def list_notes(
 def update_note(
     note_id: int,
     payload: DailyNoteUpdate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -97,7 +99,7 @@ def update_note(
         )
     ).scalar_one_or_none()
     if not note:
-        raise HTTPException(status_code=404, detail="Note not found")
+        raise localized_error(status_code=404, code="errors.note_not_found", request=request)
 
     updates = payload.model_dump(exclude_unset=True)
     if "market_condition" in updates:
@@ -114,6 +116,7 @@ def update_note(
 @router.delete("/{note_id}")
 def delete_note(
     note_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -124,7 +127,7 @@ def delete_note(
         )
     ).scalar_one_or_none()
     if not note:
-        raise HTTPException(status_code=404, detail="Note not found")
+        raise localized_error(status_code=404, code="errors.note_not_found", request=request)
 
     db.delete(note)
     db.commit()
@@ -162,13 +165,14 @@ def market_condition_suggestions(
 @router.post("/tags/rename")
 def rename_market_condition_tag(
     payload: MarketConditionTagRenameRequest,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     old_tag = payload.old_tag.strip()
     new_tag = payload.new_tag.strip()
     if not old_tag or not new_tag:
-        raise HTTPException(status_code=400, detail="Both old_tag and new_tag are required")
+        raise localized_error(status_code=400, code="errors.note_tags_old_new_required", request=request)
 
     notes = db.execute(
         select(DailyNote).where(
@@ -202,12 +206,13 @@ def rename_market_condition_tag(
 @router.post("/tags/delete")
 def delete_market_condition_tag(
     payload: MarketConditionTagDeleteRequest,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     tag_to_delete = payload.tag.strip()
     if not tag_to_delete:
-        raise HTTPException(status_code=400, detail="tag is required")
+        raise localized_error(status_code=400, code="errors.note_tag_required", request=request)
 
     notes = db.execute(
         select(DailyNote).where(

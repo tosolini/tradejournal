@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Account, Broker, api } from "../lib/api";
+import { useTranslation } from "react-i18next";
+import { Account, ApiError, Broker, api } from "../lib/api";
 
 function formatMoney(value: string | number | undefined, currency?: string): string {
   const amount = Number(value ?? 0);
@@ -69,6 +70,7 @@ function CancelIcon() {
 }
 
 export function AccountsPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [rowError, setRowError] = useState<string | null>(null);
   const [rowSuccess, setRowSuccess] = useState<string | null>(null);
@@ -118,7 +120,7 @@ export function AccountsPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["accounts"] });
       setRowError(null);
-      setRowSuccess("Account aggiornato.");
+      setRowSuccess(t("accounts.success_updated"));
     },
   });
 
@@ -127,7 +129,7 @@ export function AccountsPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["accounts"] });
       setRowError(null);
-      setRowSuccess("Account eliminato.");
+      setRowSuccess(t("accounts.success_deleted"));
     },
   });
 
@@ -174,7 +176,7 @@ export function AccountsPage() {
     }
     const cashBalance = Number(editCash);
     if (Number.isNaN(cashBalance) || cashBalance < 0) {
-      setRowError("Capitale non valido");
+      setRowError(t("accounts.error_invalid_cash"));
       return;
     }
 
@@ -186,7 +188,7 @@ export function AccountsPage() {
     };
     const parsed = accountSchema.safeParse(values);
     if (!parsed.success) {
-      setRowError(parsed.error.issues[0]?.message ?? "Dati account non validi");
+      setRowError(parsed.error.issues[0]?.message ?? t("accounts.error_invalid_data"));
       return;
     }
 
@@ -202,26 +204,24 @@ export function AccountsPage() {
   };
 
   const parseApiError = (err: unknown): string => {
+    if (err instanceof ApiError) {
+      return err.message || t("accounts.error_generic");
+    }
     if (!(err instanceof Error)) {
-      return "Operazione non riuscita";
+      return t("accounts.error_generic");
     }
-    try {
-      const parsed = JSON.parse(err.message);
-      return parsed?.detail ? String(parsed.detail) : err.message;
-    } catch {
-      return err.message || "Operazione non riuscita";
-    }
+    return err.message || t("accounts.error_generic");
   };
 
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-semibold">Accounts & Portfolios</h1>
-        <p className="text-sm text-slate-400">Crea e gestisci i portafogli da usare nei trade.</p>
+        <h1 className="text-2xl font-semibold">{t("accounts.page_title")}</h1>
+        <p className="text-sm text-slate-400">{t("accounts.page_subtitle")}</p>
       </div>
 
       <section className="card p-4">
-        <h2 className="mb-3 text-lg font-semibold">New Portfolio</h2>
+        <h2 className="mb-3 text-lg font-semibold">{t("accounts.new_title")}</h2>
         <form className="grid gap-3 md:grid-cols-5" onSubmit={handleSubmit(onSubmit)}>
           <input
             {...register("name")}
@@ -264,17 +264,17 @@ export function AccountsPage() {
             className="rounded bg-teal-500 px-3 py-2 font-semibold text-slate-950"
             disabled={createAccount.isPending}
           >
-            {createAccount.isPending ? "Saving..." : "Create Account"}
+            {createAccount.isPending ? t("accounts.saving") : t("accounts.create")}
           </button>
         </form>
         {errors.name ? <p className="mt-2 text-sm text-red-400">{errors.name.message}</p> : null}
         {createAccount.error ? (
-          <p className="mt-2 text-sm text-red-400">Errore creazione account.</p>
+          <p className="mt-2 text-sm text-red-400">{t("accounts.error_create")}</p>
         ) : null}
       </section>
 
       <section className="card overflow-x-auto">
-        <div className="border-b border-slate-700/80 px-4 py-3 text-lg font-semibold">Portfolio List</div>
+        <div className="border-b border-slate-700/80 px-4 py-3 text-lg font-semibold">{t("accounts.list_title")}</div>
         <table className="min-w-full text-sm">
           <thead>
             <tr className="border-b border-slate-700 text-left text-slate-400">
@@ -290,7 +290,7 @@ export function AccountsPage() {
             {isLoading ? (
               <tr>
                 <td colSpan={6} className="px-4 py-3 text-slate-400">
-                  Loading accounts...
+                  {t("accounts.loading")}
                 </td>
               </tr>
             ) : data?.length ? (
@@ -387,7 +387,7 @@ export function AccountsPage() {
                           setRowError(null);
                           setRowSuccess(null);
                           const confirmed = window.confirm(
-                            `Eliminare account #${account.id} (${account.name})?`
+                            t("accounts.confirm_delete", { id: account.id, name: account.name })
                           );
                           if (!confirmed) {
                             return;
@@ -410,7 +410,7 @@ export function AccountsPage() {
             ) : (
               <tr>
                 <td colSpan={6} className="px-4 py-3 text-slate-400">
-                  Nessun account presente.
+                  {t("accounts.empty")}
                 </td>
               </tr>
             )}

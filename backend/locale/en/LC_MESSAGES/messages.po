@@ -1,0 +1,82 @@
+msgid ""
+msgstr ""
+"Language: en\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "errors.user_already_exists"
+msgstr "User already exists"
+
+msgid "errors.invalid_credentials"
+msgstr "Invalid credentials"
+
+msgid "errors.fee_mode_invalid"
+msgstr "fee_mode must be 'fixed' or 'percent'"
+
+msgid "errors.fee_currency_required"
+msgstr "fee_currency is required"
+
+msgid "errors.fee_currency_too_long"
+msgstr "fee_currency is too long"
+
+msgid "errors.capital_gain_mode_invalid"
+msgstr "capital_gain_mode must be 'immediate' or 'year_end'"
+
+msgid "errors.broker_name_required"
+msgstr "Broker name is required"
+
+msgid "errors.fee_value_negative"
+msgstr "fee_value cannot be negative"
+
+msgid "errors.capital_gain_rate_negative"
+msgstr "capital_gain_rate cannot be negative"
+
+msgid "errors.broker_not_found"
+msgstr "Broker not found"
+
+msgid "errors.broker_has_accounts"
+msgstr "Cannot delete broker linked to existing accounts"
+
+msgid "errors.broker_invalid"
+msgstr "Invalid broker"
+
+msgid "errors.account_not_found"
+msgstr "Account not found"
+
+msgid "errors.account_has_trades"
+msgstr "Cannot delete account with linked trades. Delete or move trades first."
+
+msgid "errors.trade_not_found"
+msgstr "Trade not found"
+
+msgid "errors.trade_already_closed"
+msgstr "Trade already closed"
+
+msgid "errors.no_open_position_to_close"
+msgstr "No open position to close"
+
+msgid "errors.execution_not_found"
+msgstr "Execution not found"
+
+msgid "errors.note_not_found"
+msgstr "Note not found"
+
+msgid "errors.note_tags_old_new_required"
+msgstr "Both old_tag and new_tag are required"
+
+msgid "errors.note_tag_required"
+msgstr "tag is required"
+
+msgid "errors.image_not_found"
+msgstr "Image not found"
+
+msgid "errors.invalid_variant"
+msgstr "Invalid variant"
+
+msgid "errors.image_variant_not_found"
+msgstr "Requested image variant not found"
+
+msgid "errors.image_file_not_found"
+msgstr "Image file not found"
+
+msgid "notes.tax_deferred_dashboard"
+msgstr "Tax calculation deferred to year-end in dashboard"

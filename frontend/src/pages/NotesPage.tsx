@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { TagInput } from "../components/TagInput";
 import { api } from "../lib/api";
@@ -37,16 +38,16 @@ type UserPreferencesPayload = {
 
 type MoodValue = "up" | "down" | "stale";
 
-const MOOD_OPTIONS: Array<{ value: MoodValue; label: string }> = [
-  { value: "up", label: "Up" },
-  { value: "down", label: "Down" },
-  { value: "stale", label: "Stale" },
+const MOOD_OPTIONS: Array<{ value: MoodValue }> = [
+  { value: "up" },
+  { value: "down" },
+  { value: "stale" },
 ];
 
 const VOLATILITY_OPTIONS = [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
+  { value: "low" },
+  { value: "medium" },
+  { value: "high" },
 ];
 
 const MAX_FILTER_TAGS_VISIBLE = 24;
@@ -83,7 +84,7 @@ function MoodGlyph({ mood }: { mood: MoodValue }) {
   );
 }
 
-function moodLabel(value?: string | null): string {
+function moodLabel(value?: string | null, fallback = "-"): string {
   if (value === "up") {
     return "Up";
   }
@@ -93,10 +94,11 @@ function moodLabel(value?: string | null): string {
   if (value === "stale") {
     return "Stale";
   }
-  return "-";
+  return fallback;
 }
 
 export function NotesPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const dateFilter = searchParams.get("date") || "";
@@ -108,8 +110,10 @@ export function NotesPage() {
   const [activeFilterTags, setActiveFilterTags] = useState<string[]>([]);
   const [showAllFilterTags, setShowAllFilterTags] = useState(false);
   const [tagManagerSearch, setTagManagerSearch] = useState("");
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [preferencesHydrated, setPreferencesHydrated] = useState(false);
   const [filtersSaveState, setFiltersSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const lastSavedFiltersRef = useRef<string>("");
 
   const { register, handleSubmit, reset, watch, setValue } = useForm<NotePayload>({
     defaultValues: {
@@ -151,6 +155,7 @@ export function NotesPage() {
       setEditingNoteId(null);
       setMarketConditionTags([]);
       reset({ note_date: new Date().toISOString().slice(0, 10), mood: "stale", market_volatility: "medium" });
+      setIsNoteModalOpen(false);
     },
   });
 
@@ -163,6 +168,7 @@ export function NotesPage() {
       setEditingNoteId(null);
       setMarketConditionTags([]);
       reset({ note_date: new Date().toISOString().slice(0, 10), mood: "stale", market_volatility: "medium" });
+      setIsNoteModalOpen(false);
     },
   });
 
@@ -241,12 +247,21 @@ export function NotesPage() {
       short_summary: note.short_summary || "",
       rich_text: note.rich_text || "",
     });
+    setIsNoteModalOpen(true);
   };
 
-  const onCancelEdit = () => {
+  const onOpenCreateModal = () => {
     setEditingNoteId(null);
     setMarketConditionTags([]);
     reset({ note_date: new Date().toISOString().slice(0, 10), mood: "stale", market_volatility: "medium" });
+    setIsNoteModalOpen(true);
+  };
+
+  const onCancelModal = () => {
+    setEditingNoteId(null);
+    setMarketConditionTags([]);
+    reset({ note_date: new Date().toISOString().slice(0, 10), mood: "stale", market_volatility: "medium" });
+    setIsNoteModalOpen(false);
   };
 
   const allAvailableTags = useMemo(() => {
@@ -323,7 +338,7 @@ export function NotesPage() {
   }, [allAvailableTags, tagManagerSearch]);
 
   const onRenameTag = (tag: string) => {
-    const nextTag = window.prompt("Nuovo nome tag", tag)?.trim();
+    const nextTag = window.prompt(t("notes.rename_tag_prompt"), tag)?.trim();
     if (!nextTag || nextTag.toLowerCase() === tag.toLowerCase()) {
       return;
     }
@@ -331,7 +346,7 @@ export function NotesPage() {
   };
 
   const onDeleteTag = (tag: string) => {
-    if (!window.confirm(`Eliminare il tag \"${tag}\" da tutte le note?`)) {
+    if (!window.confirm(t("notes.delete_tag_confirm", { tag }))) {
       return;
     }
     deleteTag.mutate(tag);
@@ -349,12 +364,30 @@ export function NotesPage() {
       if (Array.isArray(savedFilters.activeTags)) {
         setActiveFilterTags(savedFilters.activeTags.filter((tag): tag is string => typeof tag === "string"));
       }
+      lastSavedFiltersRef.current = JSON.stringify({
+        searchQuery: typeof savedFilters.searchQuery === "string" ? savedFilters.searchQuery : "",
+        activeTags: Array.isArray(savedFilters.activeTags)
+          ? savedFilters.activeTags.filter((tag): tag is string => typeof tag === "string")
+          : [],
+      });
     }
     setPreferencesHydrated(true);
   }, [preferencesHydrated, userPreferences, userPreferencesFetched]);
 
   useEffect(() => {
     if (!preferencesHydrated) {
+      return;
+    }
+
+    const nextFiltersSnapshot = JSON.stringify({
+      searchQuery,
+      activeTags: activeFilterTags,
+    });
+
+    if (nextFiltersSnapshot === lastSavedFiltersRef.current) {
+      if (filtersSaveState !== "idle") {
+        setFiltersSaveState("idle");
+      }
       return;
     }
 
@@ -371,6 +404,7 @@ export function NotesPage() {
         },
       }, {
         onSuccess: () => {
+          lastSavedFiltersRef.current = nextFiltersSnapshot;
           setFiltersSaveState("saved");
         },
         onError: () => {
@@ -380,7 +414,7 @@ export function NotesPage() {
     }, 250);
 
     return () => window.clearTimeout(timerId);
-  }, [activeFilterTags, preferencesHydrated, savePreferences, searchQuery]);
+  }, [activeFilterTags, filtersSaveState, preferencesHydrated, searchQuery]);
 
   useEffect(() => {
     if (filtersSaveState !== "saved") {
@@ -390,73 +424,32 @@ export function NotesPage() {
     return () => window.clearTimeout(timerId);
   }, [filtersSaveState]);
 
+  useEffect(() => {
+    if (searchParams.get("new") !== "1") {
+      return;
+    }
+    setEditingNoteId(null);
+    setMarketConditionTags([]);
+    reset({ note_date: new Date().toISOString().slice(0, 10), mood: "stale", market_volatility: "medium" });
+    setIsNoteModalOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete("new");
+    setSearchParams(next, { replace: true });
+  }, [reset, searchParams, setSearchParams]);
+
   return (
-    <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
-      <form className="card p-4" onSubmit={handleSubmit(onSubmit)}>
-        <h2 className="mb-3 text-lg font-semibold">{editingNoteId ? "Edit Note" : "Daily Note"}</h2>
-        <div className="space-y-3">
-          <input type="hidden" {...register("mood")} />
-          <input type="date" {...register("note_date")} className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2" />
-          <div className="space-y-2">
-            <label className="block text-xs uppercase tracking-wide text-slate-400">Mood</label>
-            <div className="grid grid-cols-3 gap-2">
-              {MOOD_OPTIONS.map((option) => {
-                const isSelected = selectedMood === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setValue("mood", option.value, { shouldDirty: true })}
-                    className={`flex items-center justify-center gap-2 rounded border px-3 py-2 text-sm ${
-                      isSelected
-                        ? "border-teal-400 bg-teal-500/15 text-teal-200"
-                        : "border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-500"
-                    }`}
-                  >
-                    <MoodGlyph mood={option.value} />
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          <TagInput
-            label="Market Condition"
-            placeholder="Aggiungi tag e premi invio"
-            value={marketConditionTags}
-            suggestions={marketConditionSuggestions}
-            onChange={setMarketConditionTags}
-          />
-          <select
-            {...register("market_volatility")}
-            className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2"
-          >
-            {VOLATILITY_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                Volatility: {option.label}
-              </option>
-            ))}
-          </select>
-          <input {...register("short_summary")} placeholder="Short summary" className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2" />
-          <textarea {...register("rich_text")} rows={5} placeholder="Notes" className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2" />
-          <button className="w-full rounded bg-teal-500 px-3 py-2 font-semibold text-slate-900">
-            {editingNoteId ? "Update Note" : "Save Note"}
-          </button>
-          {editingNoteId ? (
-            <button
-              type="button"
-              onClick={onCancelEdit}
-              className="w-full rounded border border-slate-600 px-3 py-2 text-sm text-slate-300"
-            >
-              Cancel Edit
-            </button>
-          ) : null}
-        </div>
-      </form>
+    <>
       <section className="card p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold">Calendar Notes</h2>
+          <h2 className="text-lg font-semibold">{t("notes.title")}</h2>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onOpenCreateModal}
+              className="rounded bg-teal-500 px-3 py-1 text-xs font-semibold text-slate-900"
+            >
+              {t("notes.new_note")}
+            </button>
             <span className={`text-xs ${
               filtersSaveState === "error"
                 ? "text-rose-300"
@@ -464,29 +457,29 @@ export function NotesPage() {
                   ? "text-teal-300"
                   : "text-slate-400"
             }`}>
-              {filtersSaveState === "saving" && "Salvataggio filtri..."}
-              {filtersSaveState === "saved" && "Filtri salvati"}
-              {filtersSaveState === "error" && "Errore salvataggio filtri"}
-              {filtersSaveState === "idle" && "Filtri sincronizzati"}
+              {filtersSaveState === "saving" && t("notes.filters_saving")}
+              {filtersSaveState === "saved" && t("notes.filters_saved")}
+              {filtersSaveState === "error" && t("notes.filters_error")}
+              {filtersSaveState === "idle" && t("notes.filters_synced")}
             </span>
             <button
               type="button"
               onClick={resetFilters}
               className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:border-teal-500/50 hover:text-teal-200"
             >
-              Reset Filters
+              {t("notes.reset_filters")}
             </button>
           </div>
         </div>
         {dateFilter ? (
           <div className="mb-3 flex items-center justify-between rounded border border-teal-500/30 bg-teal-500/10 px-3 py-2 text-sm text-teal-200">
-            <span>Filtro giorno attivo: {dateFilter}</span>
+            <span>{t("notes.active_date_filter", { date: dateFilter })}</span>
             <button
               type="button"
               onClick={clearDateFilter}
               className="rounded border border-teal-500/40 px-2 py-1 text-xs text-teal-100 hover:bg-teal-500/20"
             >
-              Rimuovi filtro giorno
+              {t("notes.remove_date_filter")}
             </button>
           </div>
         ) : null}
@@ -494,7 +487,7 @@ export function NotesPage() {
           <input
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="Search notes, summary, tags..."
+            placeholder={t("notes.search_placeholder")}
             className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2"
           />
           <div className="flex flex-wrap gap-2">
@@ -515,7 +508,7 @@ export function NotesPage() {
                 </button>
               );
             })}
-            {allAvailableTags.length === 0 ? <span className="text-xs text-slate-500">No tags available</span> : null}
+            {allAvailableTags.length === 0 ? <span className="text-xs text-slate-500">{t("notes.no_tags_available")}</span> : null}
             {hiddenFilterTagsCount > 0 ? (
               <button
                 type="button"
@@ -531,18 +524,18 @@ export function NotesPage() {
                 onClick={() => setShowAllFilterTags(false)}
                 className="rounded-full border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-slate-300 hover:border-teal-500/50 hover:text-teal-200"
               >
-                Mostra meno
+                {t("notes.show_less")}
               </button>
             ) : null}
           </div>
         </div>
         <details className="mb-3 rounded border border-slate-700/70 bg-slate-900/40 px-3 py-2">
-          <summary className="cursor-pointer text-sm font-medium text-slate-200">Gestione tag</summary>
+          <summary className="cursor-pointer text-sm font-medium text-slate-200">{t("notes.tag_management")}</summary>
           <div className="mt-3 space-y-2">
             <input
               value={tagManagerSearch}
               onChange={(event) => setTagManagerSearch(event.target.value)}
-              placeholder="Cerca tag da gestire"
+              placeholder={t("notes.tag_management_search")}
               className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2"
             />
             <div className="max-h-40 space-y-2 overflow-y-auto pr-1">
@@ -555,19 +548,19 @@ export function NotesPage() {
                       onClick={() => onRenameTag(tag)}
                       className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:border-teal-500/50 hover:text-teal-200"
                     >
-                      Rinomina
+                      {t("notes.rename")}
                     </button>
                     <button
                       type="button"
                       onClick={() => onDeleteTag(tag)}
                       className="rounded border border-rose-500/40 px-2 py-1 text-xs text-rose-300 hover:bg-rose-500/10"
                     >
-                      Elimina
+                      {t("notes.delete")}
                     </button>
                   </div>
                 </div>
               ))}
-              {filteredManagedTags.length === 0 ? <div className="text-xs text-slate-500">Nessun tag trovato</div> : null}
+              {filteredManagedTags.length === 0 ? <div className="text-xs text-slate-500">{t("notes.no_tag_found")}</div> : null}
             </div>
           </div>
         </details>
@@ -582,45 +575,45 @@ export function NotesPage() {
               }`}
             >
               <div className="mb-2 flex items-start justify-between gap-3">
-                <div className="text-sm text-slate-400">{note.note_date}</div>
+                <div className="text-sm text-slate-400">{note.note_date} - {note.short_summary || t("notes.no_summary")}</div>
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() => onEdit(note)}
                     className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:border-teal-500/50 hover:text-teal-200"
                   >
-                    Edit
+                    {t("notes.edit")}
                   </button>
                   <button
                     type="button"
                     onClick={() => {
-                      if (window.confirm("Delete this note?")) {
+                      if (window.confirm(t("notes.delete_note_confirm"))) {
                         deleteNote.mutate(note.id);
                       }
                     }}
                     className="rounded border border-rose-500/40 px-2 py-1 text-xs text-rose-300 hover:bg-rose-500/10"
                   >
-                    Delete
+                    {t("notes.delete")}
                   </button>
                 </div>
               </div>
 
               <div className="grid gap-2 text-sm md:grid-cols-2">
                 <div className="rounded border border-slate-700/70 bg-slate-900/60 px-2 py-1">
-                  <div className="text-xs uppercase tracking-wide text-slate-500">Mood</div>
+                  <div className="text-xs uppercase tracking-wide text-slate-500">{t("notes.mood")}</div>
                   <div className="mt-1 flex items-center gap-2 text-slate-200">
                     {note.mood === "up" || note.mood === "down" || note.mood === "stale" ? (
                       <MoodGlyph mood={note.mood} />
                     ) : null}
-                    <span>{moodLabel(note.mood)}</span>
+                    <span>{t(`notes.mood_${(note.mood || "").toLowerCase()}`, { defaultValue: moodLabel(note.mood) })}</span>
                   </div>
                 </div>
                 <div className="rounded border border-slate-700/70 bg-slate-900/60 px-2 py-1">
-                  <div className="text-xs uppercase tracking-wide text-slate-500">Volatility</div>
+                  <div className="text-xs uppercase tracking-wide text-slate-500">{t("notes.volatility")}</div>
                   <div className="mt-1 text-slate-200">{note.market_volatility || "-"}</div>
                 </div>
                 <div className="rounded border border-slate-700/70 bg-slate-900/60 px-2 py-1 md:col-span-2">
-                  <div className="text-xs uppercase tracking-wide text-slate-500">Market Condition Tags</div>
+                  <div className="text-xs uppercase tracking-wide text-slate-500">{t("notes.market_condition_tags")}</div>
                   <div className="mt-1 flex flex-wrap gap-2">
                     {parseMarketConditionTags(note.market_condition).length > 0 ? (
                       parseMarketConditionTags(note.market_condition).map((tag) => (
@@ -638,23 +631,100 @@ export function NotesPage() {
                     )}
                   </div>
                 </div>
+                {/* <div className="rounded border border-slate-700/70 bg-slate-900/60 px-2 py-1 md:col-span-2">
+                  <div className="text-xs uppercase tracking-wide text-slate-500">{t("notes.short_summary")}</div>
+                  <div className="mt-1 font-medium text-teal-200">{note.short_summary || t("notes.no_summary")}</div>
+                </div> */}
                 <div className="rounded border border-slate-700/70 bg-slate-900/60 px-2 py-1 md:col-span-2">
-                  <div className="text-xs uppercase tracking-wide text-slate-500">Short Summary</div>
-                  <div className="mt-1 font-medium text-teal-200">{note.short_summary || "No summary"}</div>
-                </div>
-                <div className="rounded border border-slate-700/70 bg-slate-900/60 px-2 py-1 md:col-span-2">
-                  <div className="text-xs uppercase tracking-wide text-slate-500">Notes</div>
-                  <div className="mt-1 whitespace-pre-wrap text-slate-300">{note.rich_text || "No details"}</div>
+                  <div className="text-xs uppercase tracking-wide text-slate-500">{t("notes.notes")}</div>
+                  <div className="mt-1 whitespace-pre-wrap text-slate-300">{note.rich_text || t("notes.no_details")}</div>
                 </div>
               </div>
             </article>
           ))}
-          {data && data.length === 0 ? <div className="text-sm text-slate-400">No notes yet.</div> : null}
+          {data && data.length === 0 ? <div className="text-sm text-slate-400">{t("notes.no_notes_yet")}</div> : null}
           {data && data.length > 0 && filteredNotes.length === 0 ? (
-            <div className="text-sm text-slate-400">No notes match current filters.</div>
+            <div className="text-sm text-slate-400">{t("notes.no_notes_match")}</div>
           ) : null}
         </div>
       </section>
-    </div>
+
+      {isNoteModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
+          <div className="w-full max-w-2xl rounded-xl border border-slate-700 bg-slate-900 p-5 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-slate-100">{editingNoteId ? t("notes.edit_note") : t("notes.new_note")}</h2>
+              <button
+                type="button"
+                onClick={onCancelModal}
+                className="rounded bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-200"
+              >
+                {t("common.close")}
+              </button>
+            </div>
+
+            <form className="space-y-3" onSubmit={handleSubmit(onSubmit)}>
+              <input type="hidden" {...register("mood")} />
+              <input type="date" {...register("note_date")} className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2" />
+              <div className="space-y-2">
+                <label className="block text-xs uppercase tracking-wide text-slate-400">{t("notes.mood")}</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {MOOD_OPTIONS.map((option) => {
+                    const isSelected = selectedMood === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setValue("mood", option.value, { shouldDirty: true })}
+                        className={`flex items-center justify-center gap-2 rounded border px-3 py-2 text-sm ${
+                          isSelected
+                            ? "border-teal-400 bg-teal-500/15 text-teal-200"
+                            : "border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-500"
+                        }`}
+                      >
+                        <MoodGlyph mood={option.value} />
+                        {t(`notes.mood_${option.value}`)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <TagInput
+                label={t("notes.market_condition")}
+                placeholder={t("notes.tag_input_placeholder")}
+                value={marketConditionTags}
+                suggestions={marketConditionSuggestions}
+                onChange={setMarketConditionTags}
+              />
+              <select
+                {...register("market_volatility")}
+                className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2"
+              >
+                {VOLATILITY_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {t("notes.volatility")}: {t(`notes.volatility_${option.value}`)}
+                  </option>
+                ))}
+              </select>
+              <input {...register("short_summary")} placeholder={t("notes.short_summary")} className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2" />
+              <textarea {...register("rich_text")} rows={6} placeholder={t("notes.notes")} className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2" />
+
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={onCancelModal}
+                  className="rounded border border-slate-600 px-3 py-2 text-sm text-slate-300"
+                >
+                  {t("common.cancel")}
+                </button>
+                <button className="rounded bg-teal-500 px-3 py-2 text-sm font-semibold text-slate-900">
+                  {editingNoteId ? t("notes.update_note") : t("notes.save_note")}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }

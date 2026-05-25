@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Broker, api } from "../lib/api";
+import { useTranslation } from "react-i18next";
+import { ApiError, Broker, api } from "../lib/api";
 
 const brokerSchema = z.object({
   name: z.string().trim().min(2, "Inserisci un nome broker valido"),
@@ -55,6 +56,7 @@ function CancelIcon() {
 }
 
 export function BrokersPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [rowError, setRowError] = useState<string | null>(null);
   const [rowSuccess, setRowSuccess] = useState<string | null>(null);
@@ -88,7 +90,7 @@ export function BrokersPage() {
         capital_gain_rate: 26,
       });
       setRowError(null);
-      setRowSuccess("Broker aggiunto.");
+      setRowSuccess(t("brokers.success_added"));
     },
     onError: (err) => {
       setRowSuccess(null);
@@ -102,7 +104,7 @@ export function BrokersPage() {
       qc.invalidateQueries({ queryKey: ["brokers"] });
       qc.invalidateQueries({ queryKey: ["accounts"] });
       setRowError(null);
-      setRowSuccess("Broker eliminato.");
+      setRowSuccess(t("brokers.success_deleted"));
     },
     onError: (err) => {
       setRowSuccess(null);
@@ -135,7 +137,7 @@ export function BrokersPage() {
       qc.invalidateQueries({ queryKey: ["brokers"] });
       qc.invalidateQueries({ queryKey: ["accounts"] });
       setRowError(null);
-      setRowSuccess("Broker aggiornato.");
+      setRowSuccess(t("brokers.success_updated"));
       setEditingBroker(null);
       setEditName("");
     },
@@ -163,15 +165,13 @@ export function BrokersPage() {
   });
 
   const parseApiError = (err: unknown): string => {
+    if (err instanceof ApiError) {
+      return err.message || t("brokers.error_generic");
+    }
     if (!(err instanceof Error)) {
-      return "Operazione non riuscita";
+      return t("brokers.error_generic");
     }
-    try {
-      const parsed = JSON.parse(err.message);
-      return parsed?.detail ? String(parsed.detail) : err.message;
-    } catch {
-      return err.message || "Operazione non riuscita";
-    }
+    return err.message || t("brokers.error_generic");
   };
 
   const startEditing = (broker: Broker) => {
@@ -209,7 +209,7 @@ export function BrokersPage() {
       capital_gain_rate: Number.isFinite(editCapitalGainRate) ? editCapitalGainRate : 26,
     });
     if (!parsed.success) {
-      setRowError(parsed.error.issues[0]?.message ?? "Nome broker non valido");
+      setRowError(parsed.error.issues[0]?.message ?? t("brokers.error_invalid_name"));
       return;
     }
     await updateBroker.mutateAsync({
@@ -226,12 +226,12 @@ export function BrokersPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-semibold">Settings • Brokers</h1>
-        <p className="text-sm text-slate-400">Gestisci l'anagrafica broker da associare agli account.</p>
+        <h1 className="text-2xl font-semibold">{t("brokers.page_title")}</h1>
+        <p className="text-sm text-slate-400">{t("brokers.page_subtitle")}</p>
       </div>
 
       <section className="card p-4">
-        <h2 className="mb-3 text-lg font-semibold">Nuovo Broker</h2>
+        <h2 className="mb-3 text-lg font-semibold">{t("brokers.new_title")}</h2>
         <form className="grid gap-3 md:grid-cols-[1fr_auto]" onSubmit={handleSubmit((values) => createBroker.mutate(values))}>
           <div className="grid gap-3 md:grid-cols-6">
             <input
@@ -272,7 +272,7 @@ export function BrokersPage() {
             className="rounded bg-teal-500 px-3 py-2 font-semibold text-slate-950"
             disabled={createBroker.isPending}
           >
-            {createBroker.isPending ? "Saving..." : "Aggiungi broker"}
+            {createBroker.isPending ? t("brokers.saving") : t("brokers.create")}
           </button>
         </form>
         {errors.name ? <p className="mt-2 text-sm text-red-400">{errors.name.message}</p> : null}
@@ -284,7 +284,7 @@ export function BrokersPage() {
       </section>
 
       <section className="card overflow-x-auto">
-        <div className="border-b border-slate-700/80 px-4 py-3 text-lg font-semibold">Lista Broker</div>
+        <div className="border-b border-slate-700/80 px-4 py-3 text-lg font-semibold">{t("brokers.list_title")}</div>
         <table className="min-w-full text-sm">
           <thead>
             <tr className="border-b border-slate-700 text-left text-slate-400">
@@ -302,7 +302,7 @@ export function BrokersPage() {
             {isLoading ? (
               <tr>
                 <td colSpan={8} className="px-4 py-3 text-slate-400">
-                  Loading brokers...
+                  {t("brokers.loading")}
                 </td>
               </tr>
             ) : data?.length ? (
@@ -430,7 +430,9 @@ export function BrokersPage() {
                         onClick={async () => {
                           setRowError(null);
                           setRowSuccess(null);
-                          const confirmed = window.confirm(`Eliminare broker #${broker.id} (${broker.name})?`);
+                          const confirmed = window.confirm(
+                            t("brokers.confirm_delete", { id: broker.id, name: broker.name })
+                          );
                           if (!confirmed) {
                             return;
                           }
@@ -448,7 +450,7 @@ export function BrokersPage() {
             ) : (
               <tr>
                 <td colSpan={8} className="px-4 py-3 text-slate-400">
-                  Nessun broker presente.
+                  {t("brokers.empty")}
                 </td>
               </tr>
             )}

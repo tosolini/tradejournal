@@ -1,9 +1,9 @@
-FROM node:20-alpine
+FROM node:lts-alpine3.23
 
 WORKDIR /app
 
-COPY package.json /app/
-RUN npm install
+COPY package.json package-lock.json /app/
+RUN npm ci
 
 COPY . /app
 

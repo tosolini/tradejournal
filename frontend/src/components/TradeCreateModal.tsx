@@ -1,28 +1,30 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Account, Broker, Trade, api } from "../lib/api";
 
-const tradeModalSchema = z.object({
-  account_id: z.coerce.number().int().positive("Seleziona un account valido."),
-  symbol: z.string().trim().min(1, "Inserisci il simbolo."),
-  quantity: z.coerce.number().positive("La quantita deve essere maggiore di 0."),
-  direction: z.enum(["long", "short"]),
-  execution_type: z.enum(["open", "close", "partial"]),
-  entry_price: z.coerce.number().positive("Il prezzo ingresso deve essere maggiore di 0."),
-  take_profit: z.preprocess(
-    (value) => (value === "" ? undefined : value),
-    z.coerce.number().positive("Take Profit deve essere maggiore di 0.").optional()
-  ),
-  stop_loss: z.preprocess(
-    (value) => (value === "" ? undefined : value),
-    z.coerce.number().positive("Stop Loss deve essere maggiore di 0.").optional()
-  ),
-});
+const createTradeModalSchema = (t: (key: string) => string) =>
+  z.object({
+    account_id: z.coerce.number().int().positive(t("trades.new_trade.validation.account_required")),
+    symbol: z.string().trim().min(1, t("trades.new_trade.validation.symbol_required")),
+    quantity: z.coerce.number().positive(t("trades.new_trade.validation.quantity_positive")),
+    direction: z.enum(["long", "short"]),
+    execution_type: z.enum(["open", "close", "partial"]),
+    entry_price: z.coerce.number().positive(t("trades.new_trade.validation.entry_price_positive")),
+    take_profit: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.coerce.number().positive(t("trades.new_trade.validation.take_profit_positive")).optional()
+    ),
+    stop_loss: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.coerce.number().positive(t("trades.new_trade.validation.stop_loss_positive")).optional()
+    ),
+  });
 
-type TradeModalPayload = z.infer<typeof tradeModalSchema>;
+type TradeModalPayload = z.infer<ReturnType<typeof createTradeModalSchema>>;
 
 type Props = {
   open: boolean;
@@ -57,6 +59,8 @@ function FieldHelp({ text }: { text: string }) {
 }
 
 export function TradeCreateModal({ open, onClose }: Props) {
+  const { t, i18n } = useTranslation();
+  const tradeModalSchema = useMemo(() => createTradeModalSchema(t), [t]);
   const qc = useQueryClient();
   const { data: accounts } = useQuery({
     queryKey: ["accounts"],
@@ -131,6 +135,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
   const direction = watch("direction");
   const accountId = watch("account_id");
   const quantity = watch("quantity");
+  const numberLocale = i18n.resolvedLanguage === "it" ? "it-IT" : "en-US";
 
   const estimatedFee = useMemo(() => {
     if (!accounts?.length || !brokers?.length || !accountId || accountId <= 0 || !entryPrice || !quantity) {
@@ -187,15 +192,15 @@ export function TradeCreateModal({ open, onClose }: Props) {
       <div className="w-full max-w-4xl rounded-xl border border-slate-700 bg-slate-900 p-5 shadow-2xl">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-slate-100">New Trade</h2>
-            <p className="text-sm text-slate-400">Crea trade + prima execution in un unico passaggio.</p>
+            <h2 className="text-xl font-semibold text-slate-100">{t("trades.new_trade.title")}</h2>
+            <p className="text-sm text-slate-400">{t("trades.new_trade.subtitle")}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="rounded bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-200"
           >
-            Chiudi
+              {t("trades.new_trade.close")}
           </button>
         </div>
 
@@ -203,14 +208,14 @@ export function TradeCreateModal({ open, onClose }: Props) {
           <div className="grid gap-3 md:grid-cols-4">
             <label className="text-sm text-slate-300">
               <span className="inline-flex items-center">
-                Account
-                <FieldHelp text="Seleziona il conto su cui registrare trade ed esecuzione." />
+                {t("trades.new_trade.labels.account")}
+                <FieldHelp text={t("trades.new_trade.tooltips.account")} />
               </span>
               <select
                 {...register("account_id", { valueAsNumber: true })}
                 className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2"
               >
-                <option value={0}>Seleziona account</option>
+                  <option value={0}>{t("trades.new_trade.placeholders.select_account")}</option>
                 {accounts?.map((account) => (
                   <option key={account.id} value={account.id}>
                     {account.name}
@@ -221,20 +226,20 @@ export function TradeCreateModal({ open, onClose }: Props) {
             </label>
             <label className="text-sm text-slate-300">
               <span className="inline-flex items-center">
-                Simbolo
-                <FieldHelp text="Ticker strumento, ad esempio AAPL o ENEL." />
+                  {t("trades.new_trade.labels.symbol")}
+                <FieldHelp text={t("trades.new_trade.tooltips.symbol")} />
               </span>
               <input
                 {...register("symbol")}
                 className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2"
-                placeholder="AAPL"
+                  placeholder={t("trades.new_trade.placeholders.symbol")}
               />
               {errors.symbol ? <span className="mt-1 block text-xs text-red-300">{errors.symbol.message}</span> : null}
             </label>
             <label className="text-sm text-slate-300">
               <span className="inline-flex items-center">
-                Quantita
-                <FieldHelp text="Numero di pezzi/lotti eseguiti in questa operazione." />
+                  {t("trades.new_trade.labels.quantity")}
+                <FieldHelp text={t("trades.new_trade.tooltips.quantity")} />
               </span>
               <input
                 type="number"
@@ -246,12 +251,12 @@ export function TradeCreateModal({ open, onClose }: Props) {
             </label>
             <label className="text-sm text-slate-300">
               <span className="inline-flex items-center">
-                Direzione
-                <FieldHelp text="Long: guadagni se sale. Short: guadagni se scende." />
+                  {t("trades.new_trade.labels.direction")}
+                <FieldHelp text={t("trades.new_trade.tooltips.direction")} />
               </span>
               <select {...register("direction")} className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2">
-                <option value="long">Long</option>
-                <option value="short">Short</option>
+                <option value="long">{t("trades.new_trade.options.direction.long")}</option>
+                <option value="short">{t("trades.new_trade.options.direction.short")}</option>
               </select>
             </label>
           </div>
@@ -259,19 +264,19 @@ export function TradeCreateModal({ open, onClose }: Props) {
           <div className="grid gap-3 md:grid-cols-4">
             <label className="text-sm text-slate-300">
               <span className="inline-flex items-center">
-                Eseguito
-                <FieldHelp text="Open apre posizione, Partial chiude parzialmente, Close chiude totalmente." />
+                {t("trades.new_trade.labels.execution")}
+                <FieldHelp text={t("trades.new_trade.tooltips.execution_type")} />
               </span>
               <select {...register("execution_type")} className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2">
-                <option value="open">Open</option>
-                <option value="partial">Partial</option>
-                <option value="close">Close</option>
+                <option value="open">{t("trades.new_trade.options.execution.open")}</option>
+                <option value="partial">{t("trades.new_trade.options.execution.partial")}</option>
+                <option value="close">{t("trades.new_trade.options.execution.close")}</option>
               </select>
             </label>
             <label className="text-sm text-slate-300">
               <span className="inline-flex items-center">
-                Prezzo ingresso
-                <FieldHelp text="Prezzo unitario di esecuzione per questa operazione." />
+                {t("trades.new_trade.labels.entry_price")}
+                <FieldHelp text={t("trades.new_trade.tooltips.entry_price")} />
               </span>
               <input
                 type="number"
@@ -283,23 +288,23 @@ export function TradeCreateModal({ open, onClose }: Props) {
             </label>
             <label className="text-sm text-slate-300">
               <span className="inline-flex items-center">
-                Fee automatica
-                <FieldHelp text="Calcolata dal broker in base alla sua regola (fissa o percentuale)." />
+                {t("trades.new_trade.labels.auto_fee")}
+                <FieldHelp text={t("trades.new_trade.tooltips.auto_fee")} />
               </span>
               <div className="mt-1 rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200">
                 {estimatedFee === null
                   ? "-"
-                  : `${estimatedFee.value.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 6 })} ${estimatedFee.currency}`}
+                  : `${estimatedFee.value.toLocaleString(numberLocale, { minimumFractionDigits: 2, maximumFractionDigits: 6 })} ${estimatedFee.currency}`}
               </div>
-              <span className="mt-1 block text-xs text-slate-400">Valore stimato: il valore finale viene calcolato lato backend.</span>
+              <span className="mt-1 block text-xs text-slate-400">{t("trades.new_trade.estimated_fee_note")}</span>
             </label>
           </div>
 
           <div className="grid gap-3 md:grid-cols-4">
             <label className="text-sm text-slate-300">
               <span className="inline-flex items-center">
-                Take Profit
-                <FieldHelp text="Lascia vuoto se non vuoi impostarlo ora." />
+                {t("trades.new_trade.labels.take_profit")}
+                <FieldHelp text={t("trades.new_trade.tooltips.take_profit")} />
               </span>
               <input
                 type="number"
@@ -310,12 +315,12 @@ export function TradeCreateModal({ open, onClose }: Props) {
               {errors.take_profit ? <span className="mt-1 block text-xs text-red-300">{errors.take_profit.message}</span> : null}
             </label>
             <div className="rounded border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
-              TP %: {tpPct === null ? "-" : `${tpPct.toFixed(2)}%`}
+              {t("trades.new_trade.metrics.tp_pct")} {tpPct === null ? "-" : `${tpPct.toFixed(2)}%`}
             </div>
             <label className="text-sm text-slate-300">
               <span className="inline-flex items-center">
-                Stop Loss
-                <FieldHelp text="Lascia vuoto se non vuoi impostarlo ora." />
+                {t("trades.new_trade.labels.stop_loss")}
+                <FieldHelp text={t("trades.new_trade.tooltips.stop_loss")} />
               </span>
               <input
                 type="number"
@@ -326,19 +331,19 @@ export function TradeCreateModal({ open, onClose }: Props) {
               {errors.stop_loss ? <span className="mt-1 block text-xs text-red-300">{errors.stop_loss.message}</span> : null}
             </label>
             <div className="rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-              SL %: {slPct === null ? "-" : `${slPct.toFixed(2)}%`}
+              {t("trades.new_trade.metrics.sl_pct")} {slPct === null ? "-" : `${slPct.toFixed(2)}%`}
             </div>
           </div>
 
           {Object.keys(errors).length > 0 ? (
             <div className="rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-              Correggi i campi evidenziati prima di salvare.
+              {t("trades.new_trade.errors.fix_fields")}
             </div>
           ) : null}
 
           {createTrade.error ? (
             <div className="rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-              Creazione trade non riuscita.
+              {t("trades.new_trade.errors.create_failed")}
             </div>
           ) : null}
 
@@ -348,14 +353,14 @@ export function TradeCreateModal({ open, onClose }: Props) {
               onClick={onClose}
               className="rounded bg-slate-700 px-4 py-2 text-sm font-semibold text-slate-200"
             >
-              Annulla
+              {t("trades.new_trade.cancel")}
             </button>
             <button
               type="submit"
               disabled={createTrade.isPending}
               className="rounded bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-900"
             >
-              {createTrade.isPending ? "Saving..." : "Salva Trade"}
+              {createTrade.isPending ? t("trades.new_trade.saving") : t("trades.new_trade.save")}
             </button>
           </div>
         </form>
