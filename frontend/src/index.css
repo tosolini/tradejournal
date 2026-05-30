@@ -46,3 +46,26 @@ a {
   text-decoration: underline;
   text-underline-offset: 4px;
 }
+
+/* ─── Light theme overrides ──────────────────────────────── */
+[data-theme="light"] {
+  --bg: #f8fafc;
+  --bg-soft: #f1f5f9;
+  --panel: #ffffff;
+  --panel-alt: #f8fafc;
+  --text: #1e293b;
+  --muted: #64748b;
+  --accent: #0d9488;
+  --accent-2: #2563eb;
+  --danger: #dc2626;
+}
+
+[data-theme="light"] body {
+  color: #1e293b;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+[data-theme="light"] .card {
+  background: #ffffff;
+  border: 1px solid rgba(100, 116, 139, 0.2);
+}

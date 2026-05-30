@@ -348,7 +348,7 @@ export function ImageAnnotationEditor({
     <section className="card space-y-4 p-4">
       <div>
         <h2 className="text-lg font-semibold">Image Annotation Editor</h2>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">
           Tools: arrow, rectangle, circle, text, highlight. Load an image, annotate, then export PNG.
         </p>
       </div>
@@ -359,17 +359,17 @@ export function ImageAnnotationEditor({
             type="file"
             accept="image/*"
             onChange={(event) => onLoadImage(event.target.files?.[0] || null)}
-            className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
+            className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2"
           />
         ) : (
-          <div className="rounded border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-400">
+          <div className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2 text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">
             Editing immagine selezionata
           </div>
         )}
         <select
           value={tool}
           onChange={(event) => setTool(event.target.value as Tool)}
-          className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
+          className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2"
         >
           {TOOL_LABELS.map((option) => (
             <option key={option.value} value={option.value}>
@@ -381,9 +381,9 @@ export function ImageAnnotationEditor({
           type="color"
           value={color}
           onChange={(event) => setColor(event.target.value)}
-          className="h-10 w-full rounded border border-slate-700 bg-slate-900 px-1 py-1"
+          className="h-10 w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-1 py-1"
         />
-        <label className="flex items-center gap-2 rounded border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-300">
+        <label className="flex items-center gap-2 rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2 text-xs text-slate-300 dark:text-slate-700">
           <span>Spessore</span>
           <input
             type="range"
@@ -430,10 +430,10 @@ export function ImageAnnotationEditor({
           </button>
         ) : null}
       </div>
-      {saveError ? <p className="text-sm text-red-400">{saveError}</p> : null}
+      {saveError ? <p className="text-sm text-red-400 dark:text-red-600">{saveError}</p> : null}
       {saveSuccess ? <p className="text-sm text-emerald-300">{saveSuccess}</p> : null}
 
-      <div className="overflow-auto rounded border border-slate-700 bg-slate-950/70 p-2">
+      <div className="overflow-auto rounded border border-slate-700 dark:border-slate-300 bg-slate-950/70 p-2">
         <canvas
           ref={canvasRef}
           onMouseDown={onMouseDown}
@@ -442,7 +442,7 @@ export function ImageAnnotationEditor({
           className="max-h-[560px] w-full cursor-crosshair rounded"
         />
         {!hasImage ? (
-          <p className="p-3 text-sm text-slate-400">Load an image to start annotating.</p>
+          <p className="p-3 text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">Load an image to start annotating.</p>
         ) : null}
       </div>
     </section>

@@ -220,7 +220,7 @@ export function AccountsPage() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-semibold">{t("accounts.page_title")}</h1>
-        <p className="text-sm text-slate-400">{t("accounts.page_subtitle")}</p>
+        <p className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("accounts.page_subtitle")}</p>
       </div>
 
       <section className="card p-4">
@@ -229,7 +229,7 @@ export function AccountsPage() {
           <input
             {...register("name")}
             placeholder="Portfolio name"
-            className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
+            className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2"
           />
           <select
             {...register("broker_id", {
@@ -241,7 +241,7 @@ export function AccountsPage() {
                 return Number.isNaN(parsed) ? null : parsed;
               },
             })}
-            className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
+            className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2"
           >
             <option value="">Broker (opzionale)</option>
             {brokers?.map((broker) => (
@@ -253,14 +253,14 @@ export function AccountsPage() {
           <input
             {...register("base_currency")}
             placeholder="Currency (EUR)"
-            className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
+            className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2"
           />
           <input
             type="number"
             step="0.01"
             {...register("cash_balance")}
             placeholder="Initial cash"
-            className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
+            className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2"
           />
           <button
             type="submit"
@@ -270,9 +270,9 @@ export function AccountsPage() {
             {createAccount.isPending ? t("accounts.saving") : t("accounts.create")}
           </button>
         </form>
-        {errors.name ? <p className="mt-2 text-sm text-red-400">{errors.name.message}</p> : null}
+        {errors.name ? <p className="mt-2 text-sm text-red-400 dark:text-red-600">{errors.name.message}</p> : null}
         {createAccount.error ? (
-          <p className="mt-2 text-sm text-red-400">{t("accounts.error_create")}</p>
+          <p className="mt-2 text-sm text-red-400 dark:text-red-600">{t("accounts.error_create")}</p>
         ) : null}
       </section>
 
@@ -280,7 +280,7 @@ export function AccountsPage() {
         <div className="border-b border-slate-700/80 px-4 py-3 text-lg font-semibold">{t("accounts.list_title")}</div>
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-700 text-left text-slate-400">
+            <tr className="border-b border-slate-700 dark:border-slate-300 text-left text-slate-400 dark:text-slate-500 dark:text-slate-400">
               <th className="px-4 py-2">ID</th>
               <th className="px-4 py-2">Name</th>
               <th className="px-4 py-2">Broker</th>
@@ -292,7 +292,7 @@ export function AccountsPage() {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-3 text-slate-400">
+                <td colSpan={6} className="px-4 py-3 text-slate-400 dark:text-slate-500 dark:text-slate-400">
                   {t("accounts.loading")}
                 </td>
               </tr>
@@ -306,14 +306,14 @@ export function AccountsPage() {
                         <input
                           value={editName}
                           onChange={(event) => setEditName(event.target.value)}
-                          className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1"
+                          className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-2 py-1"
                         />
                       </td>
                       <td className="px-4 py-2">
                         <select
                           value={editBrokerId}
                           onChange={(event) => setEditBrokerId(event.target.value)}
-                          className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1"
+                          className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-2 py-1"
                         >
                           <option value="">Nessun broker</option>
                           {brokers?.map((broker) => (
@@ -327,7 +327,7 @@ export function AccountsPage() {
                         <input
                           value={editCurrency}
                           onChange={(event) => setEditCurrency(event.target.value.toUpperCase())}
-                          className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1"
+                          className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-2 py-1"
                         />
                       </td>
                       <td className="px-4 py-2">
@@ -336,13 +336,13 @@ export function AccountsPage() {
                           step="0.01"
                           value={editCash}
                           onChange={(event) => setEditCash(event.target.value)}
-                          className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1"
+                          className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-2 py-1"
                         />
                       </td>
                     </>
                   ) : (
                     <>
-                      <td className="px-4 py-2 font-medium text-teal-200">{account.name}</td>
+                      <td className="px-4 py-2 font-medium text-teal-200 dark:text-teal-700">{account.name}</td>
                       <td className="px-4 py-2">{account.broker_name ?? "-"}</td>
                       <td className="px-4 py-2">{account.base_currency}</td>
                       <td className="px-4 py-2">{formatMoney(account.cash_balance, account.base_currency)}</td>
@@ -402,14 +402,14 @@ export function AccountsPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-4 py-3 text-slate-400">
+                <td colSpan={6} className="px-4 py-3 text-slate-400 dark:text-slate-500 dark:text-slate-400">
                   {t("accounts.empty")}
                 </td>
               </tr>
             )}
           </tbody>
         </table>
-        {rowError ? <div className="px-4 py-3 text-sm text-red-400">{rowError}</div> : null}
+        {rowError ? <div className="px-4 py-3 text-sm text-red-400 dark:text-red-600">{rowError}</div> : null}
         {rowSuccess ? <div className="px-4 py-3 text-sm text-emerald-300">{rowSuccess}</div> : null}
       </section>
       {deletePendingId !== null && (() => {

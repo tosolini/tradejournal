@@ -79,7 +79,7 @@ function MoodGlyph({ mood }: { mood: MoodValue }) {
     );
   }
   return (
-    <svg viewBox="0 0 16 16" className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <svg viewBox="0 0 16 16" className="h-4 w-4 text-slate-400 dark:text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M2 6h12M2 10h12" strokeLinecap="round" />
     </svg>
   );
@@ -458,8 +458,8 @@ export function NotesPage() {
               filtersSaveState === "error"
                 ? "text-rose-300"
                 : filtersSaveState === "saved"
-                  ? "text-teal-300"
-                  : "text-slate-400"
+                  ? "text-teal-300 dark:text-teal-700"
+                  : "text-slate-400 dark:text-slate-500 dark:text-slate-400"
             }`}>
               {filtersSaveState === "saving" && t("notes.filters_saving")}
               {filtersSaveState === "saved" && t("notes.filters_saved")}
@@ -469,14 +469,14 @@ export function NotesPage() {
             <button
               type="button"
               onClick={resetFilters}
-              className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:border-teal-500/50 hover:text-teal-200"
+              className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 dark:text-slate-700 hover:border-teal-500/50 hover:text-teal-200 dark:text-teal-700"
             >
               {t("notes.reset_filters")}
             </button>
           </div>
         </div>
         {dateFilter ? (
-          <div className="mb-3 flex items-center justify-between rounded border border-teal-500/30 bg-teal-500/10 px-3 py-2 text-sm text-teal-200">
+          <div className="mb-3 flex items-center justify-between rounded border border-teal-500/30 bg-teal-500/10 px-3 py-2 text-sm text-teal-200 dark:text-teal-700">
             <span>{t("notes.active_date_filter", { date: dateFilter })}</span>
             <button
               type="button"
@@ -492,7 +492,7 @@ export function NotesPage() {
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
             placeholder={t("notes.search_placeholder")}
-            className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2"
+            className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2"
           />
           <div className="flex flex-wrap gap-2">
             {visibleFilterTags.map((tag) => {
@@ -504,20 +504,20 @@ export function NotesPage() {
                   onClick={() => toggleFilterTag(tag)}
                   className={`rounded-full border px-2 py-1 text-xs ${
                     isActive
-                      ? "border-teal-400 bg-teal-500/20 text-teal-200"
-                      : "border-slate-600 bg-slate-900 text-slate-300 hover:border-teal-500/50 hover:text-teal-200"
+                      ? "border-teal-400 bg-teal-500/20 text-teal-200 dark:text-teal-700"
+                      : "border-slate-600 bg-slate-900 dark:bg-white text-slate-300 dark:text-slate-700 hover:border-teal-500/50 hover:text-teal-200 dark:text-teal-700"
                   }`}
                 >
                   {tag}
                 </button>
               );
             })}
-            {allAvailableTags.length === 0 ? <span className="text-xs text-slate-500">{t("notes.no_tags_available")}</span> : null}
+            {allAvailableTags.length === 0 ? <span className="text-xs text-slate-500 dark:text-slate-400">{t("notes.no_tags_available")}</span> : null}
             {hiddenFilterTagsCount > 0 ? (
               <button
                 type="button"
                 onClick={() => setShowAllFilterTags(true)}
-                className="rounded-full border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-slate-300 hover:border-teal-500/50 hover:text-teal-200"
+                className="rounded-full border border-slate-600 bg-slate-900 dark:bg-white px-2 py-1 text-xs text-slate-300 dark:text-slate-700 hover:border-teal-500/50 hover:text-teal-200 dark:text-teal-700"
               >
                 +{hiddenFilterTagsCount} altri
               </button>
@@ -526,7 +526,7 @@ export function NotesPage() {
               <button
                 type="button"
                 onClick={() => setShowAllFilterTags(false)}
-                className="rounded-full border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-slate-300 hover:border-teal-500/50 hover:text-teal-200"
+                className="rounded-full border border-slate-600 bg-slate-900 dark:bg-white px-2 py-1 text-xs text-slate-300 dark:text-slate-700 hover:border-teal-500/50 hover:text-teal-200 dark:text-teal-700"
               >
                 {t("notes.show_less")}
               </button>
@@ -540,11 +540,11 @@ export function NotesPage() {
               value={tagManagerSearch}
               onChange={(event) => setTagManagerSearch(event.target.value)}
               placeholder={t("notes.tag_management_search")}
-              className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2"
+              className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2"
             />
             <div className="max-h-40 space-y-2 overflow-y-auto pr-1">
               {filteredManagedTags.map((tag) => (
-                <div key={`manage-${tag}`} className="flex items-center justify-between gap-2 rounded border border-slate-700 px-2 py-1">
+                <div key={`manage-${tag}`} className="flex items-center justify-between gap-2 rounded border border-slate-700 dark:border-slate-300 px-2 py-1">
                   <span className="truncate text-sm text-slate-200">{tag}</span>
                   <div className="flex gap-1">
                     <button
@@ -576,7 +576,7 @@ export function NotesPage() {
                   </div>
                 </div>
               ))}
-              {filteredManagedTags.length === 0 ? <div className="text-xs text-slate-500">{t("notes.no_tag_found")}</div> : null}
+              {filteredManagedTags.length === 0 ? <div className="text-xs text-slate-500 dark:text-slate-400">{t("notes.no_tag_found")}</div> : null}
             </div>
           </div>
         </details>
@@ -587,11 +587,11 @@ export function NotesPage() {
               className={`rounded border p-3 ${
                 selectedNoteId === note.id
                   ? "border-teal-400 bg-teal-500/10"
-                  : "border-slate-700 bg-slate-900/40"
+                  : "border-slate-700 dark:border-slate-300 bg-slate-900/40"
               }`}
             >
               <div className="mb-2 flex items-start justify-between gap-3">
-                <div className="text-sm text-slate-400">{note.note_date} - {note.short_summary || t("notes.no_summary")}</div>
+                <div className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{note.note_date} - {note.short_summary || t("notes.no_summary")}</div>
                 <div className="flex gap-2">
                   <button
                     type="button"
@@ -624,7 +624,7 @@ export function NotesPage() {
 
               <div className="grid gap-2 text-sm md:grid-cols-2">
                 <div className="rounded border border-slate-700/70 bg-slate-900/60 px-2 py-1">
-                  <div className="text-xs uppercase tracking-wide text-slate-500">{t("notes.mood")}</div>
+                  <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t("notes.mood")}</div>
                   <div className="mt-1 flex items-center gap-2 text-slate-200">
                     {note.mood === "up" || note.mood === "down" || note.mood === "stale" ? (
                       <MoodGlyph mood={note.mood} />
@@ -633,11 +633,11 @@ export function NotesPage() {
                   </div>
                 </div>
                 <div className="rounded border border-slate-700/70 bg-slate-900/60 px-2 py-1">
-                  <div className="text-xs uppercase tracking-wide text-slate-500">{t("notes.volatility")}</div>
+                  <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t("notes.volatility")}</div>
                   <div className="mt-1 text-slate-200">{note.market_volatility || "-"}</div>
                 </div>
                 <div className="rounded border border-slate-700/70 bg-slate-900/60 px-2 py-1 md:col-span-2">
-                  <div className="text-xs uppercase tracking-wide text-slate-500">{t("notes.market_condition_tags")}</div>
+                  <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t("notes.market_condition_tags")}</div>
                   <div className="mt-1 flex flex-wrap gap-2">
                     {parseMarketConditionTags(note.market_condition).length > 0 ? (
                       parseMarketConditionTags(note.market_condition).map((tag) => (
@@ -645,37 +645,37 @@ export function NotesPage() {
                           key={`${note.id}-${tag}`}
                           type="button"
                           onClick={() => toggleFilterTag(tag)}
-                          className="rounded-full border border-teal-500/40 bg-teal-500/15 px-2 py-0.5 text-xs text-teal-200"
+                          className="rounded-full border border-teal-500/40 bg-teal-500/15 px-2 py-0.5 text-xs text-teal-200 dark:text-teal-700"
                         >
                           {tag}
                         </button>
                       ))
                     ) : (
-                      <span className="text-slate-400">-</span>
+                      <span className="text-slate-400 dark:text-slate-500 dark:text-slate-400">-</span>
                     )}
                   </div>
                 </div>
                 {/* <div className="rounded border border-slate-700/70 bg-slate-900/60 px-2 py-1 md:col-span-2">
-                  <div className="text-xs uppercase tracking-wide text-slate-500">{t("notes.short_summary")}</div>
-                  <div className="mt-1 font-medium text-teal-200">{note.short_summary || t("notes.no_summary")}</div>
+                  <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t("notes.short_summary")}</div>
+                  <div className="mt-1 font-medium text-teal-200 dark:text-teal-700">{note.short_summary || t("notes.no_summary")}</div>
                 </div> */}
                 <div className="rounded border border-slate-700/70 bg-slate-900/60 px-2 py-1 md:col-span-2">
-                  <div className="text-xs uppercase tracking-wide text-slate-500">{t("notes.notes")}</div>
-                  <div className="mt-1 whitespace-pre-wrap text-slate-300">{note.rich_text || t("notes.no_details")}</div>
+                  <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t("notes.notes")}</div>
+                  <div className="mt-1 whitespace-pre-wrap text-slate-300 dark:text-slate-700">{note.rich_text || t("notes.no_details")}</div>
                 </div>
               </div>
             </article>
           ))}
-          {data && data.length === 0 ? <div className="text-sm text-slate-400">{t("notes.no_notes_yet")}</div> : null}
+          {data && data.length === 0 ? <div className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("notes.no_notes_yet")}</div> : null}
           {data && data.length > 0 && filteredNotes.length === 0 ? (
-            <div className="text-sm text-slate-400">{t("notes.no_notes_match")}</div>
+            <div className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("notes.no_notes_match")}</div>
           ) : null}
         </div>
       </section>
 
       {isNoteModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
-          <div className="w-full max-w-2xl rounded-xl border border-slate-700 bg-slate-900 p-5 shadow-2xl">
+          <div className="w-full max-w-2xl rounded-xl border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white p-5 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-slate-100">{editingNoteId ? t("notes.edit_note") : t("notes.new_note")}</h2>
               <button
@@ -694,12 +694,12 @@ export function NotesPage() {
                   type="date"
                   {...register("note_date")}
                   ref={(el) => { register("note_date").ref(el); noteDateInputRef.current = el; }}
-                  className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 pr-11"
+                  className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2 pr-11"
                 />
                 <button
                   type="button"
                   onClick={openNoteDatePicker}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 rounded bg-slate-800 px-2 py-1 text-xs text-slate-200 hover:bg-slate-700"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 rounded bg-slate-800 dark:bg-slate-100 px-2 py-1 text-xs text-slate-200 hover:bg-slate-700"
                   title="Apri selettore data"
                   aria-label="Apri selettore data"
                 >
@@ -712,7 +712,7 @@ export function NotesPage() {
                 </button>
               </div>
               <div className="space-y-2">
-                <label className="block text-xs uppercase tracking-wide text-slate-400">{t("notes.mood")}</label>
+                <label className="block text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("notes.mood")}</label>
                 <div className="grid grid-cols-3 gap-2">
                   {MOOD_OPTIONS.map((option) => {
                     const isSelected = selectedMood === option.value;
@@ -723,8 +723,8 @@ export function NotesPage() {
                         onClick={() => setValue("mood", option.value, { shouldDirty: true })}
                         className={`flex items-center justify-center gap-2 rounded border px-3 py-2 text-sm ${
                           isSelected
-                            ? "border-teal-400 bg-teal-500/15 text-teal-200"
-                            : "border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-500"
+                            ? "border-teal-400 bg-teal-500/15 text-teal-200 dark:text-teal-700"
+                            : "border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white text-slate-300 dark:text-slate-700 hover:border-slate-500"
                         }`}
                       >
                         <MoodGlyph mood={option.value} />
@@ -743,7 +743,7 @@ export function NotesPage() {
               />
               <select
                 {...register("market_volatility")}
-                className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2"
+                className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2"
               >
                 {VOLATILITY_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -751,14 +751,14 @@ export function NotesPage() {
                   </option>
                 ))}
               </select>
-              <input {...register("short_summary")} placeholder={t("notes.short_summary")} className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2" />
-              <textarea {...register("rich_text")} rows={6} placeholder={t("notes.notes")} className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2" />
+              <input {...register("short_summary")} placeholder={t("notes.short_summary")} className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2" />
+              <textarea {...register("rich_text")} rows={6} placeholder={t("notes.notes")} className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2" />
 
               <div className="flex justify-end gap-2 pt-1">
                 <button
                   type="button"
                   onClick={onCancelModal}
-                  className="rounded border border-slate-600 px-3 py-2 text-sm text-slate-300"
+                  className="rounded border border-slate-600 px-3 py-2 text-sm text-slate-300 dark:text-slate-700"
                 >
                   {t("common.cancel")}
                 </button>
@@ -788,13 +788,13 @@ export function NotesPage() {
       )}
       {renamePendingTag !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
-            <p className="mb-3 text-sm font-semibold text-slate-300">{t("notes.rename_tag_prompt")}</p>
+          <div className="w-full max-w-sm rounded-xl border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white p-6 shadow-2xl">
+            <p className="mb-3 text-sm font-semibold text-slate-300 dark:text-slate-700">{t("notes.rename_tag_prompt")}</p>
             <input
               type="text"
               value={renamePendingTag.next}
               onChange={(e) => setRenamePendingTag({ ...renamePendingTag, next: e.target.value })}
-              className="mb-4 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+              className="mb-4 w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 text-sm text-slate-100"
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === "Enter") {

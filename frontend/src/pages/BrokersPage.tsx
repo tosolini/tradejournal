@@ -230,7 +230,7 @@ export function BrokersPage() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-semibold">{t("brokers.page_title")}</h1>
-        <p className="text-sm text-slate-400">{t("brokers.page_subtitle")}</p>
+        <p className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("brokers.page_subtitle")}</p>
       </div>
 
       <section className="card p-4">
@@ -240,9 +240,9 @@ export function BrokersPage() {
             <input
               {...register("name")}
               placeholder="Nome broker"
-              className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
+              className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2"
             />
-            <select {...register("fee_mode")} className="rounded border border-slate-700 bg-slate-900 px-3 py-2">
+            <select {...register("fee_mode")} className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2">
               <option value="fixed">Fee fissa</option>
               <option value="percent">Fee %</option>
             </select>
@@ -251,14 +251,14 @@ export function BrokersPage() {
               step="0.000001"
               {...register("fee_value")}
               placeholder="Valore fee"
-              className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
+              className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2"
             />
             <input
               {...register("fee_currency")}
               placeholder="Valuta fee (es. EUR)"
-              className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
+              className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2"
             />
-            <select {...register("capital_gain_mode")} className="rounded border border-slate-700 bg-slate-900 px-3 py-2">
+            <select {...register("capital_gain_mode")} className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2">
               <option value="immediate">Capital gain immediato</option>
               <option value="year_end">Capital gain a fine anno</option>
             </select>
@@ -267,7 +267,7 @@ export function BrokersPage() {
               step="0.01"
               {...register("capital_gain_rate")}
               placeholder="Aliquota capital gain"
-              className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
+              className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2"
             />
           </div>
           <button
@@ -278,19 +278,19 @@ export function BrokersPage() {
             {createBroker.isPending ? t("brokers.saving") : t("brokers.create")}
           </button>
         </form>
-        {errors.name ? <p className="mt-2 text-sm text-red-400">{errors.name.message}</p> : null}
-        {errors.fee_mode ? <p className="mt-2 text-sm text-red-400">{errors.fee_mode.message}</p> : null}
-        {errors.fee_value ? <p className="mt-2 text-sm text-red-400">{errors.fee_value.message}</p> : null}
-        {errors.fee_currency ? <p className="mt-2 text-sm text-red-400">{errors.fee_currency.message}</p> : null}
-        {errors.capital_gain_mode ? <p className="mt-2 text-sm text-red-400">{errors.capital_gain_mode.message}</p> : null}
-        {errors.capital_gain_rate ? <p className="mt-2 text-sm text-red-400">{errors.capital_gain_rate.message}</p> : null}
+        {errors.name ? <p className="mt-2 text-sm text-red-400 dark:text-red-600">{errors.name.message}</p> : null}
+        {errors.fee_mode ? <p className="mt-2 text-sm text-red-400 dark:text-red-600">{errors.fee_mode.message}</p> : null}
+        {errors.fee_value ? <p className="mt-2 text-sm text-red-400 dark:text-red-600">{errors.fee_value.message}</p> : null}
+        {errors.fee_currency ? <p className="mt-2 text-sm text-red-400 dark:text-red-600">{errors.fee_currency.message}</p> : null}
+        {errors.capital_gain_mode ? <p className="mt-2 text-sm text-red-400 dark:text-red-600">{errors.capital_gain_mode.message}</p> : null}
+        {errors.capital_gain_rate ? <p className="mt-2 text-sm text-red-400 dark:text-red-600">{errors.capital_gain_rate.message}</p> : null}
       </section>
 
       <section className="card overflow-x-auto">
         <div className="border-b border-slate-700/80 px-4 py-3 text-lg font-semibold">{t("brokers.list_title")}</div>
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-700 text-left text-slate-400">
+            <tr className="border-b border-slate-700 dark:border-slate-300 text-left text-slate-400 dark:text-slate-500 dark:text-slate-400">
               <th className="px-4 py-2">ID</th>
               <th className="px-4 py-2">Name</th>
               <th className="px-4 py-2">Fee type</th>
@@ -304,7 +304,7 @@ export function BrokersPage() {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={8} className="px-4 py-3 text-slate-400">
+                <td colSpan={8} className="px-4 py-3 text-slate-400 dark:text-slate-500 dark:text-slate-400">
                   {t("brokers.loading")}
                 </td>
               </tr>
@@ -312,12 +312,12 @@ export function BrokersPage() {
               data.map((broker) => (
                 <tr key={broker.id} className="border-b border-slate-800/80">
                   <td className="px-4 py-2">{broker.id}</td>
-                  <td className="px-4 py-2 text-teal-200">
+                  <td className="px-4 py-2 text-teal-200 dark:text-teal-700">
                     {editingBroker?.id === broker.id ? (
                       <input
                         value={editName}
                         onChange={(event) => setEditName(event.target.value)}
-                        className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1"
+                        className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-2 py-1"
                       />
                     ) : (
                       broker.name
@@ -328,7 +328,7 @@ export function BrokersPage() {
                       <select
                         value={editFeeMode}
                         onChange={(event) => setEditFeeMode(event.target.value as "fixed" | "percent")}
-                        className="rounded border border-slate-700 bg-slate-900 px-2 py-1"
+                        className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-2 py-1"
                       >
                         <option value="fixed">fixed</option>
                         <option value="percent">percent</option>
@@ -344,7 +344,7 @@ export function BrokersPage() {
                         step="0.000001"
                         value={editFeeValue}
                         onChange={(event) => setEditFeeValue(Number(event.target.value))}
-                        className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1"
+                        className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-2 py-1"
                       />
                     ) : (
                       Number(broker.fee_value || 0).toLocaleString("it-IT", {
@@ -358,7 +358,7 @@ export function BrokersPage() {
                       <input
                         value={editFeeCurrency}
                         onChange={(event) => setEditFeeCurrency(event.target.value.toUpperCase())}
-                        className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1"
+                        className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-2 py-1"
                         placeholder="EUR"
                       />
                     ) : (
@@ -370,7 +370,7 @@ export function BrokersPage() {
                       <select
                         value={editCapitalGainMode}
                         onChange={(event) => setEditCapitalGainMode(event.target.value as "immediate" | "year_end")}
-                        className="rounded border border-slate-700 bg-slate-900 px-2 py-1"
+                        className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-2 py-1"
                       >
                         <option value="immediate">immediate</option>
                         <option value="year_end">year_end</option>
@@ -386,7 +386,7 @@ export function BrokersPage() {
                         step="0.01"
                         value={editCapitalGainRate}
                         onChange={(event) => setEditCapitalGainRate(Number(event.target.value))}
-                        className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1"
+                        className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-2 py-1"
                       />
                     ) : (
                       `${Number(broker.capital_gain_rate || 0).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`
@@ -446,14 +446,14 @@ export function BrokersPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={8} className="px-4 py-3 text-slate-400">
+                <td colSpan={8} className="px-4 py-3 text-slate-400 dark:text-slate-500 dark:text-slate-400">
                   {t("brokers.empty")}
                 </td>
               </tr>
             )}
           </tbody>
         </table>
-        {rowError ? <div className="px-4 py-3 text-sm text-red-400">{rowError}</div> : null}
+        {rowError ? <div className="px-4 py-3 text-sm text-red-400 dark:text-red-600">{rowError}</div> : null}
         {rowSuccess ? <div className="px-4 py-3 text-sm text-emerald-300">{rowSuccess}</div> : null}
       </section>
       {deletePendingId !== null && (() => {

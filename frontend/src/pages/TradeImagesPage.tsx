@@ -179,14 +179,14 @@ export function TradeImagesPage() {
   };
 
   if (!tradeId) {
-    return <div className="text-sm text-red-400">{t("trade_images.invalid_trade")}</div>;
+    return <div className="text-sm text-red-400 dark:text-red-600">{t("trade_images.invalid_trade")}</div>;
   }
 
   return (
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-semibold">{t("trade_images.title", { id: tradeId })}</h1>
-        <p className="text-sm text-slate-400">{t("trade_images.subtitle")}</p>
+        <p className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("trade_images.subtitle")}</p>
         <div className="mt-3">
           <Link
             to={`/trades/${tradeId}`}
@@ -202,7 +202,7 @@ export function TradeImagesPage() {
         <input
           type="file"
           onChange={(event) => setFile(event.target.files?.[0] || null)}
-          className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2"
+          className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2"
         />
         <button
           type="button"
@@ -213,13 +213,13 @@ export function TradeImagesPage() {
           {uploadMutation.isPending ? t("trade_images.uploading") : t("trade_images.upload")}
         </button>
         {message ? <div className="text-sm text-emerald-300">{message}</div> : null}
-        {error ? <div className="text-sm text-red-400">{error}</div> : null}
+        {error ? <div className="text-sm text-red-400 dark:text-red-600">{error}</div> : null}
       </section>
 
       <section className="card overflow-x-auto">
         <div className="border-b border-slate-700/80 px-4 py-3 text-lg font-semibold">{t("trade_images.registered_title")}</div>
         {isLoading ? (
-          <div className="px-4 py-3 text-sm text-slate-400">{t("trade_images.loading")}</div>
+          <div className="px-4 py-3 text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("trade_images.loading")}</div>
         ) : data?.images?.length ? (
           <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
             {data.images.map((image) => (
@@ -240,10 +240,10 @@ export function TradeImagesPage() {
                   }
                 }}
                 className={`overflow-hidden rounded border text-left transition ${
-                  selectedImageId === image.id ? "border-teal-400" : "border-slate-700"
+                  selectedImageId === image.id ? "border-teal-400" : "border-slate-700 dark:border-slate-300"
                 }`}
               >
-                <div className="aspect-video bg-slate-900">
+                <div className="aspect-video bg-slate-900 dark:bg-white">
                   {thumbnailUrls[image.id] ? (
                     <img
                       src={thumbnailUrls[image.id]}
@@ -251,17 +251,17 @@ export function TradeImagesPage() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full items-center justify-center text-xs text-slate-500">{t("trade_images.preview_unavailable")}</div>
+                    <div className="flex h-full items-center justify-center text-xs text-slate-500 dark:text-slate-400">{t("trade_images.preview_unavailable")}</div>
                   )}
                 </div>
-                <div className="px-2 py-1 text-xs text-slate-300">
+                <div className="px-2 py-1 text-xs text-slate-300 dark:text-slate-700">
                   #{image.id} {image.annotated_path ? t("trade_images.annotated") : t("trade_images.original")}
                 </div>
               </button>
             ))}
           </div>
         ) : (
-          <div className="px-4 py-3 text-sm text-slate-400">{t("trade_images.empty")}</div>
+          <div className="px-4 py-3 text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("trade_images.empty")}</div>
         )}
       </section>
 
@@ -274,7 +274,7 @@ export function TradeImagesPage() {
             showFileLoader={false}
           />
         ) : (
-          <div className="text-sm text-slate-400">{t("trade_images.select_from_gallery")}</div>
+          <div className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("trade_images.select_from_gallery")}</div>
         )}
       </section>
 
@@ -287,7 +287,7 @@ export function TradeImagesPage() {
                 URL.revokeObjectURL(zoomImageUrl);
                 setZoomImageUrl(null);
               }}
-              className="absolute right-2 top-2 rounded bg-slate-800 px-3 py-2 text-sm text-white"
+              className="absolute right-2 top-2 rounded bg-slate-800 dark:bg-slate-100 px-3 py-2 text-sm text-white"
             >
               {t("common.close")}
             </button>

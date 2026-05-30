@@ -582,7 +582,7 @@ export function TradesPage() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-semibold">{t("trades.title")}</h1>
-        <p className="text-sm text-slate-400">{t("trades.subtitle")}</p>
+        <p className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("trades.subtitle")}</p>
       </div>
 
       <section className="card overflow-x-auto">
@@ -591,13 +591,13 @@ export function TradesPage() {
           <input
             value={recentSearch}
             onChange={(event) => setRecentSearch(event.target.value)}
-            className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm md:max-w-xs"
+            className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 text-sm md:max-w-xs"
             placeholder={t("trades.search_recent_placeholder")}
           />
         </div>
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-700 text-left text-slate-400">
+            <tr className="border-b border-slate-700 dark:border-slate-300 text-left text-slate-400 dark:text-slate-500 dark:text-slate-400">
               <th className="px-3 py-2">
                 <button type="button" onClick={() => toggleRecentSort("date")} className="text-left hover:text-slate-200">
                   {t("trades.columns.date")}{recentSortIndicator("date")}
@@ -631,7 +631,7 @@ export function TradesPage() {
                     <button
                       type="button"
                       onClick={() => navigate(`/trades/${execution.trade_id}`)}
-                      className="text-teal-200 underline-offset-2 hover:underline"
+                      className="text-teal-200 dark:text-teal-700 underline-offset-2 hover:underline"
                     >
                       #{execution.trade_id} - {execution.trade_symbol}
                     </button>
@@ -644,7 +644,7 @@ export function TradesPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-3 py-2 text-slate-400">
+                <td colSpan={6} className="px-3 py-2 text-slate-400 dark:text-slate-500 dark:text-slate-400">
                   {t("trades.no_recent_executions")}
                 </td>
               </tr>
@@ -660,13 +660,13 @@ export function TradesPage() {
             <input
               value={tradeSearch}
               onChange={(event) => setTradeSearch(event.target.value)}
-              className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm md:w-64"
+              className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 text-sm md:w-64"
               placeholder={t("trades.search_placeholder")}
             />
             <select
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
-              className="rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
+              className="rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 text-sm"
             >
               <option value="all">{t("trades.all_statuses")}</option>
               <option value="open">{t("trades.status.open")}</option>
@@ -677,13 +677,13 @@ export function TradesPage() {
               <button
                 type="button"
                 onClick={() => setShowColumnsMenu((value) => !value)}
-                className="rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200"
+                className="rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 text-sm text-slate-200"
               >
                 {t("trades.visible_columns")}
               </button>
               {showColumnsMenu ? (
-                <div className="absolute right-0 top-full z-20 mt-2 w-72 rounded border border-slate-700 bg-slate-950 p-3 shadow-2xl">
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{t("trades.show_hide")}</div>
+                <div className="absolute right-0 top-full z-20 mt-2 w-72 rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white p-3 shadow-2xl">
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("trades.show_hide")}</div>
                   <div className="grid max-h-64 gap-2 overflow-y-auto md:grid-cols-2">
                     {OPTIONAL_TRADE_COLUMNS.map((column) => (
                       <label key={column.key} className="flex items-center gap-2 text-xs text-slate-200">
@@ -717,13 +717,13 @@ export function TradesPage() {
                 step="0.000001"
                 value={quickClosePrice}
                 onChange={(event) => setQuickClosePrice(event.target.value)}
-                className="rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
+                className="rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 text-sm"
                 placeholder={t("trades.exit_price")}
               />
               <select
                 value={quickCloseReason}
                 onChange={(event) => setQuickCloseReason(event.target.value as "manual" | "take_profit" | "stop_loss")}
-                className="rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
+                className="rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 text-sm"
               >
                 <option value="manual">{t("trades.manual")}</option>
                 <option value="take_profit">{t("trades.status.take_profit")}</option>
@@ -732,7 +732,7 @@ export function TradesPage() {
               <input
                 value={quickCloseNote}
                 onChange={(event) => setQuickCloseNote(event.target.value)}
-                className="rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
+                className="rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 text-sm"
                 placeholder={t("trades.note_optional")}
               />
               <button
@@ -771,12 +771,12 @@ export function TradesPage() {
                 {t("common.cancel")}
               </button>
             </div>
-            {quickCloseError ? <div className="mt-2 text-sm text-red-400">{quickCloseError}</div> : null}
+            {quickCloseError ? <div className="mt-2 text-sm text-red-400 dark:text-red-600">{quickCloseError}</div> : null}
           </div>
         ) : null}
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-700 text-left text-slate-400">
+            <tr className="border-b border-slate-700 dark:border-slate-300 text-left text-slate-400 dark:text-slate-500 dark:text-slate-400">
               <th className="px-3 py-2">
                 <button type="button" onClick={() => toggleSort("date")} className="text-left hover:text-slate-200">
                   {t("trades.columns.date")}{sortIndicator("date")}
@@ -899,14 +899,14 @@ export function TradesPage() {
               return (
               <tr key={trade.id} className="border-b border-slate-800/80">
                 <td
-                  className="cursor-pointer px-3 py-2 hover:text-teal-300"
+                  className="cursor-pointer px-3 py-2 hover:text-teal-300 dark:text-teal-700"
                   onClick={() => navigate(`/trades/${trade.id}`)}
                   title={t("trades.view_trade") ?? "Visualizza trade"}
                 >
                   {new Date(trade.created_at).toLocaleDateString()}
                 </td>
                 <td
-                  className="cursor-pointer px-3 py-2 font-semibold text-teal-200 hover:text-teal-100 hover:underline"
+                  className="cursor-pointer px-3 py-2 font-semibold text-teal-200 dark:text-teal-700 hover:text-teal-100 hover:underline"
                   onClick={() => navigate(`/trades/${trade.id}`)}
                   title={t("trades.view_trade") ?? "Visualizza trade"}
                 >
@@ -924,10 +924,10 @@ export function TradesPage() {
                   <td
                     className={`px-3 py-2 ${
                       trade.net_return === undefined
-                        ? "text-slate-300"
+                        ? "text-slate-300 dark:text-slate-700"
                         : asNumber(trade.net_return) >= 0
                           ? "text-emerald-300"
-                          : "text-red-400"
+                          : "text-red-400 dark:text-red-600"
                     }`}
                   >
                     {formatMoney(trade.net_return, trade.account_currency)}
@@ -937,10 +937,10 @@ export function TradesPage() {
                   <td
                     className={`px-3 py-2 ${
                       trade.return_pct === undefined
-                        ? "text-slate-300"
+                        ? "text-slate-300 dark:text-slate-700"
                         : asNumber(trade.return_pct) >= 0
                           ? "text-emerald-300"
-                          : "text-red-400"
+                          : "text-red-400 dark:text-red-600"
                     }`}
                   >
                     {formatMetric(trade.return_pct)}%
@@ -1014,14 +1014,14 @@ export function TradesPage() {
             );})}
             {!filteredTrades.length ? (
               <tr>
-                <td colSpan={5 + visibleOptionalCount} className="px-3 py-2 text-slate-400">
+                <td colSpan={5 + visibleOptionalCount} className="px-3 py-2 text-slate-400 dark:text-slate-500 dark:text-slate-400">
                   {t("trades.no_trades")}
                 </td>
               </tr>
             ) : null}
           </tbody>
         </table>
-        {deleteError ? <div className="p-3 text-sm text-red-400">{deleteError}</div> : null}
+        {deleteError ? <div className="p-3 text-sm text-red-400 dark:text-red-600">{deleteError}</div> : null}
       </section>
       {deletePendingId !== null && (() => {
         const trade = data?.find((tr) => tr.id === deletePendingId);

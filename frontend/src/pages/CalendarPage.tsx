@@ -107,7 +107,7 @@ export function CalendarPage() {
           <button
             type="button"
             onClick={() => setMonthCursor((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))}
-            className="rounded border border-slate-600 px-3 py-2 text-sm text-slate-300 hover:border-teal-500/50 hover:text-teal-200"
+            className="rounded border border-slate-600 px-3 py-2 text-sm text-slate-300 dark:text-slate-700 hover:border-teal-500/50 hover:text-teal-200 dark:text-teal-700"
           >
             ← {t("calendar.prev_month")}
           </button>
@@ -117,30 +117,30 @@ export function CalendarPage() {
               const now = new Date();
               setMonthCursor(new Date(now.getFullYear(), now.getMonth(), 1));
             }}
-            className="rounded border border-slate-600 px-3 py-2 text-sm text-slate-300 hover:border-teal-500/50 hover:text-teal-200"
+            className="rounded border border-slate-600 px-3 py-2 text-sm text-slate-300 dark:text-slate-700 hover:border-teal-500/50 hover:text-teal-200 dark:text-teal-700"
           >
             {t("calendar.today")}
           </button>
           <button
             type="button"
             onClick={() => setMonthCursor((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))}
-            className="rounded border border-slate-600 px-3 py-2 text-sm text-slate-300 hover:border-teal-500/50 hover:text-teal-200"
+            className="rounded border border-slate-600 px-3 py-2 text-sm text-slate-300 dark:text-slate-700 hover:border-teal-500/50 hover:text-teal-200 dark:text-teal-700"
           >
             {t("calendar.next_month")} →
           </button>
         </div>
       </div>
 
-      <div className="text-sm text-slate-400">{toMonthLabel(monthCursor, locale)}</div>
+      <div className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{toMonthLabel(monthCursor, locale)}</div>
 
-      {isLoading ? <div className="text-sm text-slate-400">{t("calendar.loading")}</div> : null}
-      {error ? <div className="text-sm text-red-400">{t("calendar.unavailable")}</div> : null}
+      {isLoading ? <div className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("calendar.loading")}</div> : null}
+      {error ? <div className="text-sm text-red-400 dark:text-red-600">{t("calendar.unavailable")}</div> : null}
 
       {!isLoading && !error ? (
         <div className="space-y-2">
           <div className="grid grid-cols-7 gap-2">
             {weekDays.map((weekday) => (
-              <div key={weekday} className="rounded border border-slate-700/70 bg-slate-900/60 px-2 py-1 text-center text-xs uppercase tracking-wide text-slate-400">
+              <div key={weekday} className="rounded border border-slate-700/70 bg-slate-900/60 px-2 py-1 text-center text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500 dark:text-slate-400">
                 {weekday}
               </div>
             ))}
@@ -162,7 +162,7 @@ export function CalendarPage() {
                     {(notes.length > 0 || executions.length > 0) ? (
                       <Link
                         to={`/notes?date=${cell.isoDate}`}
-                        className="rounded border border-slate-600 px-1.5 py-0.5 text-[10px] text-slate-300 hover:border-teal-500/50 hover:text-teal-200"
+                        className="rounded border border-slate-600 px-1.5 py-0.5 text-[10px] text-slate-300 dark:text-slate-700 hover:border-teal-500/50 hover:text-teal-200 dark:text-teal-700"
                       >
                         {t("calendar.open_notes")}
                       </Link>
@@ -172,20 +172,20 @@ export function CalendarPage() {
                   <div className="space-y-2">
                     {executions.length > 0 ? (
                       <div className="space-y-1">
-                        <div className="text-[10px] uppercase tracking-wide text-slate-500">{t("calendar.latest_executions")}</div>
+                        <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">{t("calendar.latest_executions")}</div>
                         <div className="flex flex-wrap gap-1">
                           {executions.slice(0, 3).map((execution) => (
                             <Link
                               key={execution.id}
                               to={`/trades/${execution.trade_id}`}
-                              className="rounded-full border border-teal-500/40 bg-teal-500/15 px-2 py-0.5 text-[10px] text-teal-200"
+                              className="rounded-full border border-teal-500/40 bg-teal-500/15 px-2 py-0.5 text-[10px] text-teal-200 dark:text-teal-700"
                               title={`${execution.symbol} ${execution.action} ${execution.quantity} @ ${execution.price}`}
                             >
                               {execution.symbol} {execution.action}
                             </Link>
                           ))}
                           {executions.length > 3 ? (
-                            <span className="rounded-full border border-slate-600 px-2 py-0.5 text-[10px] text-slate-400">+{executions.length - 3}</span>
+                            <span className="rounded-full border border-slate-600 px-2 py-0.5 text-[10px] text-slate-400 dark:text-slate-500 dark:text-slate-400">+{executions.length - 3}</span>
                           ) : null}
                         </div>
                       </div>
@@ -193,7 +193,7 @@ export function CalendarPage() {
 
                     {notes.length > 0 ? (
                       <div className="space-y-1">
-                        <div className="text-[10px] uppercase tracking-wide text-slate-500">{t("calendar.notes")}</div>
+                        <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">{t("calendar.notes")}</div>
                         <div className="space-y-1">
                           {notes.slice(0, 2).map((note) => (
                             <Link
@@ -204,7 +204,7 @@ export function CalendarPage() {
                               <div className="truncate text-[11px] text-slate-200">{note.summary || t("calendar.note_fallback")}</div>
                               <div className="mt-1 flex flex-wrap gap-1">
                                 {parseTags(note.market_condition).map((tag) => (
-                                  <span key={`${note.id}-${tag}`} className="rounded-full border border-slate-600 px-1.5 py-0.5 text-[10px] text-slate-300">
+                                  <span key={`${note.id}-${tag}`} className="rounded-full border border-slate-600 px-1.5 py-0.5 text-[10px] text-slate-300 dark:text-slate-700">
                                     {tag}
                                   </span>
                                 ))}
@@ -212,7 +212,7 @@ export function CalendarPage() {
                             </Link>
                           ))}
                           {notes.length > 2 ? (
-                            <div className="text-[10px] text-slate-500">+{notes.length - 2} {t("calendar.more_notes")}</div>
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400">+{notes.length - 2} {t("calendar.more_notes")}</div>
                           ) : null}
                         </div>
                       </div>
