@@ -186,7 +186,7 @@ export function TradeImagesPage() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-semibold">{t("trade_images.title", { id: tradeId })}</h1>
-        <p className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("trade_images.subtitle")}</p>
+        <p className="text-sm text-slate-400 dark:text-slate-900">{t("trade_images.subtitle")}</p>
         <div className="mt-3">
           <Link
             to={`/trades/${tradeId}`}
@@ -219,7 +219,7 @@ export function TradeImagesPage() {
       <section className="card overflow-x-auto">
         <div className="border-b border-slate-700/80 px-4 py-3 text-lg font-semibold">{t("trade_images.registered_title")}</div>
         {isLoading ? (
-          <div className="px-4 py-3 text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("trade_images.loading")}</div>
+          <div className="px-4 py-3 text-sm text-slate-400 dark:text-slate-900">{t("trade_images.loading")}</div>
         ) : data?.images?.length ? (
           <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
             {data.images.map((image) => (
@@ -254,14 +254,14 @@ export function TradeImagesPage() {
                     <div className="flex h-full items-center justify-center text-xs text-slate-500 dark:text-slate-400">{t("trade_images.preview_unavailable")}</div>
                   )}
                 </div>
-                <div className="px-2 py-1 text-xs text-slate-300 dark:text-slate-700">
+                <div className="px-2 py-1 text-xs text-slate-300 dark:text-slate-900">
                   #{image.id} {image.annotated_path ? t("trade_images.annotated") : t("trade_images.original")}
                 </div>
               </button>
             ))}
           </div>
         ) : (
-          <div className="px-4 py-3 text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("trade_images.empty")}</div>
+          <div className="px-4 py-3 text-sm text-slate-400 dark:text-slate-900">{t("trade_images.empty")}</div>
         )}
       </section>
 
@@ -274,7 +274,7 @@ export function TradeImagesPage() {
             showFileLoader={false}
           />
         ) : (
-          <div className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("trade_images.select_from_gallery")}</div>
+          <div className="text-sm text-slate-400 dark:text-slate-900">{t("trade_images.select_from_gallery")}</div>
         )}
       </section>
 

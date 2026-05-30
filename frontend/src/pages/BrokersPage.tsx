@@ -230,7 +230,7 @@ export function BrokersPage() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-semibold">{t("brokers.page_title")}</h1>
-        <p className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("brokers.page_subtitle")}</p>
+        <p className="text-sm text-slate-400 dark:text-slate-900">{t("brokers.page_subtitle")}</p>
       </div>
 
       <section className="card p-4">
@@ -290,7 +290,7 @@ export function BrokersPage() {
         <div className="border-b border-slate-700/80 px-4 py-3 text-lg font-semibold">{t("brokers.list_title")}</div>
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-700 dark:border-slate-300 text-left text-slate-400 dark:text-slate-500 dark:text-slate-400">
+            <tr className="border-b border-slate-700 dark:border-slate-300 text-left text-slate-400 dark:text-slate-900">
               <th className="px-4 py-2">ID</th>
               <th className="px-4 py-2">Name</th>
               <th className="px-4 py-2">Fee type</th>
@@ -304,7 +304,7 @@ export function BrokersPage() {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={8} className="px-4 py-3 text-slate-400 dark:text-slate-500 dark:text-slate-400">
+                <td colSpan={8} className="px-4 py-3 text-slate-400 dark:text-slate-900">
                   {t("brokers.loading")}
                 </td>
               </tr>
@@ -312,7 +312,7 @@ export function BrokersPage() {
               data.map((broker) => (
                 <tr key={broker.id} className="border-b border-slate-800/80">
                   <td className="px-4 py-2">{broker.id}</td>
-                  <td className="px-4 py-2 text-teal-200 dark:text-teal-700">
+                  <td className="px-4 py-2 text-teal-200 dark:text-teal-900">
                     {editingBroker?.id === broker.id ? (
                       <input
                         value={editName}
@@ -446,7 +446,7 @@ export function BrokersPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={8} className="px-4 py-3 text-slate-400 dark:text-slate-500 dark:text-slate-400">
+                <td colSpan={8} className="px-4 py-3 text-slate-400 dark:text-slate-900">
                   {t("brokers.empty")}
                 </td>
               </tr>

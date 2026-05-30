@@ -48,43 +48,43 @@ function AssetFormModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-xl border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white p-6 shadow-2xl">
-        <h2 className="mb-4 text-lg font-semibold text-teal-200 dark:text-teal-700">
+        <h2 className="mb-4 text-lg font-semibold text-teal-200 dark:text-teal-900">
           {isEditing ? t("assets.edit_title") : t("assets.add_title")}
         </h2>
         <div className="space-y-3">
           <div>
-            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("assets.symbol")}</label>
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("assets.symbol")}</label>
             <input
               value={symbol}
               onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200"
+              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200 dark:text-slate-900"
               placeholder="VWCE"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("assets.name")}</label>
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("assets.name")}</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200"
+              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200 dark:text-slate-900"
               placeholder="FTSE All-World UCITS ETF"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("assets.isin")}</label>
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("assets.isin")}</label>
             <input
               value={isin}
               onChange={(e) => setIsin(e.target.value.toUpperCase())}
-              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200"
+              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200 dark:text-slate-900"
               placeholder="IE00BK5BQT80"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("assets.instrument_type")}</label>
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("assets.instrument_type")}</label>
             <select
               value={instrumentType}
               onChange={(e) => setInstrumentType(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200"
+              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200 dark:text-slate-900"
             >
               {INSTRUMENT_TYPES.map((t) => (
                 <option key={t} value={t}>{t}</option>
@@ -92,20 +92,20 @@ function AssetFormModal({
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("assets.exchange")}</label>
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("assets.exchange")}</label>
             <input
               value={exchange}
               onChange={(e) => setExchange(e.target.value.toUpperCase())}
-              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200"
+              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200 dark:text-slate-900"
               placeholder="XETRA"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("assets.currency")}</label>
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("assets.currency")}</label>
             <input
               value={currency}
               onChange={(e) => setCurrency(e.target.value.toUpperCase())}
-              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200"
+              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200 dark:text-slate-900"
               placeholder="EUR"
             />
           </div>
@@ -113,7 +113,7 @@ function AssetFormModal({
         <div className="flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="rounded bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-200"
+            className="rounded bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-200 dark:text-slate-900"
           >
             {t("assets.cancel")}
           </button>
@@ -155,7 +155,7 @@ export function AssetsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">{t("assets.title")}</h1>
-          <p className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("assets.subtitle")}</p>
+          <p className="text-sm text-slate-400 dark:text-slate-900">{t("assets.subtitle")}</p>
         </div>
         <button
           onClick={() => { setEditAsset(null); setShowForm(true); }}
@@ -168,7 +168,7 @@ export function AssetsPage() {
       <div className="card overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-slate-700 dark:border-slate-300 text-xs uppercase text-slate-400 dark:text-slate-500 dark:text-slate-400">
+            <tr className="border-b border-slate-700 dark:border-slate-300 text-xs uppercase text-slate-400 dark:text-slate-900">
               <th className="px-3 py-2">{t("assets.col_symbol")}</th>
               <th className="px-3 py-2">{t("assets.col_name")}</th>
               <th className="px-3 py-2">{t("assets.col_isin")}</th>
@@ -181,19 +181,19 @@ export function AssetsPage() {
           <tbody>
             {(assets ?? []).length === 0 && (
               <tr>
-                <td colSpan={7} className="px-3 py-2 text-center text-slate-400 dark:text-slate-500 dark:text-slate-400">
+                <td colSpan={7} className="px-3 py-2 text-center text-slate-400 dark:text-slate-900">
                   {t("assets.no_assets")}
                 </td>
               </tr>
             )}
             {(assets ?? []).map((asset: Asset) => (
               <tr key={asset.id} className="border-b border-slate-800/80 hover:bg-slate-800/40">
-                <td className="px-3 py-2 font-medium text-teal-200 dark:text-teal-700">{asset.symbol}</td>
-                <td className="px-3 py-2 text-slate-300 dark:text-slate-700">{asset.name}</td>
-                <td className="px-3 py-2 font-mono text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">{asset.isin ?? "—"}</td>
-                <td className="px-3 py-2 text-slate-400 dark:text-slate-500 dark:text-slate-400">{asset.instrument_type}</td>
-                <td className="px-3 py-2 text-slate-400 dark:text-slate-500 dark:text-slate-400">{asset.exchange ?? "—"}</td>
-                <td className="px-3 py-2 text-slate-400 dark:text-slate-500 dark:text-slate-400">{asset.currency}</td>
+                <td className="px-3 py-2 font-medium text-teal-200 dark:text-teal-900">{asset.symbol}</td>
+                <td className="px-3 py-2 text-slate-300 dark:text-slate-900">{asset.name}</td>
+                <td className="px-3 py-2 font-mono text-xs text-slate-400 dark:text-slate-900">{asset.isin ?? "—"}</td>
+                <td className="px-3 py-2 text-slate-400 dark:text-slate-900">{asset.instrument_type}</td>
+                <td className="px-3 py-2 text-slate-400 dark:text-slate-900">{asset.exchange ?? "—"}</td>
+                <td className="px-3 py-2 text-slate-400 dark:text-slate-900">{asset.currency}</td>
                 <td className="px-3 py-2">
                   <div className="flex gap-2">
                     <button
@@ -233,11 +233,11 @@ export function AssetsPage() {
       {deleteId !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-xl border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white p-6 shadow-2xl">
-            <p className="mb-4 text-slate-200">{t("assets.confirm_delete")}</p>
+            <p className="mb-4 text-slate-200 dark:text-slate-900">{t("assets.confirm_delete")}</p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setDeleteId(null)}
-                className="rounded bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-200"
+                className="rounded bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-200 dark:text-slate-900"
               >
                 {t("assets.cancel")}
               </button>

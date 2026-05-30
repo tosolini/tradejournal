@@ -48,8 +48,8 @@ export function Layout({ children }: PropsWithChildren) {
   return (
     <>
       <div className="grid min-h-screen grid-cols-1 md:grid-cols-[240px_1fr]">
-        <aside className="flex flex-col border-r border-slate-700/60 bg-slate-950/70 p-5 backdrop-blur dark:border-slate-200/20 dark:bg-white/80">
-          <div className="mb-8 flex items-center gap-2.5 text-xl font-semibold tracking-wide text-teal-300 dark:text-teal-700">
+        <aside className="flex flex-col border-r border-slate-700/60 bg-slate-950/70 p-5 backdrop-blur dark:border-slate-200/20 dark:bg-white">
+          <div className="mb-8 flex items-center gap-2.5 text-xl font-semibold tracking-wide text-teal-300 dark:text-teal-900">
             <img src={bullVectLogo} alt="Bull logo" className="h-6 w-6 object-contain" loading="eager" />
             <span className="titlelogo">TradeJournal</span>
           </div>
@@ -74,8 +74,8 @@ export function Layout({ children }: PropsWithChildren) {
                       className={({ isActive }) =>
                         `block rounded-lg px-3 py-2 text-sm transition ${
                           isActive
-                            ? "bg-teal-500/20 text-teal-200 dark:bg-teal-500/15 dark:text-teal-700"
-                            : "text-slate-300 hover:bg-slate-800/80 dark:text-slate-700 dark:hover:bg-slate-200/60"
+                            ? "bg-teal-500/20 text-teal-200 dark:bg-teal-500/15 dark:text-teal-900"
+                            : "text-slate-300 hover:bg-slate-800/80 dark:text-slate-900 dark:hover:bg-slate-200/60"
                         }`
                       }
                     >
@@ -97,20 +97,20 @@ export function Layout({ children }: PropsWithChildren) {
             <button
               type="button"
               onClick={() => navigate("/notes?new=1")}
-              className="mt-2 w-full rounded-lg border border-teal-500/60 bg-slate-900 px-3 py-2 text-sm font-semibold text-teal-200 hover:bg-teal-500/10 dark:border-teal-600/50 dark:bg-transparent dark:text-teal-700 dark:hover:bg-teal-500/10"
+              className="mt-2 w-full rounded-lg border border-teal-500/60 bg-slate-900 px-3 py-2 text-sm font-semibold text-teal-200 hover:bg-teal-500/10 dark:border-teal-600/50 dark:bg-transparent dark:text-teal-900 dark:hover:bg-teal-500/10"
             >
               {t("layout.actions.new_note")}
             </button>
           </div>
           <div className="mt-auto border-t border-slate-700/60 pt-4 dark:border-slate-300/30">
             <div className="flex items-center justify-between">
-              <div className="text-xs text-slate-400 dark:text-slate-500">
+              <div className="text-xs text-slate-400 dark:text-slate-600">
                 {t("layout.version")} v{appVersion}
               </div>
               <button
                 type="button"
                 onClick={toggleTheme}
-                className="rounded px-2 py-1 text-sm text-slate-400 hover:text-slate-200 dark:text-slate-500 dark:hover:text-slate-700"
+                className="rounded px-2 py-1 text-sm text-slate-400 hover:text-slate-200 dark:text-slate-600 dark:hover:text-slate-700"
                 title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
                 aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
               >

@@ -582,7 +582,7 @@ export function TradesPage() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-semibold">{t("trades.title")}</h1>
-        <p className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("trades.subtitle")}</p>
+        <p className="text-sm text-slate-400 dark:text-slate-900">{t("trades.subtitle")}</p>
       </div>
 
       <section className="card overflow-x-auto">
@@ -597,26 +597,26 @@ export function TradesPage() {
         </div>
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-700 dark:border-slate-300 text-left text-slate-400 dark:text-slate-500 dark:text-slate-400">
+            <tr className="border-b border-slate-700 dark:border-slate-300 text-left text-slate-400 dark:text-slate-900">
               <th className="px-3 py-2">
-                <button type="button" onClick={() => toggleRecentSort("date")} className="text-left hover:text-slate-200">
+                <button type="button" onClick={() => toggleRecentSort("date")} className="text-left hover:text-slate-200 dark:text-slate-900">
                   {t("trades.columns.date")}{recentSortIndicator("date")}
                 </button>
               </th>
               <th className="px-3 py-2">{t("trades.columns.trade")}</th>
               <th className="px-3 py-2">{t("trades.columns.action")}</th>
               <th className="px-3 py-2">
-                <button type="button" onClick={() => toggleRecentSort("qty")} className="text-left hover:text-slate-200">
+                <button type="button" onClick={() => toggleRecentSort("qty")} className="text-left hover:text-slate-200 dark:text-slate-900">
                   {t("trades.columns.qty")}{recentSortIndicator("qty")}
                 </button>
               </th>
               <th className="px-3 py-2">
-                <button type="button" onClick={() => toggleRecentSort("price")} className="text-left hover:text-slate-200">
+                <button type="button" onClick={() => toggleRecentSort("price")} className="text-left hover:text-slate-200 dark:text-slate-900">
                   {t("trades.columns.price")}{recentSortIndicator("price")}
                 </button>
               </th>
               <th className="px-3 py-2">
-                <button type="button" onClick={() => toggleRecentSort("fee")} className="text-left hover:text-slate-200">
+                <button type="button" onClick={() => toggleRecentSort("fee")} className="text-left hover:text-slate-200 dark:text-slate-900">
                   {t("trades.columns.fee")}{recentSortIndicator("fee")}
                 </button>
               </th>
@@ -631,7 +631,7 @@ export function TradesPage() {
                     <button
                       type="button"
                       onClick={() => navigate(`/trades/${execution.trade_id}`)}
-                      className="text-teal-200 dark:text-teal-700 underline-offset-2 hover:underline"
+                      className="text-teal-200 dark:text-teal-900 underline-offset-2 hover:underline"
                     >
                       #{execution.trade_id} - {execution.trade_symbol}
                     </button>
@@ -644,7 +644,7 @@ export function TradesPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-3 py-2 text-slate-400 dark:text-slate-500 dark:text-slate-400">
+                <td colSpan={6} className="px-3 py-2 text-slate-400 dark:text-slate-900">
                   {t("trades.no_recent_executions")}
                 </td>
               </tr>
@@ -677,16 +677,16 @@ export function TradesPage() {
               <button
                 type="button"
                 onClick={() => setShowColumnsMenu((value) => !value)}
-                className="rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 text-sm text-slate-200"
+                className="rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 text-sm text-slate-200 dark:text-slate-900"
               >
                 {t("trades.visible_columns")}
               </button>
               {showColumnsMenu ? (
                 <div className="absolute right-0 top-full z-20 mt-2 w-72 rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white p-3 shadow-2xl">
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("trades.show_hide")}</div>
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-900">{t("trades.show_hide")}</div>
                   <div className="grid max-h-64 gap-2 overflow-y-auto md:grid-cols-2">
                     {OPTIONAL_TRADE_COLUMNS.map((column) => (
-                      <label key={column.key} className="flex items-center gap-2 text-xs text-slate-200">
+                      <label key={column.key} className="flex items-center gap-2 text-xs text-slate-200 dark:text-slate-900">
                         <input
                           type="checkbox"
                           checked={visibleOptionalColumns[column.key]}
@@ -708,7 +708,7 @@ export function TradesPage() {
         </div>
         {quickCloseTrade ? (
           <div className="border-b border-slate-700/80 bg-slate-900/40 px-4 py-3">
-            <div className="mb-2 text-sm font-semibold text-amber-200">
+            <div className="mb-2 text-sm font-semibold text-amber-200 dark:text-amber-800">
               {t("trades.quick_close_title", { id: quickCloseTrade.id, symbol: quickCloseTrade.symbol })}
             </div>
             <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto_auto]">
@@ -776,107 +776,107 @@ export function TradesPage() {
         ) : null}
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-700 dark:border-slate-300 text-left text-slate-400 dark:text-slate-500 dark:text-slate-400">
+            <tr className="border-b border-slate-700 dark:border-slate-300 text-left text-slate-400 dark:text-slate-900">
               <th className="px-3 py-2">
-                <button type="button" onClick={() => toggleSort("date")} className="text-left hover:text-slate-200">
+                <button type="button" onClick={() => toggleSort("date")} className="text-left hover:text-slate-200 dark:text-slate-900">
                   {t("trades.columns.date")}{sortIndicator("date")}
                 </button>
               </th>
               <th className="px-3 py-2">
-                <button type="button" onClick={() => toggleSort("symbol")} className="text-left hover:text-slate-200">
+                <button type="button" onClick={() => toggleSort("symbol")} className="text-left hover:text-slate-200 dark:text-slate-900">
                   {t("trades.columns.symbol")}{sortIndicator("symbol")}
                 </button>
               </th>
               <th className="px-3 py-2">
-                <button type="button" onClick={() => toggleSort("status")} className="text-left hover:text-slate-200">
+                <button type="button" onClick={() => toggleSort("status")} className="text-left hover:text-slate-200 dark:text-slate-900">
                   {t("trades.columns.status")}{sortIndicator("status")}
                 </button>
               </th>
               <th className="px-3 py-2">
-                <button type="button" onClick={() => toggleSort("side")} className="text-left hover:text-slate-200">
+                <button type="button" onClick={() => toggleSort("side")} className="text-left hover:text-slate-200 dark:text-slate-900">
                   {t("trades.columns.side")}{sortIndicator("side")}
                 </button>
               </th>
               {visibleOptionalColumns.avgEntry ? (
                 <th className="px-3 py-2">
-                  <button type="button" onClick={() => toggleSort("avgEntry")} className="text-left hover:text-slate-200">
+                  <button type="button" onClick={() => toggleSort("avgEntry")} className="text-left hover:text-slate-200 dark:text-slate-900">
                     Avg Entry{sortIndicator("avgEntry")}
                   </button>
                 </th>
               ) : null}
               {visibleOptionalColumns.avgExit ? (
                 <th className="px-3 py-2">
-                  <button type="button" onClick={() => toggleSort("avgExit")} className="text-left hover:text-slate-200">
+                  <button type="button" onClick={() => toggleSort("avgExit")} className="text-left hover:text-slate-200 dark:text-slate-900">
                     Avg Exit{sortIndicator("avgExit")}
                   </button>
                 </th>
               ) : null}
               {visibleOptionalColumns.entryTotal ? (
                 <th className="px-3 py-2">
-                  <button type="button" onClick={() => toggleSort("entryTotal")} className="text-left hover:text-slate-200">
+                  <button type="button" onClick={() => toggleSort("entryTotal")} className="text-left hover:text-slate-200 dark:text-slate-900">
                     Entry Total{sortIndicator("entryTotal")}
                   </button>
                 </th>
               ) : null}
               {visibleOptionalColumns.exitTotal ? (
                 <th className="px-3 py-2">
-                  <button type="button" onClick={() => toggleSort("exitTotal")} className="text-left hover:text-slate-200">
+                  <button type="button" onClick={() => toggleSort("exitTotal")} className="text-left hover:text-slate-200 dark:text-slate-900">
                     Exit Total{sortIndicator("exitTotal")}
                   </button>
                 </th>
               ) : null}
               {visibleOptionalColumns.openQty ? (
                 <th className="px-3 py-2">
-                  <button type="button" onClick={() => toggleSort("openQty")} className="text-left hover:text-slate-200">
+                  <button type="button" onClick={() => toggleSort("openQty")} className="text-left hover:text-slate-200 dark:text-slate-900">
                     Open Qty{sortIndicator("openQty")}
                   </button>
                 </th>
               ) : null}
               {visibleOptionalColumns.hold ? (
                 <th className="px-3 py-2">
-                  <button type="button" onClick={() => toggleSort("hold")} className="text-left hover:text-slate-200">
+                  <button type="button" onClick={() => toggleSort("hold")} className="text-left hover:text-slate-200 dark:text-slate-900">
                     Hold{sortIndicator("hold")}
                   </button>
                 </th>
               ) : null}
               {visibleOptionalColumns.return ? (
                 <th className="px-3 py-2">
-                  <button type="button" onClick={() => toggleSort("return")} className="text-left hover:text-slate-200">
+                  <button type="button" onClick={() => toggleSort("return")} className="text-left hover:text-slate-200 dark:text-slate-900">
                     Return{sortIndicator("return")}
                   </button>
                 </th>
               ) : null}
               {visibleOptionalColumns.returnPct ? (
                 <th className="px-3 py-2">
-                  <button type="button" onClick={() => toggleSort("returnPct")} className="text-left hover:text-slate-200">
+                  <button type="button" onClick={() => toggleSort("returnPct")} className="text-left hover:text-slate-200 dark:text-slate-900">
                     Return %{sortIndicator("returnPct")}
                   </button>
                 </th>
               ) : null}
               {visibleOptionalColumns.tpPct ? (
                 <th className="px-3 py-2">
-                  <button type="button" onClick={() => toggleSort("tpPct")} className="text-left hover:text-slate-200">
+                  <button type="button" onClick={() => toggleSort("tpPct")} className="text-left hover:text-slate-200 dark:text-slate-900">
                     TP %{sortIndicator("tpPct")}
                   </button>
                 </th>
               ) : null}
               {visibleOptionalColumns.slPct ? (
                 <th className="px-3 py-2">
-                  <button type="button" onClick={() => toggleSort("slPct")} className="text-left hover:text-slate-200">
+                  <button type="button" onClick={() => toggleSort("slPct")} className="text-left hover:text-slate-200 dark:text-slate-900">
                     SL %{sortIndicator("slPct")}
                   </button>
                 </th>
               ) : null}
               {visibleOptionalColumns.tpAbs ? (
                 <th className="px-3 py-2">
-                  <button type="button" onClick={() => toggleSort("tpAbs")} className="text-left hover:text-slate-200">
+                  <button type="button" onClick={() => toggleSort("tpAbs")} className="text-left hover:text-slate-200 dark:text-slate-900">
                     TP Assoluto{sortIndicator("tpAbs")}
                   </button>
                 </th>
               ) : null}
               {visibleOptionalColumns.slAbs ? (
                 <th className="px-3 py-2">
-                  <button type="button" onClick={() => toggleSort("slAbs")} className="text-left hover:text-slate-200">
+                  <button type="button" onClick={() => toggleSort("slAbs")} className="text-left hover:text-slate-200 dark:text-slate-900">
                     SL Assoluto{sortIndicator("slAbs")}
                   </button>
                 </th>
@@ -899,14 +899,14 @@ export function TradesPage() {
               return (
               <tr key={trade.id} className="border-b border-slate-800/80">
                 <td
-                  className="cursor-pointer px-3 py-2 hover:text-teal-300 dark:text-teal-700"
+                  className="cursor-pointer px-3 py-2 hover:text-teal-300 dark:text-teal-900"
                   onClick={() => navigate(`/trades/${trade.id}`)}
                   title={t("trades.view_trade") ?? "Visualizza trade"}
                 >
                   {new Date(trade.created_at).toLocaleDateString()}
                 </td>
                 <td
-                  className="cursor-pointer px-3 py-2 font-semibold text-teal-200 dark:text-teal-700 hover:text-teal-100 hover:underline"
+                  className="cursor-pointer px-3 py-2 font-semibold text-teal-200 dark:text-teal-900 hover:text-teal-100 dark:text-teal-900 hover:underline"
                   onClick={() => navigate(`/trades/${trade.id}`)}
                   title={t("trades.view_trade") ?? "Visualizza trade"}
                 >
@@ -924,9 +924,9 @@ export function TradesPage() {
                   <td
                     className={`px-3 py-2 ${
                       trade.net_return === undefined
-                        ? "text-slate-300 dark:text-slate-700"
+                        ? "text-slate-300 dark:text-slate-900"
                         : asNumber(trade.net_return) >= 0
-                          ? "text-emerald-300"
+                          ? "text-emerald-300 dark:text-emerald-800"
                           : "text-red-400 dark:text-red-600"
                     }`}
                   >
@@ -937,19 +937,19 @@ export function TradesPage() {
                   <td
                     className={`px-3 py-2 ${
                       trade.return_pct === undefined
-                        ? "text-slate-300 dark:text-slate-700"
+                        ? "text-slate-300 dark:text-slate-900"
                         : asNumber(trade.return_pct) >= 0
-                          ? "text-emerald-300"
+                          ? "text-emerald-300 dark:text-emerald-800"
                           : "text-red-400 dark:text-red-600"
                     }`}
                   >
                     {formatMetric(trade.return_pct)}%
                   </td>
                 ) : null}
-                {visibleOptionalColumns.tpPct ? <td className="px-3 py-2 text-emerald-300">{tpPct === null ? "-" : `${tpPct.toFixed(2)}%`}</td> : null}
-                {visibleOptionalColumns.slPct ? <td className="px-3 py-2 text-red-300">{slPct === null ? "-" : `${slPct.toFixed(2)}%`}</td> : null}
-                {visibleOptionalColumns.tpAbs ? <td className="px-3 py-2 text-emerald-300">{tpAbs === null ? "-" : formatMoney(tpAbs, trade.account_currency)}</td> : null}
-                {visibleOptionalColumns.slAbs ? <td className="px-3 py-2 text-red-300">{slAbs === null ? "-" : formatMoney(slAbs, trade.account_currency)}</td> : null}
+                {visibleOptionalColumns.tpPct ? <td className="px-3 py-2 text-emerald-300 dark:text-emerald-800">{tpPct === null ? "-" : `${tpPct.toFixed(2)}%`}</td> : null}
+                {visibleOptionalColumns.slPct ? <td className="px-3 py-2 text-red-300 dark:text-red-600">{slPct === null ? "-" : `${slPct.toFixed(2)}%`}</td> : null}
+                {visibleOptionalColumns.tpAbs ? <td className="px-3 py-2 text-emerald-300 dark:text-emerald-800">{tpAbs === null ? "-" : formatMoney(tpAbs, trade.account_currency)}</td> : null}
+                {visibleOptionalColumns.slAbs ? <td className="px-3 py-2 text-red-300 dark:text-red-600">{slAbs === null ? "-" : formatMoney(slAbs, trade.account_currency)}</td> : null}
                 <td className="px-3 py-2">
                   <div className="flex gap-2">
                     <button
@@ -1014,7 +1014,7 @@ export function TradesPage() {
             );})}
             {!filteredTrades.length ? (
               <tr>
-                <td colSpan={5 + visibleOptionalCount} className="px-3 py-2 text-slate-400 dark:text-slate-500 dark:text-slate-400">
+                <td colSpan={5 + visibleOptionalCount} className="px-3 py-2 text-slate-400 dark:text-slate-900">
                   {t("trades.no_trades")}
                 </td>
               </tr>

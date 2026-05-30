@@ -39,8 +39,8 @@ export function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <form onSubmit={handleSubmit(onSubmit)} className="card w-full max-w-md p-6">
-        <h1 className="mb-2 text-2xl font-semibold text-teal-200 dark:text-teal-700">TradeJournal</h1>
-        <p className="mb-6 text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("login.subtitle")}</p>
+        <h1 className="mb-2 text-2xl font-semibold text-teal-200 dark:text-teal-900">TradeJournal</h1>
+        <p className="mb-6 text-sm text-slate-400 dark:text-slate-900">{t("login.subtitle")}</p>
         <div className="space-y-4">
           <input
             {...register("username_or_email")}

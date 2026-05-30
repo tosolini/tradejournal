@@ -61,7 +61,7 @@ function colorForPct(value: string | number | undefined): string {
   const n = asNumber(value);
   if (n > 0) return "text-green-400 dark:text-green-700";
   if (n < 0) return "text-red-400 dark:text-red-600";
-  return "text-slate-300 dark:text-slate-700";
+  return "text-slate-300 dark:text-slate-900";
 }
 
 function ChartPanel({ history }: { history: { date: string; value: number }[] }) {
@@ -146,14 +146,14 @@ function HoldingFormModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-xl border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white p-6 shadow-2xl">
-        <h2 className="mb-4 text-lg font-semibold text-teal-200 dark:text-teal-700">{t("portfolio.add_holding")}</h2>
+        <h2 className="mb-4 text-lg font-semibold text-teal-200 dark:text-teal-900">{t("portfolio.add_holding")}</h2>
         <div className="space-y-3">
           <div>
-            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("portfolio.account")}</label>
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("portfolio.account")}</label>
             <select
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200"
+              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200 dark:text-slate-900"
             >
               <option value="">{t("portfolio.select_account")}</option>
               {accounts?.map((a: Account) => (
@@ -162,11 +162,11 @@ function HoldingFormModal({
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("portfolio.asset")}</label>
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("portfolio.asset")}</label>
             <select
               value={assetId}
               onChange={(e) => setAssetId(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200"
+              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200 dark:text-slate-900"
             >
               <option value="">{t("portfolio.select_asset")}</option>
               {assets?.map((a: any) => (
@@ -175,48 +175,48 @@ function HoldingFormModal({
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("portfolio.quantity")}</label>
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("portfolio.quantity")}</label>
             <input
               type="text"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200"
+              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200 dark:text-slate-900"
               placeholder="100"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("portfolio.avg_cost")}</label>
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("portfolio.avg_cost")}</label>
             <input
               type="text"
               value={avgCost}
               onChange={(e) => setAvgCost(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200"
+              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200 dark:text-slate-900"
               placeholder="120.50"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("portfolio.entry_date")}</label>
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("portfolio.entry_date")}</label>
             <input
               type="date"
               value={entryDate}
               onChange={(e) => setEntryDate(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200"
+              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200 dark:text-slate-900"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("portfolio.exit_date")}</label>
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("portfolio.exit_date")}</label>
             <input
               type="date"
               value={exitDate}
               onChange={(e) => setExitDate(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200"
+              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200 dark:text-slate-900"
             />
           </div>
         </div>
         <div className="mt-5 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 dark:text-slate-700 hover:bg-slate-800 dark:bg-slate-100"
+            className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 dark:text-slate-900 hover:bg-slate-800 dark:bg-slate-100"
           >
             {t("portfolio.cancel")}
           </button>
@@ -289,49 +289,49 @@ function HoldingEditFormModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-xl border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white p-6 shadow-2xl">
-        <h2 className="mb-4 text-lg font-semibold text-teal-200 dark:text-teal-700">{t("portfolio.edit_holding")}</h2>
+        <h2 className="mb-4 text-lg font-semibold text-teal-200 dark:text-teal-900">{t("portfolio.edit_holding")}</h2>
         <div className="space-y-3">
           <div>
-            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("portfolio.quantity")}</label>
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("portfolio.quantity")}</label>
             <input
               type="text"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200"
+              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200 dark:text-slate-900"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("portfolio.avg_cost")}</label>
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("portfolio.avg_cost")}</label>
             <input
               type="text"
               value={avgCost}
               onChange={(e) => setAvgCost(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200"
+              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200 dark:text-slate-900"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("portfolio.entry_date")}</label>
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("portfolio.entry_date")}</label>
             <input
               type="date"
               value={entryDate}
               onChange={(e) => setEntryDate(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200"
+              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200 dark:text-slate-900"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("portfolio.exit_date")}</label>
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("portfolio.exit_date")}</label>
             <input
               type="date"
               value={exitDate}
               onChange={(e) => setExitDate(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200"
+              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200 dark:text-slate-900"
             />
           </div>
         </div>
         <div className="mt-5 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 dark:text-slate-700 hover:bg-slate-800 dark:bg-slate-100"
+            className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 dark:text-slate-900 hover:bg-slate-800 dark:bg-slate-100"
           >
             {t("portfolio.cancel")}
           </button>
@@ -408,7 +408,7 @@ export function PortfolioPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">{t("portfolio.title")}</h1>
-          <p className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("portfolio.subtitle")}</p>
+          <p className="text-sm text-slate-400 dark:text-slate-900">{t("portfolio.subtitle")}</p>
         </div>
         <button
           onClick={() => setShowAddHolding(true)}
@@ -421,8 +421,8 @@ export function PortfolioPage() {
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {kpiCards.map((card) => (
           <article key={card.label} className="card p-4">
-            <div className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{card.label}</div>
-            <div className={`mt-2 text-2xl font-semibold ${card.color ?? "text-teal-200 dark:text-teal-700"}`}>
+            <div className="text-sm text-slate-400 dark:text-slate-900">{card.label}</div>
+            <div className={`mt-2 text-2xl font-semibold ${card.color ?? "text-teal-200 dark:text-teal-900"}`}>
               {card.value}
             </div>
           </article>
@@ -432,11 +432,11 @@ export function PortfolioPage() {
       <ChartPanel history={chartHistory} />
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold text-teal-200 dark:text-teal-700">{t("portfolio.holdings_title")}</h2>
+        <h2 className="mb-3 text-lg font-semibold text-teal-200 dark:text-teal-900">{t("portfolio.holdings_title")}</h2>
         <div className="card overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-slate-700 dark:border-slate-300 text-xs uppercase text-slate-400 dark:text-slate-500 dark:text-slate-400">
+              <tr className="border-b border-slate-700 dark:border-slate-300 text-xs uppercase text-slate-400 dark:text-slate-900">
                 <th className="p-3">{t("portfolio.col_symbol")}</th>
                 <th className="p-3">{t("portfolio.col_name")}</th>
                 <th className="p-3">{t("portfolio.col_type")}</th>
@@ -462,18 +462,18 @@ export function PortfolioPage() {
               )}
               {(details ?? []).map((h: HoldingDetail) => (
                 <tr key={h.id} className="border-b border-slate-800 hover:bg-slate-800/40">
-                  <td className="p-3 font-medium text-teal-300 dark:text-teal-700">{h.asset_symbol}</td>
-                  <td className="p-3 text-slate-300 dark:text-slate-700">{h.asset_name}</td>
-                  <td className="p-3 text-slate-400 dark:text-slate-500 dark:text-slate-400">{h.instrument_type}</td>
-                  <td className="p-3 text-right text-slate-200">{Number(h.quantity).toFixed(4)}</td>
-                  <td className="p-3 text-right text-slate-200">{formatMoney(h.avg_cost)}</td>
-                  <td className="p-3 text-right text-slate-300 dark:text-slate-700 text-xs">{h.entry_date}</td>
-                  <td className="p-3 text-right text-slate-300 dark:text-slate-700 text-xs">{h.exit_date ?? "—"}</td>
-                  <td className="p-3 text-right text-slate-300 dark:text-slate-700 text-xs">
+                  <td className="p-3 font-medium text-teal-300 dark:text-teal-900">{h.asset_symbol}</td>
+                  <td className="p-3 text-slate-300 dark:text-slate-900">{h.asset_name}</td>
+                  <td className="p-3 text-slate-400 dark:text-slate-900">{h.instrument_type}</td>
+                  <td className="p-3 text-right text-slate-200 dark:text-slate-900">{Number(h.quantity).toFixed(4)}</td>
+                  <td className="p-3 text-right text-slate-200 dark:text-slate-900">{formatMoney(h.avg_cost)}</td>
+                  <td className="p-3 text-right text-slate-300 dark:text-slate-900 text-xs">{h.entry_date}</td>
+                  <td className="p-3 text-right text-slate-300 dark:text-slate-900 text-xs">{h.exit_date ?? "—"}</td>
+                  <td className="p-3 text-right text-slate-300 dark:text-slate-900 text-xs">
                     {h.hold_duration_days != null ? `${h.hold_duration_days}d` : "—"}
                   </td>
-                  <td className="p-3 text-right text-slate-200">{formatMoney(h.current_price)}</td>
-                  <td className="p-3 text-right text-slate-200">{formatMoney(h.market_value)}</td>
+                  <td className="p-3 text-right text-slate-200 dark:text-slate-900">{formatMoney(h.current_price)}</td>
+                  <td className="p-3 text-right text-slate-200 dark:text-slate-900">{formatMoney(h.market_value)}</td>
                   <td className={`p-3 text-right ${colorForPct(h.return_value)}`}>
                     {formatMoney(h.return_value)}
                   </td>
@@ -518,11 +518,11 @@ export function PortfolioPage() {
       {deleteId !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-xl border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white p-6 shadow-2xl">
-            <p className="mb-4 text-slate-200">{t("portfolio.confirm_delete")}</p>
+            <p className="mb-4 text-slate-200 dark:text-slate-900">{t("portfolio.confirm_delete")}</p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setDeleteId(null)}
-                className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 dark:text-slate-700 hover:bg-slate-800 dark:bg-slate-100"
+                className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 dark:text-slate-900 hover:bg-slate-800 dark:bg-slate-100"
               >
                 {t("portfolio.cancel")}
               </button>

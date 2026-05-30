@@ -220,7 +220,7 @@ export function AccountsPage() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-semibold">{t("accounts.page_title")}</h1>
-        <p className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("accounts.page_subtitle")}</p>
+        <p className="text-sm text-slate-400 dark:text-slate-900">{t("accounts.page_subtitle")}</p>
       </div>
 
       <section className="card p-4">
@@ -280,7 +280,7 @@ export function AccountsPage() {
         <div className="border-b border-slate-700/80 px-4 py-3 text-lg font-semibold">{t("accounts.list_title")}</div>
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-700 dark:border-slate-300 text-left text-slate-400 dark:text-slate-500 dark:text-slate-400">
+            <tr className="border-b border-slate-700 dark:border-slate-300 text-left text-slate-400 dark:text-slate-900">
               <th className="px-4 py-2">ID</th>
               <th className="px-4 py-2">Name</th>
               <th className="px-4 py-2">Broker</th>
@@ -292,7 +292,7 @@ export function AccountsPage() {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-3 text-slate-400 dark:text-slate-500 dark:text-slate-400">
+                <td colSpan={6} className="px-4 py-3 text-slate-400 dark:text-slate-900">
                   {t("accounts.loading")}
                 </td>
               </tr>
@@ -342,7 +342,7 @@ export function AccountsPage() {
                     </>
                   ) : (
                     <>
-                      <td className="px-4 py-2 font-medium text-teal-200 dark:text-teal-700">{account.name}</td>
+                      <td className="px-4 py-2 font-medium text-teal-200 dark:text-teal-900">{account.name}</td>
                       <td className="px-4 py-2">{account.broker_name ?? "-"}</td>
                       <td className="px-4 py-2">{account.base_currency}</td>
                       <td className="px-4 py-2">{formatMoney(account.cash_balance, account.base_currency)}</td>
@@ -402,7 +402,7 @@ export function AccountsPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-4 py-3 text-slate-400 dark:text-slate-500 dark:text-slate-400">
+                <td colSpan={6} className="px-4 py-3 text-slate-400 dark:text-slate-900">
                   {t("accounts.empty")}
                 </td>
               </tr>

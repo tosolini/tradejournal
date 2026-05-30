@@ -100,13 +100,13 @@ export function DashboardPage() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-semibold">{t("dashboard.title")}</h1>
-        <p className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("dashboard.subtitle")}</p>
+        <p className="text-sm text-slate-400 dark:text-slate-900">{t("dashboard.subtitle")}</p>
       </div>
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {cards.map((card) => (
           <article key={card.label} className="card p-4">
-            <div className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{card.label}</div>
-            <div className="mt-2 text-2xl font-semibold text-teal-200 dark:text-teal-700">{card.value}</div>
+            <div className="text-sm text-slate-400 dark:text-slate-900">{card.label}</div>
+            <div className="mt-2 text-2xl font-semibold text-teal-200 dark:text-teal-900">{card.value}</div>
           </article>
         ))}
       </section>

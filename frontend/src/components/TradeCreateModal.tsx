@@ -43,7 +43,7 @@ function FieldHelp({ text }: { text: string }) {
     <span className="group relative ml-1 inline-flex">
       <span
         tabIndex={0}
-        className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-slate-500 text-[10px] font-semibold text-slate-300 dark:text-slate-700 outline-none ring-teal-400/70 transition focus:ring-2"
+        className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-slate-500 text-[10px] font-semibold text-slate-300 dark:text-slate-900 outline-none ring-teal-400/70 transition focus:ring-2"
         aria-label={text}
       >
         ?
@@ -192,14 +192,14 @@ export function TradeCreateModal({ open, onClose }: Props) {
       <div className="w-full max-w-xl overflow-y-auto rounded-xl border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white p-6 shadow-2xl">
         <div className="mb-5">
           <h2 className="text-xl font-semibold text-slate-100 dark:text-slate-900">{t("trades.new_trade.title")}</h2>
-          <p className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("trades.new_trade.subtitle")}</p>
+          <p className="text-sm text-slate-400 dark:text-slate-900">{t("trades.new_trade.subtitle")}</p>
         </div>
 
         <form className="space-y-4" onSubmit={handleSubmit((values) => createTrade.mutate(values))}>
 
           {/* Account + Simbolo */}
           <div className="grid grid-cols-2 gap-3">
-            <label className="text-sm text-slate-300 dark:text-slate-700">
+            <label className="text-sm text-slate-300 dark:text-slate-900">
               <span className="inline-flex items-center mb-1">
                 {t("trades.new_trade.labels.account")}
                 <FieldHelp text={t("trades.new_trade.tooltips.account")} />
@@ -215,7 +215,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
               </select>
               {errors.account_id ? <span className="mt-1 block text-xs text-red-300">{errors.account_id.message}</span> : null}
             </label>
-            <label className="text-sm text-slate-300 dark:text-slate-700">
+            <label className="text-sm text-slate-300 dark:text-slate-900">
               <span className="inline-flex items-center mb-1">
                 {t("trades.new_trade.labels.symbol")}
                 <FieldHelp text={t("trades.new_trade.tooltips.symbol")} />
@@ -231,7 +231,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
 
           {/* Quantità + Prezzo ingresso */}
           <div className="grid grid-cols-2 gap-3">
-            <label className="text-sm text-slate-300 dark:text-slate-700">
+            <label className="text-sm text-slate-300 dark:text-slate-900">
               <span className="inline-flex items-center mb-1">
                 {t("trades.new_trade.labels.quantity")}
                 <FieldHelp text={t("trades.new_trade.tooltips.quantity")} />
@@ -244,7 +244,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
               />
               {errors.quantity ? <span className="mt-1 block text-xs text-red-300">{errors.quantity.message}</span> : null}
             </label>
-            <label className="text-sm text-slate-300 dark:text-slate-700">
+            <label className="text-sm text-slate-300 dark:text-slate-900">
               <span className="inline-flex items-center mb-1">
                 {t("trades.new_trade.labels.entry_price")}
                 <FieldHelp text={t("trades.new_trade.tooltips.entry_price")} />
@@ -261,7 +261,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
 
           {/* Direzione + Fee automatica */}
           <div className="grid grid-cols-2 gap-3">
-            <label className="text-sm text-slate-300 dark:text-slate-700">
+            <label className="text-sm text-slate-300 dark:text-slate-900">
               <span className="inline-flex items-center mb-1">
                 {t("trades.new_trade.labels.direction")}
                 <FieldHelp text={t("trades.new_trade.tooltips.direction")} />
@@ -271,23 +271,23 @@ export function TradeCreateModal({ open, onClose }: Props) {
                 <option value="short">{t("trades.new_trade.options.direction.short")}</option>
               </select>
             </label>
-            <div className="text-sm text-slate-300 dark:text-slate-700">
+            <div className="text-sm text-slate-300 dark:text-slate-900">
               <span className="inline-flex items-center mb-1">
                 {t("trades.new_trade.labels.auto_fee")}
                 <FieldHelp text={t("trades.new_trade.tooltips.auto_fee")} />
               </span>
-              <div className="rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 text-slate-200">
+              <div className="rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 text-slate-200 dark:text-slate-900">
                 {estimatedFee === null
                   ? "-"
                   : `${estimatedFee.value.toLocaleString(numberLocale, { minimumFractionDigits: 2, maximumFractionDigits: 6 })} ${estimatedFee.currency}`}
               </div>
-              <span className="mt-1 block text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">{t("trades.new_trade.estimated_fee_note")}</span>
+              <span className="mt-1 block text-xs text-slate-400 dark:text-slate-900">{t("trades.new_trade.estimated_fee_note")}</span>
             </div>
           </div>
 
           {/* Take Profit */}
           <div className="grid grid-cols-2 gap-3">
-            <label className="text-sm text-slate-300 dark:text-slate-700">
+            <label className="text-sm text-slate-300 dark:text-slate-900">
               <span className="inline-flex items-center mb-1">
                 {t("trades.new_trade.labels.take_profit")}
                 <FieldHelp text={t("trades.new_trade.tooltips.take_profit")} />
@@ -309,7 +309,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
 
           {/* Stop Loss */}
           <div className="grid grid-cols-2 gap-3">
-            <label className="text-sm text-slate-300 dark:text-slate-700">
+            <label className="text-sm text-slate-300 dark:text-slate-900">
               <span className="inline-flex items-center mb-1">
                 {t("trades.new_trade.labels.stop_loss")}
                 <FieldHelp text={t("trades.new_trade.tooltips.stop_loss")} />
@@ -343,7 +343,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
 
           {/* Footer: Eseguito + Bottoni */}
           <div className="flex items-end gap-3">
-            <label className="flex-1 text-sm text-slate-300 dark:text-slate-700">
+            <label className="flex-1 text-sm text-slate-300 dark:text-slate-900">
               <span className="inline-flex items-center mb-1">
                 {t("trades.new_trade.labels.execution")}
                 <FieldHelp text={t("trades.new_trade.tooltips.execution_type")} />
@@ -357,7 +357,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded bg-slate-700 dark:bg-slate-200 dark:text-slate-700 px-4 py-2 text-sm font-semibold text-slate-200"
+              className="rounded bg-slate-700 dark:bg-slate-200 dark:text-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 dark:text-slate-900"
             >
               {t("trades.new_trade.cancel")}
             </button>

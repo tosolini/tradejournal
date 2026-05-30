@@ -348,7 +348,7 @@ export function ImageAnnotationEditor({
     <section className="card space-y-4 p-4">
       <div>
         <h2 className="text-lg font-semibold">Image Annotation Editor</h2>
-        <p className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-slate-400 dark:text-slate-900">
           Tools: arrow, rectangle, circle, text, highlight. Load an image, annotate, then export PNG.
         </p>
       </div>
@@ -362,7 +362,7 @@ export function ImageAnnotationEditor({
             className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2"
           />
         ) : (
-          <div className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2 text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">
+          <div className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2 text-sm text-slate-400 dark:text-slate-900">
             Editing immagine selezionata
           </div>
         )}
@@ -383,7 +383,7 @@ export function ImageAnnotationEditor({
           onChange={(event) => setColor(event.target.value)}
           className="h-10 w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-1 py-1"
         />
-        <label className="flex items-center gap-2 rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2 text-xs text-slate-300 dark:text-slate-700">
+        <label className="flex items-center gap-2 rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2 text-xs text-slate-300 dark:text-slate-900">
           <span>Spessore</span>
           <input
             type="range"
@@ -442,7 +442,7 @@ export function ImageAnnotationEditor({
           className="max-h-[560px] w-full cursor-crosshair rounded"
         />
         {!hasImage ? (
-          <p className="p-3 text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">Load an image to start annotating.</p>
+          <p className="p-3 text-sm text-slate-400 dark:text-slate-900">Load an image to start annotating.</p>
         ) : null}
       </div>
     </section>
