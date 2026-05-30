@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { TagInput } from "../components/TagInput";
+import { ConfirmModal } from "../components/ConfirmModal";
 import { api } from "../lib/api";
 
 type NotePayload = {
@@ -113,7 +114,17 @@ export function NotesPage() {
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [preferencesHydrated, setPreferencesHydrated] = useState(false);
   const [filtersSaveState, setFiltersSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [deletePendingNoteId, setDeletePendingNoteId] = useState<number | null>(null);
+  const [deletePendingTag, setDeletePendingTag] = useState<string | null>(null);
+  const [renamePendingTag, setRenamePendingTag] = useState<{ old: string; next: string } | null>(null);
   const lastSavedFiltersRef = useRef<string>("");
+  const noteDateInputRef = useRef<HTMLInputElement | null>(null);
+  const openNoteDatePicker = () => {
+    const input = noteDateInputRef.current;
+    if (!input) return;
+    const pickerInput = input as HTMLInputElement & { showPicker?: () => void };
+    if (typeof pickerInput.showPicker === "function") pickerInput.showPicker();
+  };
 
   const { register, handleSubmit, reset, watch, setValue } = useForm<NotePayload>({
     defaultValues: {
@@ -338,18 +349,11 @@ export function NotesPage() {
   }, [allAvailableTags, tagManagerSearch]);
 
   const onRenameTag = (tag: string) => {
-    const nextTag = window.prompt(t("notes.rename_tag_prompt"), tag)?.trim();
-    if (!nextTag || nextTag.toLowerCase() === tag.toLowerCase()) {
-      return;
-    }
-    renameTag.mutate({ oldTag: tag, newTag: nextTag });
+    setRenamePendingTag({ old: tag, next: tag });
   };
 
   const onDeleteTag = (tag: string) => {
-    if (!window.confirm(t("notes.delete_tag_confirm", { tag }))) {
-      return;
-    }
-    deleteTag.mutate(tag);
+    setDeletePendingTag(tag);
   };
 
   useEffect(() => {
@@ -446,7 +450,7 @@ export function NotesPage() {
             <button
               type="button"
               onClick={onOpenCreateModal}
-              className="rounded bg-teal-500 px-3 py-1 text-xs font-semibold text-slate-900"
+              className="rounded-lg bg-teal-500 px-3 py-2 text-sm font-semibold text-slate-900"
             >
               {t("notes.new_note")}
             </button>
@@ -546,16 +550,28 @@ export function NotesPage() {
                     <button
                       type="button"
                       onClick={() => onRenameTag(tag)}
-                      className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:border-teal-500/50 hover:text-teal-200"
+                      className="rounded bg-sky-500 p-2 text-slate-950"
+                      title={t("notes.rename")}
+                      aria-label={t("notes.rename")}
                     >
-                      {t("notes.rename")}
+                      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                      </svg>
                     </button>
                     <button
                       type="button"
                       onClick={() => onDeleteTag(tag)}
-                      className="rounded border border-rose-500/40 px-2 py-1 text-xs text-rose-300 hover:bg-rose-500/10"
+                      className="rounded bg-red-500 p-2 text-white"
+                      title={t("notes.delete")}
+                      aria-label={t("notes.delete")}
                     >
-                      {t("notes.delete")}
+                      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        <line x1="10" x2="10" y1="11" y2="17" />
+                        <line x1="14" x2="14" y1="11" y2="17" />
+                      </svg>
                     </button>
                   </div>
                 </div>
@@ -580,20 +596,28 @@ export function NotesPage() {
                   <button
                     type="button"
                     onClick={() => onEdit(note)}
-                    className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:border-teal-500/50 hover:text-teal-200"
+                    className="rounded bg-sky-500 p-2 text-slate-950"
+                    title={t("notes.edit")}
+                    aria-label={t("notes.edit")}
                   >
-                    {t("notes.edit")}
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                    </svg>
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      if (window.confirm(t("notes.delete_note_confirm"))) {
-                        deleteNote.mutate(note.id);
-                      }
-                    }}
-                    className="rounded border border-rose-500/40 px-2 py-1 text-xs text-rose-300 hover:bg-rose-500/10"
+                    onClick={() => setDeletePendingNoteId(note.id)}
+                    className="rounded bg-red-500 p-2 text-white"
+                    title={t("notes.delete")}
+                    aria-label={t("notes.delete")}
                   >
-                    {t("notes.delete")}
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M3 6h18" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      <line x1="10" x2="10" y1="11" y2="17" />
+                      <line x1="14" x2="14" y1="11" y2="17" />
+                    </svg>
                   </button>
                 </div>
               </div>
@@ -665,7 +689,28 @@ export function NotesPage() {
 
             <form className="space-y-3" onSubmit={handleSubmit(onSubmit)}>
               <input type="hidden" {...register("mood")} />
-              <input type="date" {...register("note_date")} className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2" />
+              <div className="relative">
+                <input
+                  type="date"
+                  {...register("note_date")}
+                  ref={(el) => { register("note_date").ref(el); noteDateInputRef.current = el; }}
+                  className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 pr-11"
+                />
+                <button
+                  type="button"
+                  onClick={openNoteDatePicker}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 rounded bg-slate-800 px-2 py-1 text-xs text-slate-200 hover:bg-slate-700"
+                  title="Apri selettore data"
+                  aria-label="Apri selettore data"
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                </button>
+              </div>
               <div className="space-y-2">
                 <label className="block text-xs uppercase tracking-wide text-slate-400">{t("notes.mood")}</label>
                 <div className="grid grid-cols-3 gap-2">
@@ -725,6 +770,70 @@ export function NotesPage() {
           </div>
         </div>
       ) : null}
+      {deletePendingNoteId !== null && (
+        <ConfirmModal
+          message={t("notes.delete_note_confirm")}
+          onConfirm={() => { deleteNote.mutate(deletePendingNoteId); setDeletePendingNoteId(null); }}
+          onCancel={() => setDeletePendingNoteId(null)}
+          isPending={deleteNote.isPending}
+        />
+      )}
+      {deletePendingTag !== null && (
+        <ConfirmModal
+          message={t("notes.delete_tag_confirm", { tag: deletePendingTag })}
+          onConfirm={() => { deleteTag.mutate(deletePendingTag); setDeletePendingTag(null); }}
+          onCancel={() => setDeletePendingTag(null)}
+          isPending={deleteTag.isPending}
+        />
+      )}
+      {renamePendingTag !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
+            <p className="mb-3 text-sm font-semibold text-slate-300">{t("notes.rename_tag_prompt")}</p>
+            <input
+              type="text"
+              value={renamePendingTag.next}
+              onChange={(e) => setRenamePendingTag({ ...renamePendingTag, next: e.target.value })}
+              className="mb-4 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const trimmed = renamePendingTag.next.trim();
+                  if (trimmed && trimmed.toLowerCase() !== renamePendingTag.old.toLowerCase()) {
+                    renameTag.mutate({ oldTag: renamePendingTag.old, newTag: trimmed });
+                  }
+                  setRenamePendingTag(null);
+                } else if (e.key === "Escape") {
+                  setRenamePendingTag(null);
+                }
+              }}
+            />
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setRenamePendingTag(null)}
+                className="rounded bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-200"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const trimmed = renamePendingTag.next.trim();
+                  if (trimmed && trimmed.toLowerCase() !== renamePendingTag.old.toLowerCase()) {
+                    renameTag.mutate({ oldTag: renamePendingTag.old, newTag: trimmed });
+                  }
+                  setRenamePendingTag(null);
+                }}
+                disabled={renameTag.isPending}
+                className="rounded bg-teal-500 px-3 py-2 text-sm font-semibold text-slate-900 disabled:opacity-50"
+              >
+                {t("notes.rename_tag_confirm")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

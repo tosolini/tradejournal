@@ -180,6 +180,61 @@ export async function login(username_or_email: string, password: string) {
   });
 }
 
+export type User = {
+  id: number;
+  email: string;
+  username: string;
+  role: string;
+};
+
+export type UserUpdate = {
+  email?: string;
+  username?: string;
+  current_password?: string;
+  new_password?: string;
+};
+
+export function getMe() {
+  return api<User>("/api/auth/me");
+}
+
+export function updateMe(payload: UserUpdate) {
+  return api<User>("/api/auth/me", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export type AdminUserCreate = {
+  email: string;
+  username: string;
+  password: string;
+  role?: string;
+};
+
+export type AdminUserUpdate = {
+  email?: string;
+  username?: string;
+  new_password?: string;
+  role?: string;
+};
+
+export function adminListUsers() {
+  return api<User[]>("/api/admin/users");
+}
+
+export function adminCreateUser(payload: AdminUserCreate) {
+  return api<User>("/api/admin/users", { method: "POST", body: JSON.stringify(payload) });
+}
+
+export function adminUpdateUser(id: number, payload: AdminUserUpdate) {
+  return api<User>(`/api/admin/users/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+}
+
+export function adminDeleteUser(id: number) {
+  return api<void>(`/api/admin/users/${id}`, { method: "DELETE" });
+}
+
 export type Asset = {
   id: number;
   symbol: string;

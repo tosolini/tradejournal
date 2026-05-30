@@ -5,6 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
 import { Account, ApiError, Broker, api } from "../lib/api";
+import { ConfirmModal } from "../components/ConfirmModal";
 
 function formatMoney(value: string | number | undefined, currency?: string): string {
   const amount = Number(value ?? 0);
@@ -79,6 +80,8 @@ export function AccountsPage() {
   const [editCurrency, setEditCurrency] = useState("EUR");
   const [editCash, setEditCash] = useState("0");
   const [editBrokerId, setEditBrokerId] = useState("");
+  const [deletePendingId, setDeletePendingId] = useState<number | null>(null);
+
 
   const { data, isLoading } = useQuery({
     queryKey: ["accounts"],
@@ -383,20 +386,10 @@ export function AccountsPage() {
                       <button
                         type="button"
                         className="rounded bg-red-500 p-2 text-white"
-                        onClick={async () => {
+                        onClick={() => {
                           setRowError(null);
                           setRowSuccess(null);
-                          const confirmed = window.confirm(
-                            t("accounts.confirm_delete", { id: account.id, name: account.name })
-                          );
-                          if (!confirmed) {
-                            return;
-                          }
-                          try {
-                            await deleteAccount.mutateAsync(account.id);
-                          } catch (err) {
-                            setRowError(parseApiError(err));
-                          }
+                          setDeletePendingId(account.id);
                         }}
                         title="Elimina account"
                         aria-label="Elimina account"
@@ -419,6 +412,25 @@ export function AccountsPage() {
         {rowError ? <div className="px-4 py-3 text-sm text-red-400">{rowError}</div> : null}
         {rowSuccess ? <div className="px-4 py-3 text-sm text-emerald-300">{rowSuccess}</div> : null}
       </section>
+      {deletePendingId !== null && (() => {
+        const account = data?.find((a) => a.id === deletePendingId);
+        return (
+          <ConfirmModal
+            message={t("accounts.confirm_delete", { id: deletePendingId, name: account?.name ?? "" })}
+            onConfirm={async () => {
+              try {
+                await deleteAccount.mutateAsync(deletePendingId);
+              } catch (err) {
+                setRowError(parseApiError(err));
+              } finally {
+                setDeletePendingId(null);
+              }
+            }}
+            onCancel={() => setDeletePendingId(null)}
+            isPending={deleteAccount.isPending}
+          />
+        );
+      })()}
     </div>
   );
 }

@@ -38,6 +38,27 @@ class UserPreferencesUpdate(BaseModel):
     preferences: dict[str, Any] = Field(default_factory=dict)
 
 
+class UserUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    username: Optional[str] = None
+    current_password: Optional[str] = None
+    new_password: Optional[str] = Field(default=None, min_length=8)
+
+
+class AdminUserCreate(BaseModel):
+    email: EmailStr
+    username: str
+    password: str = Field(min_length=8)
+    role: str = "user"
+
+
+class AdminUserUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    username: Optional[str] = None
+    new_password: Optional[str] = Field(default=None, min_length=8)
+    role: Optional[str] = None
+
+
 class AccountCreate(BaseModel):
     name: str
     broker_id: int | None = None
