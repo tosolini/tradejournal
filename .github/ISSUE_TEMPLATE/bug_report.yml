@@ -1,0 +1,78 @@
+name: 🐛 Bug Report
+description: Segnala un problema o un comportamento inatteso
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Grazie per aver segnalato un bug! Compila il modulo con più dettagli possibili.
+
+  - type: input
+    id: page
+    attributes:
+      label: Pagina / URL
+      description: Su quale pagina o sezione dell'applicazione si verifica il bug?
+      placeholder: "es. /dashboard, Pagina trades, Modal di aggiunta trade..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Descrizione del bug
+      description: Descrizione chiara e dettagliata del problema riscontrato.
+      placeholder: "Quando faccio X, mi aspetto che succeda Y, ma invece succede Z..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Passi per riprodurre
+      description: Elenca i passi necessari per riprodurre il comportamento.
+      placeholder: |
+        1. Vai alla pagina '...'
+        2. Clicca su '...'
+        3. Scorri fino a '...'
+        4. Vedi l'errore
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamento atteso
+      description: Descrivi cosa ti aspettavi che accadesse.
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshot o video
+      description: Se applicabile, aggiungi screenshot o una registrazione per aiutare a spiegare il problema.
+      placeholder: "Trascina qui le immagini oppure incolla un link..."
+    validations:
+      required: false
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      options:
+        - Chrome
+        - Firefox
+        - Safari
+        - Edge
+        - Altro
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Informazioni aggiuntive
+      description: Qualsiasi altro contesto utile (versione del sistema operativo, errori in console, ecc.)
+    validations:
+      required: false
