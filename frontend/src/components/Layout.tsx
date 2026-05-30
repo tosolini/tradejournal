@@ -117,7 +117,7 @@ export function Layout({ children }: PropsWithChildren) {
                 {theme === 'dark' ? '☀' : '☾'}
               </button>
             </div>
-            <div className="mt-3">
+            <div className="mt-3 flex justify-center">
               <a
                 href="https://www.tosolini.info"
                 target="_blank"
@@ -132,8 +132,9 @@ export function Layout({ children }: PropsWithChildren) {
                 />
               </a>
             </div>
-            <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-              © {currentYear} Tosolini. {t("layout.copyright")}
+            <div className="mt-2 text-xs text-slate-500 dark:text-slate-400 text-center">
+              <a href="https://github.com/tosolini/tradejournal/issues" target="_blank" rel="noreferrer" className="underline">Bug Report</a> <br/>
+              © {currentYear} Walter Tosolini <br />{t("layout.copyright")}
             </div>
           </div>
         </aside>

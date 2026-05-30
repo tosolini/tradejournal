@@ -5,7 +5,7 @@
             "npm": "@ai-sdk/openai-compatible",
             "name": "Local MLX",
             "options": {
-                "baseURL": "http://192.168.178.100:1234/v1"
+                "baseURL": "http://localhost:1234/v1"
             },
             "models": {
                 "qwen2.5-coder-14b-instruct-mlx": {
