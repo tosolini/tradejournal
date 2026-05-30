@@ -1,6 +1,6 @@
 import i18n from "./i18n";
 
-const API_BASE = import.meta.env.DEV ? "" : import.meta.env.VITE_API_BASE_URL || "http://localhost:18000";
+const API_BASE = "http://localhost:18000";
 
 export class ApiError extends Error {
   status: number;
@@ -132,29 +132,45 @@ export type Broker = {
   capital_gain_rate: string;
 };
 
-export async function api<T>(path: string, options?: RequestInit): Promise<T> {
-  const token = localStorage.getItem("token");
-  const locale = i18n.resolvedLanguage || i18n.language || "en";
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      "Accept-Language": locale,
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options?.headers || {}),
-    },
-  });
-  if (!response.ok) {
-    // If token is stale/invalid, force a clean auth state.
-    if (response.status === 401) {
-      localStorage.removeItem("token");
-      if (!window.location.pathname.startsWith("/login")) {
-        window.location.replace("/login");
+function xhrRequest<T>(method: string, path: string, body?: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const token = localStorage.getItem("token");
+    const locale = i18n.resolvedLanguage || i18n.language || "en";
+    const url = API_BASE + path;
+    const xhr = new XMLHttpRequest();
+    xhr.open(method, url, true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.setRequestHeader("Accept-Language", locale);
+    if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    xhr.onload = () => {
+      if (xhr.status === 401) {
+        localStorage.removeItem("token");
+        if (!window.location.pathname.startsWith("/login")) {
+          window.location.replace("/login");
+        }
+        reject(new Error("Unauthorized"));
+        return;
       }
-    }
-    throw await parseApiError(response);
-  }
-  return response.json() as Promise<T>;
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          resolve(JSON.parse(xhr.responseText));
+        } catch {
+          resolve(xhr.responseText as unknown as T);
+        }
+      } else {
+        reject(new Error(`HTTP ${xhr.status}: ${xhr.responseText}`));
+      }
+    };
+    xhr.onerror = () => reject(new Error("XHR failed: " + url));
+    if (body) xhr.send(body);
+    else xhr.send();
+  });
+}
+
+export async function api<T>(path: string, options?: RequestInit): Promise<T> {
+  const method = options?.method || "GET";
+  const body = options?.body as string | undefined;
+  return xhrRequest<T>(method, path, body);
 }
 
 export async function login(username_or_email: string, password: string) {
@@ -163,6 +179,117 @@ export async function login(username_or_email: string, password: string) {
     body: JSON.stringify({ username_or_email, password }),
   });
 }
+
+export type User = {
+  id: number;
+  email: string;
+  username: string;
+  role: string;
+};
+
+export type UserUpdate = {
+  email?: string;
+  username?: string;
+  current_password?: string;
+  new_password?: string;
+};
+
+export function getMe() {
+  return api<User>("/api/auth/me");
+}
+
+export function updateMe(payload: UserUpdate) {
+  return api<User>("/api/auth/me", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export type AdminUserCreate = {
+  email: string;
+  username: string;
+  password: string;
+  role?: string;
+};
+
+export type AdminUserUpdate = {
+  email?: string;
+  username?: string;
+  new_password?: string;
+  role?: string;
+};
+
+export function adminListUsers() {
+  return api<User[]>("/api/admin/users");
+}
+
+export function adminCreateUser(payload: AdminUserCreate) {
+  return api<User>("/api/admin/users", { method: "POST", body: JSON.stringify(payload) });
+}
+
+export function adminUpdateUser(id: number, payload: AdminUserUpdate) {
+  return api<User>(`/api/admin/users/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+}
+
+export function adminDeleteUser(id: number) {
+  return api<void>(`/api/admin/users/${id}`, { method: "DELETE" });
+}
+
+export type Asset = {
+  id: number;
+  symbol: string;
+  name: string;
+  isin?: string | null;
+  instrument_type: string;
+  exchange?: string | null;
+  currency: string;
+};
+
+export type Holding = {
+  id: number;
+  account_id: number;
+  asset_id: number;
+  quantity: string;
+  avg_cost: string;
+  entry_date: string;
+  exit_date: string | null;
+};
+
+export type HoldingDetail = {
+  id: number;
+  account_id: number;
+  asset_id: number;
+  asset_symbol: string;
+  asset_name: string;
+  instrument_type: string;
+  asset_currency: string;
+  quantity: string;
+  avg_cost: string;
+  entry_date: string;
+  exit_date: string | null;
+  hold_duration_days: number | null;
+  current_price: string;
+  market_value: string;
+  return_value: string;
+  return_pct: string;
+};
+
+export type PortfolioSummary = {
+  account_id: number;
+  account_name: string;
+  total_value: string;
+  total_cost: string;
+  total_return: string;
+  total_return_pct: string;
+  holdings_count: number;
+};
+
+export type PortfolioHistoryPoint = {
+  date: string;
+  value: number;
+  cost: number;
+  return_pct: number;
+};
 
 export async function fetchTradeImageBlobUrl(imageId: number, variant: "original" | "annotated" = "original") {
   const token = localStorage.getItem("token");
@@ -174,4 +301,79 @@ export async function fetchTradeImageBlobUrl(imageId: number, variant: "original
   }
   const blob = await response.blob();
   return URL.createObjectURL(blob);
+}
+
+// ── Assets ──────────────────────────────────────────
+export function fetchAssets(): Promise<Asset[]> {
+  return api("/api/assets/");
+}
+
+export function createAsset(payload: Partial<Asset>): Promise<Asset> {
+  return api("/api/assets/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateAsset(id: number, payload: Partial<Asset>): Promise<Asset> {
+  return api(`/api/assets/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteAsset(id: number): Promise<void> {
+  return api(`/api/assets/${id}`, { method: "DELETE" });
+}
+
+// ── Accounts ────────────────────────────────────────
+export function fetchAccounts(): Promise<Account[]> {
+  return api("/api/accounts");
+}
+
+// ── Holdings ────────────────────────────────────────
+export function fetchHoldings(accountId?: number): Promise<Holding[]> {
+  const params = accountId ? `?account_id=${accountId}` : "";
+  return api(`/api/holdings/${params}`);
+}
+
+export function createHolding(payload: {
+  account_id: number;
+  asset_id: number;
+  quantity: string;
+  avg_cost: string;
+  entry_date: string;
+  exit_date?: string | null;
+}): Promise<Holding> {
+  return api("/api/holdings/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateHolding(id: number, payload: Partial<Holding>): Promise<Holding> {
+  return api(`/api/holdings/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteHolding(id: number): Promise<void> {
+  return api(`/api/holdings/${id}`, { method: "DELETE" });
+}
+
+// ── Portfolio ───────────────────────────────────────
+export function fetchPortfolioDetails(accountId?: number): Promise<HoldingDetail[]> {
+  const params = accountId ? `?account_id=${accountId}` : "";
+  return api(`/api/portfolio/details${params}`);
+}
+
+export function fetchPortfolioSummary(accountId?: number): Promise<PortfolioSummary[]> {
+  const params = accountId ? `?account_id=${accountId}` : "";
+  return api(`/api/portfolio/summary${params}`);
+}
+
+export function fetchPortfolioHistory(accountId?: number): Promise<PortfolioHistoryPoint[]> {
+  const params = accountId ? `?account_id=${accountId}` : "";
+  return api(`/api/portfolio/history${params}`);
 }

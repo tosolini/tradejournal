@@ -1,11 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
-import { Account, Broker, TradeDetail, api, fetchTradeImageBlobUrl } from "../lib/api";
+import { Account, Broker, Trade, TradeDetail, api, fetchTradeImageBlobUrl } from "../lib/api";
 
 const closeTradeSchema = z.object({
   executed_at: z.string().min(1),
@@ -128,11 +128,23 @@ export function TradeDetailPage() {
   const params = useParams<{ tradeId: string }>();
   const tradeId = Number(params.tradeId || 0);
   const qc = useQueryClient();
+  const navigate = useNavigate();
+  const executedAtInputRef = useRef<HTMLInputElement | null>(null);
+  const openDateTimePicker = () => {
+    const input = executedAtInputRef.current;
+    if (!input) return;
+    const pickerInput = input as HTMLInputElement & { showPicker?: () => void };
+    if (typeof pickerInput.showPicker === "function") pickerInput.showPicker();
+  };
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["trade-detail", tradeId],
     queryFn: () => api<TradeDetail>(`/api/trades/${tradeId}`),
     enabled: tradeId > 0,
+  });
+  const { data: allTrades } = useQuery({
+    queryKey: ["trades"],
+    queryFn: () => api<Trade[]>("/api/trades"),
   });
   const { data: accounts } = useQuery({
     queryKey: ["accounts"],
@@ -281,6 +293,11 @@ export function TradeDetailPage() {
   const trade = data.trade;
   const executions = data.executions;
 
+  const sortedIds = allTrades ? [...allTrades].sort((a, b) => a.id - b.id).map((tr) => tr.id) : [];
+  const currentIndex = sortedIds.indexOf(tradeId);
+  const prevId = currentIndex > 0 ? sortedIds[currentIndex - 1] : null;
+  const nextId = currentIndex !== -1 && currentIndex < sortedIds.length - 1 ? sortedIds[currentIndex + 1] : null;
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -289,6 +306,30 @@ export function TradeDetailPage() {
           <p className="text-sm text-slate-400">{t("trade_detail.subtitle")}</p>
         </div>
         <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => prevId !== null && navigate(`/trades/${prevId}`)}
+            disabled={prevId === null}
+            title="Trade precedente"
+            aria-label="Trade precedente"
+            className="rounded bg-slate-700 p-2 text-slate-200 disabled:opacity-30"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => nextId !== null && navigate(`/trades/${nextId}`)}
+            disabled={nextId === null}
+            title="Trade successivo"
+            aria-label="Trade successivo"
+            className="rounded bg-slate-700 p-2 text-slate-200 disabled:opacity-30"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
           <Link to={`/trades/${trade.id}/edit`} className="rounded bg-sky-500 px-3 py-2 text-sm font-semibold text-slate-950">
             {t("trade_detail.edit")}
           </Link>
@@ -424,7 +465,28 @@ export function TradeDetailPage() {
           <form className="grid gap-3 md:grid-cols-4" onSubmit={closeForm.handleSubmit((values) => closeTrade.mutate(values))}>
             <label className="text-sm text-slate-300">
               {t("trade_detail.exit_datetime")}
-              <input type="datetime-local" {...closeForm.register("executed_at")} className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" />
+              <div className="relative mt-1">
+                <input
+                  type="datetime-local"
+                  {...closeForm.register("executed_at")}
+                  ref={(el) => { closeForm.register("executed_at").ref(el); executedAtInputRef.current = el; }}
+                  className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 pr-11"
+                />
+                <button
+                  type="button"
+                  onClick={openDateTimePicker}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 rounded bg-slate-800 px-2 py-1 text-xs text-slate-200 hover:bg-slate-700"
+                  title="Apri selettore data"
+                  aria-label="Apri selettore data"
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                </button>
+              </div>
             </label>
             <label className="text-sm text-slate-300">
               {t("trade_detail.exit_price")}

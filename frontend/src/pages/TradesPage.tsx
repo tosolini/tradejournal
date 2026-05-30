@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { ApiError, RecentExecution, Trade, api } from "../lib/api";
+import { ConfirmModal } from "../components/ConfirmModal";
 
 function asNumber(value: string | number | undefined): number {
   if (value === undefined) {
@@ -284,6 +285,7 @@ export function TradesPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deletePendingId, setDeletePendingId] = useState<number | null>(null);
   const [quickCloseTradeId, setQuickCloseTradeId] = useState<number | null>(null);
   const [quickClosePrice, setQuickClosePrice] = useState<string>("");
   const [quickCloseReason, setQuickCloseReason] = useState<"manual" | "take_profit" | "stop_loss">("manual");
@@ -896,8 +898,20 @@ export function TradesPage() {
 
               return (
               <tr key={trade.id} className="border-b border-slate-800/80">
-                <td className="px-3 py-2">{new Date(trade.created_at).toLocaleDateString()}</td>
-                <td className="px-3 py-2 font-semibold text-teal-200">{trade.symbol}</td>
+                <td
+                  className="cursor-pointer px-3 py-2 hover:text-teal-300"
+                  onClick={() => navigate(`/trades/${trade.id}`)}
+                  title={t("trades.view_trade") ?? "Visualizza trade"}
+                >
+                  {new Date(trade.created_at).toLocaleDateString()}
+                </td>
+                <td
+                  className="cursor-pointer px-3 py-2 font-semibold text-teal-200 hover:text-teal-100 hover:underline"
+                  onClick={() => navigate(`/trades/${trade.id}`)}
+                  title={t("trades.view_trade") ?? "Visualizza trade"}
+                >
+                  {trade.symbol}
+                </td>
                 <td className="px-3 py-2">{trade.status}</td>
                 <td className="px-3 py-2">{trade.side}</td>
                 {visibleOptionalColumns.avgEntry ? <td className="px-3 py-2">{formatMoney(trade.average_entry_price, trade.account_currency)}</td> : null}
@@ -984,18 +998,9 @@ export function TradesPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={async () => {
+                      onClick={() => {
                         setDeleteError(null);
-                        const confirmed = window.confirm(t("trades.delete_confirm", { id: trade.id, symbol: trade.symbol }));
-                        if (!confirmed) {
-                          return;
-                        }
-                        try {
-                          await deleteTrade.mutateAsync(trade.id);
-                          qc.invalidateQueries({ queryKey: ["recent-executions"] });
-                        } catch (err) {
-                          setDeleteError(parseApiError(err));
-                        }
+                        setDeletePendingId(trade.id);
                       }}
                       className="rounded bg-red-500 p-2 text-white"
                       title={t("trades.delete_trade")}
@@ -1018,6 +1023,26 @@ export function TradesPage() {
         </table>
         {deleteError ? <div className="p-3 text-sm text-red-400">{deleteError}</div> : null}
       </section>
+      {deletePendingId !== null && (() => {
+        const trade = data?.find((tr) => tr.id === deletePendingId);
+        return (
+          <ConfirmModal
+            message={t("trades.delete_confirm", { id: deletePendingId, symbol: trade?.symbol ?? "" })}
+            onConfirm={async () => {
+              try {
+                await deleteTrade.mutateAsync(deletePendingId);
+                qc.invalidateQueries({ queryKey: ["recent-executions"] });
+              } catch (err) {
+                setDeleteError(parseApiError(err));
+              } finally {
+                setDeletePendingId(null);
+              }
+            }}
+            onCancel={() => setDeletePendingId(null)}
+            isPending={deleteTrade.isPending}
+          />
+        );
+      })()}
     </div>
   );
 }

@@ -13,6 +13,7 @@ from app.schemas import (
     UserPreferencesResponse,
     UserPreferencesUpdate,
     UserResponse,
+    UserUpdate,
 )
 from app.security import create_access_token, hash_password, verify_password
 
@@ -70,6 +71,37 @@ def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)
 
 @router.get("/me", response_model=UserResponse)
 def me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
+@router.patch("/me", response_model=UserResponse)
+def update_me(
+    payload: UserUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if payload.new_password:
+        if not payload.current_password:
+            raise localized_error(status_code=400, code="errors.current_password_required")
+        if not verify_password(payload.current_password, current_user.hashed_password):
+            raise localized_error(status_code=400, code="errors.invalid_credentials", request=request)
+        current_user.hashed_password = hash_password(payload.new_password)
+
+    if payload.email and payload.email != current_user.email:
+        conflict = db.execute(select(User).where(User.email == payload.email)).scalar_one_or_none()
+        if conflict:
+            raise localized_error(status_code=400, code="errors.user_already_exists")
+        current_user.email = payload.email
+
+    if payload.username and payload.username != current_user.username:
+        conflict = db.execute(select(User).where(User.username == payload.username)).scalar_one_or_none()
+        if conflict:
+            raise localized_error(status_code=400, code="errors.user_already_exists")
+        current_user.username = payload.username
+
+    db.commit()
+    db.refresh(current_user)
     return current_user
 
 

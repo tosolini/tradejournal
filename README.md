@@ -24,8 +24,8 @@ The entire project is meant to be used on localhost or private networks. **Do no
 
 ## Current version
 
-- Backend: `0.1.0` (`backend/pyproject.toml`)
-- Frontend: `0.1.0` (`frontend/package.json`)
+- Backend: `0.1.2` (`backend/pyproject.toml`)
+- Frontend: `0.1.2` (`frontend/package.json`)
 
 ## Quick start
 

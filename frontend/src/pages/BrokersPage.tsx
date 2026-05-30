@@ -5,6 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
 import { ApiError, Broker, api } from "../lib/api";
+import { ConfirmModal } from "../components/ConfirmModal";
 
 const brokerSchema = z.object({
   name: z.string().trim().min(2, "Inserisci un nome broker valido"),
@@ -67,6 +68,8 @@ export function BrokersPage() {
   const [editFeeCurrency, setEditFeeCurrency] = useState("EUR");
   const [editCapitalGainMode, setEditCapitalGainMode] = useState<"immediate" | "year_end">("immediate");
   const [editCapitalGainRate, setEditCapitalGainRate] = useState(26);
+  const [deletePendingId, setDeletePendingId] = useState<number | null>(null);
+
 
   const { data, isLoading } = useQuery({
     queryKey: ["brokers"],
@@ -427,16 +430,10 @@ export function BrokersPage() {
                       <button
                         type="button"
                         className="rounded bg-red-500 p-2 text-white"
-                        onClick={async () => {
+                        onClick={() => {
                           setRowError(null);
                           setRowSuccess(null);
-                          const confirmed = window.confirm(
-                            t("brokers.confirm_delete", { id: broker.id, name: broker.name })
-                          );
-                          if (!confirmed) {
-                            return;
-                          }
-                          await deleteBroker.mutateAsync(broker.id);
+                          setDeletePendingId(broker.id);
                         }}
                         title="Elimina broker"
                         aria-label="Elimina broker"
@@ -459,6 +456,17 @@ export function BrokersPage() {
         {rowError ? <div className="px-4 py-3 text-sm text-red-400">{rowError}</div> : null}
         {rowSuccess ? <div className="px-4 py-3 text-sm text-emerald-300">{rowSuccess}</div> : null}
       </section>
+      {deletePendingId !== null && (() => {
+        const broker = data?.find((b) => b.id === deletePendingId);
+        return (
+          <ConfirmModal
+            message={t("brokers.confirm_delete", { id: deletePendingId, name: broker?.name ?? "" })}
+            onConfirm={() => { deleteBroker.mutate(deletePendingId); setDeletePendingId(null); }}
+            onCancel={() => setDeletePendingId(null)}
+            isPending={deleteBroker.isPending}
+          />
+        );
+      })()}
     </div>
   );
 }

@@ -1,11 +1,13 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { AccountsPage } from "./pages/AccountsPage";
+import { AssetsPage } from "./pages/AssetsPage";
 import { BrokersPage } from "./pages/BrokersPage";
 import { CalendarPage } from "./pages/CalendarPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotesPage } from "./pages/NotesPage";
+import { PortfolioPage } from "./pages/PortfolioPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { TradeDetailPage } from "./pages/TradeDetailPage";
 import { TradeEditPage } from "./pages/TradeEditPage";
@@ -33,6 +35,8 @@ export default function App() {
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/accounts" element={<AccountsPage />} />
+                <Route path="/portfolio" element={<PortfolioPage />} />
+                <Route path="/assets" element={<AssetsPage />} />
                 <Route path="/trades" element={<TradesPage />} />
                 <Route path="/trades/:tradeId" element={<TradeDetailPage />} />
                 <Route path="/trades/:tradeId/edit" element={<TradeEditPage />} />

@@ -21,14 +21,29 @@ export function Layout({ children }: PropsWithChildren) {
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [isLightTheme, setIsLightTheme] = useState(prefersLightTheme);
 
-  const links = [
-    { to: "/", label: t("layout.nav.dashboard") },
-    { to: "/calendar", label: t("layout.nav.calendar") },
-    { to: "/accounts", label: t("layout.nav.accounts") },
-    { to: "/trades", label: t("layout.nav.trades") },
-    { to: "/stats", label: t("layout.nav.stats") },
-    { to: "/notes", label: t("layout.nav.notes") },
-    { to: "/settings", label: t("layout.nav.settings") },
+  const navGroups = [
+    {
+      items: [
+        { to: "/", label: t("layout.nav.dashboard") },
+        { to: "/calendar", label: t("layout.nav.calendar") },
+        { to: "/trades", label: t("layout.nav.trades") },
+        { to: "/notes", label: t("layout.nav.notes") },
+      ],
+    },
+    {
+      label: t("layout.nav.section_investments"),
+      items: [
+        { to: "/portfolio", label: t("layout.nav.portfolio") },
+        { to: "/assets", label: t("layout.nav.assets") },
+      ],
+    },
+    {
+      label: t("layout.nav.section_settings"),
+      items: [
+        { to: "/accounts", label: t("layout.nav.accounts") },
+        { to: "/settings", label: t("layout.nav.settings") },
+      ],
+    },
   ];
 
   useEffect(() => {
@@ -55,21 +70,37 @@ export function Layout({ children }: PropsWithChildren) {
             <img src={bullVectLogo} alt="Bull logo" className="h-6 w-6 object-contain" loading="eager" />
             <span className="titlelogo">TradeJournal</span>
           </div>
-          <nav className="space-y-2">
-            {links.map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                className={({ isActive }) =>
-                  `block rounded-lg px-3 py-2 text-sm transition ${
-                    isActive
-                      ? "bg-teal-500/20 text-teal-200"
-                      : "text-slate-300 hover:bg-slate-800/80"
-                  }`
-                }
-              >
-                {link.label}
-              </NavLink>
+          <nav className="space-y-4">
+            {navGroups.map((group, groupIndex) => (
+              <div key={groupIndex}>
+                {group.label ? (
+                  <div className="mb-1 flex items-center gap-2 px-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                      {group.label}
+                    </span>
+                    <div className="h-px flex-1 bg-slate-700/60" />
+                  </div>
+                ) : groupIndex > 0 ? (
+                  <div className="border-t border-slate-700/40" />
+                ) : null}
+                <div className="space-y-1">
+                  {group.items.map((link) => (
+                    <NavLink
+                      key={link.to}
+                      to={link.to}
+                      className={({ isActive }) =>
+                        `block rounded-lg px-3 py-2 text-sm transition ${
+                          isActive
+                            ? "bg-teal-500/20 text-teal-200"
+                            : "text-slate-300 hover:bg-slate-800/80"
+                        }`
+                      }
+                    >
+                      {link.label}
+                    </NavLink>
+                  ))}
+                </div>
+              </div>
             ))}
           </nav>
           <div className="mt-6 border-t border-slate-700/60 pt-4">
