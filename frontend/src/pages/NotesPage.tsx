@@ -1,8 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
+import DOMPurify from "dompurify";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 import { TagInput } from "../components/TagInput";
 import { ConfirmModal } from "../components/ConfirmModal";
 import { api } from "../lib/api";
@@ -52,6 +55,31 @@ const VOLATILITY_OPTIONS = [
 ];
 
 const MAX_FILTER_TAGS_VISIBLE = 24;
+const QUILL_MODULES = {
+  toolbar: [
+    [{ header: [1, 2, 3, false] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    [{ align: [] }],
+    ["blockquote", "code-block"],
+    ["link"],
+    ["clean"],
+  ],
+};
+
+const QUILL_FORMATS = [
+  "header",
+  "bold",
+  "italic",
+  "underline",
+  "strike",
+  "list",
+  "bullet",
+  "align",
+  "blockquote",
+  "code-block",
+  "link",
+];
 
 function parseMarketConditionTags(value?: string | null): string[] {
   if (!value) {
@@ -126,7 +154,7 @@ export function NotesPage() {
     if (typeof pickerInput.showPicker === "function") pickerInput.showPicker();
   };
 
-  const { register, handleSubmit, reset, watch, setValue } = useForm<NotePayload>({
+  const { control, register, handleSubmit, reset, watch, setValue } = useForm<NotePayload>({
     defaultValues: {
       note_date: new Date().toISOString().slice(0, 10),
       mood: "stale",
@@ -661,7 +689,16 @@ export function NotesPage() {
                 </div> */}
                 <div className="rounded border border-slate-700/70 dark:border-slate-200 bg-slate-900/60 dark:bg-slate-50 px-2 py-1 md:col-span-2">
                   <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t("notes.notes")}</div>
-                  <div className="mt-1 whitespace-pre-wrap text-slate-300 dark:text-slate-900">{note.rich_text || t("notes.no_details")}</div>
+                  {note.rich_text ? (
+                    <div
+                      className="notes-rich-content mt-1 text-slate-300 dark:text-slate-900"
+                      dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(note.rich_text),
+                      }}
+                    />
+                  ) : (
+                    <div className="mt-1 text-slate-300 dark:text-slate-900">{t("notes.no_details")}</div>
+                  )}
                 </div>
               </div>
             </article>
@@ -752,7 +789,22 @@ export function NotesPage() {
                 ))}
               </select>
               <input {...register("short_summary")} placeholder={t("notes.short_summary")} className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2" />
-              <textarea {...register("rich_text")} rows={6} placeholder={t("notes.notes")} className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2" />
+              <Controller
+                control={control}
+                name="rich_text"
+                render={({ field }) => (
+                  <div className="notes-quill overflow-hidden rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white">
+                    <ReactQuill
+                      theme="snow"
+                      value={field.value || ""}
+                      onChange={(value) => field.onChange(value)}
+                      modules={QUILL_MODULES}
+                      formats={QUILL_FORMATS}
+                      placeholder={t("notes.rich_editor_placeholder")}
+                    />
+                  </div>
+                )}
+              />
 
               <div className="flex justify-end gap-2 pt-1">
                 <button
