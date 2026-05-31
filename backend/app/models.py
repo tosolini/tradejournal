@@ -93,7 +93,7 @@ class Account(TimestampMixin, Base):
     owner: Mapped[User] = relationship(back_populates="accounts")
     broker: Mapped[Optional[Broker]] = relationship(back_populates="accounts")
     trades: Mapped[list["Trade"]] = relationship(back_populates="account")
-    holdings: Mapped[list["Holding"]] = relationship(back_populates="account")
+    holdings: Mapped[list["Holding"]] = relationship(back_populates="account", cascade="all, delete-orphan")
 
 
 class Trade(TimestampMixin, Base):

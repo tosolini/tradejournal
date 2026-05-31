@@ -29,6 +29,8 @@ The entire project is meant to be used on localhost or private networks. **Do no
 - Backend: `0.1.4` (`backend/pyproject.toml`)
 - Frontend: `0.1.4` (`frontend/package.json`)
 
+more details on change log and versioning strategy in the [CHANGELOG.md](CHANGELOG.md) file.
+
 ## Quick start
 
 1. Copy the env file.

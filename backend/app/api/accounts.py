@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, Request
-from sqlalchemy import select
+from sqlalchemy import delete as sql_delete, select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.deps import get_current_user
 from app.i18n import localized_error
-from app.models import Account, Broker, Trade, User
+from app.models import Account, Broker, CashLedgerEntry, PortfolioSnapshot, PositionDailySnapshot, Trade, User
 from app.schemas import AccountCreate, AccountResponse, AccountUpdate
 
 router = APIRouter(prefix="/api/accounts", tags=["accounts"])
@@ -100,6 +100,9 @@ def delete_account(
             request=request,
         )
 
+    db.execute(sql_delete(PositionDailySnapshot).where(PositionDailySnapshot.account_id == account_id))
+    db.execute(sql_delete(CashLedgerEntry).where(CashLedgerEntry.account_id == account_id))
+    db.execute(sql_delete(PortfolioSnapshot).where(PortfolioSnapshot.account_id == account_id))
     db.delete(account)
     db.commit()
     return {"deleted": True, "account_id": account_id}
