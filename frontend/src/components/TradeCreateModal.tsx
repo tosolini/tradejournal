@@ -1,10 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Account, Broker, Trade, api } from "../lib/api";
+import { Account, Broker, Ticker, Trade, api, tickersApi } from "../lib/api";
 
 const createTradeModalSchema = (t: (key: string) => string) =>
   z.object({
@@ -38,7 +38,11 @@ function inferAction(direction: "long" | "short", executionType: "open" | "close
   return direction === "long" ? "SELL" : "BUY";
 }
 
-function FieldHelp({ text }: { text: string }) {
+function FieldHelp({ text, align = "center" }: { text: string; align?: "center" | "start" }) {
+  const tooltipPos =
+    align === "start"
+      ? "left-0 -translate-x-0"
+      : "left-1/2 -translate-x-1/2";
   return (
     <span className="group relative ml-1 inline-flex">
       <span
@@ -50,7 +54,7 @@ function FieldHelp({ text }: { text: string }) {
       </span>
       <span
         role="tooltip"
-        className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 w-56 -translate-x-1/2 rounded border border-slate-600 bg-slate-800 dark:bg-slate-100 px-2 py-1 text-xs leading-snug text-slate-100 dark:text-slate-900 opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+        className={`pointer-events-none absolute ${tooltipPos} top-full z-30 mt-2 w-56 rounded border border-slate-600 bg-slate-800 dark:bg-slate-100 px-2 py-1 text-xs leading-snug text-slate-100 dark:text-slate-900 opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-within:opacity-100`}
       >
         {text}
       </span>
@@ -62,6 +66,47 @@ export function TradeCreateModal({ open, onClose }: Props) {
   const { t, i18n } = useTranslation();
   const tradeModalSchema = useMemo(() => createTradeModalSchema(t), [t]);
   const qc = useQueryClient();
+
+  // Symbol autocomplete state
+  const [symbolInput, setSymbolInput] = useState("");
+  const [symbolSuggestions, setSymbolSuggestions] = useState<Ticker[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const symbolDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const symbolContainerRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (symbolContainerRef.current && !symbolContainerRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  async function handleSymbolInput(value: string) {
+    setSymbolInput(value);
+    setValue("symbol", value.toUpperCase());
+    if (symbolDebounceRef.current) clearTimeout(symbolDebounceRef.current);
+    if (value.trim().length < 1) {
+      setSymbolSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    symbolDebounceRef.current = setTimeout(async () => {
+      const results = await tickersApi.search(value, 8);
+      setSymbolSuggestions(results);
+      setShowSuggestions(results.length > 0);
+    }, 300);
+  }
+
+  function selectSymbol(ticker: Ticker) {
+    setSymbolInput(ticker.symbol);
+    setValue("symbol", ticker.symbol, { shouldValidate: true });
+    setShowSuggestions(false);
+  }
+
   const { data: accounts } = useQuery({
     queryKey: ["accounts"],
     queryFn: () => api<Account[]>("/api/accounts"),
@@ -78,6 +123,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
     handleSubmit,
     watch,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<TradeModalPayload>({
     resolver: zodResolver(tradeModalSchema),
@@ -125,6 +171,8 @@ export function TradeCreateModal({ open, onClose }: Props) {
       qc.invalidateQueries({ queryKey: ["trades"] });
       qc.invalidateQueries({ queryKey: ["recent-executions"] });
       reset();
+      setSymbolInput("");
+      setSymbolSuggestions([]);
       onClose();
     },
   });
@@ -202,7 +250,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
             <label className="text-sm text-slate-300 dark:text-slate-900">
               <span className="inline-flex items-center mb-1">
                 {t("trades.new_trade.labels.account")}
-                <FieldHelp text={t("trades.new_trade.tooltips.account")} />
+                <FieldHelp text={t("trades.new_trade.tooltips.account")} align="start" />
               </span>
               <select
                 {...register("account_id", { valueAsNumber: true })}
@@ -215,18 +263,47 @@ export function TradeCreateModal({ open, onClose }: Props) {
               </select>
               {errors.account_id ? <span className="mt-1 block text-xs text-red-300">{errors.account_id.message}</span> : null}
             </label>
-            <label className="text-sm text-slate-300 dark:text-slate-900">
+            <div className="text-sm text-slate-300 dark:text-slate-900" ref={symbolContainerRef}>
               <span className="inline-flex items-center mb-1">
                 {t("trades.new_trade.labels.symbol")}
                 <FieldHelp text={t("trades.new_trade.tooltips.symbol")} />
               </span>
-              <input
-                {...register("symbol")}
-                className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 uppercase"
-                placeholder={t("trades.new_trade.placeholders.symbol")}
-              />
+              {/* Hidden field for react-hook-form validation */}
+              <input type="hidden" {...register("symbol")} />
+              <div className="relative">
+                <input
+                  type="text"
+                  value={symbolInput}
+                  onChange={(e) => handleSymbolInput(e.target.value)}
+                  onFocus={() => symbolSuggestions.length > 0 && setShowSuggestions(true)}
+                  className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 uppercase"
+                  placeholder={t("trades.new_trade.placeholders.symbol")}
+                  autoComplete="off"
+                />
+                {showSuggestions && (
+                  <ul className="absolute left-0 top-full z-50 mt-1 w-full max-h-48 overflow-y-auto rounded border border-slate-600 dark:border-slate-300 bg-slate-900 dark:bg-white shadow-xl">
+                    {symbolSuggestions.map((tk) => (
+                      <li
+                        key={tk.id}
+                        onMouseDown={() => selectSymbol(tk)}
+                        className="flex cursor-pointer items-baseline gap-2 px-3 py-2 hover:bg-slate-700/60 dark:hover:bg-slate-100"
+                      >
+                        <span className="font-mono font-semibold text-teal-400 dark:text-teal-700 text-sm shrink-0">
+                          {tk.symbol}
+                        </span>
+                        <span className="truncate text-xs text-slate-300 dark:text-slate-600">
+                          {tk.name}
+                        </span>
+                        <span className="ml-auto shrink-0 text-[10px] text-slate-500 dark:text-slate-400">
+                          {tk.market}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
               {errors.symbol ? <span className="mt-1 block text-xs text-red-300">{errors.symbol.message}</span> : null}
-            </label>
+            </div>
           </div>
 
           {/* Quantità + Prezzo ingresso */}
@@ -234,7 +311,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
             <label className="text-sm text-slate-300 dark:text-slate-900">
               <span className="inline-flex items-center mb-1">
                 {t("trades.new_trade.labels.quantity")}
-                <FieldHelp text={t("trades.new_trade.tooltips.quantity")} />
+                <FieldHelp text={t("trades.new_trade.tooltips.quantity")} align="start" />
               </span>
               <input
                 type="number"
@@ -264,7 +341,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
             <label className="text-sm text-slate-300 dark:text-slate-900">
               <span className="inline-flex items-center mb-1">
                 {t("trades.new_trade.labels.direction")}
-                <FieldHelp text={t("trades.new_trade.tooltips.direction")} />
+                <FieldHelp text={t("trades.new_trade.tooltips.direction")} align="start" />
               </span>
               <select {...register("direction")} className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2">
                 <option value="long">{t("trades.new_trade.options.direction.long")}</option>
@@ -290,7 +367,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
             <label className="text-sm text-slate-300 dark:text-slate-900">
               <span className="inline-flex items-center mb-1">
                 {t("trades.new_trade.labels.take_profit")}
-                <FieldHelp text={t("trades.new_trade.tooltips.take_profit")} />
+                <FieldHelp text={t("trades.new_trade.tooltips.take_profit")} align="start" />
               </span>
               <input
                 type="number"
@@ -312,7 +389,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
             <label className="text-sm text-slate-300 dark:text-slate-900">
               <span className="inline-flex items-center mb-1">
                 {t("trades.new_trade.labels.stop_loss")}
-                <FieldHelp text={t("trades.new_trade.tooltips.stop_loss")} />
+                <FieldHelp text={t("trades.new_trade.tooltips.stop_loss")} align="start" />
               </span>
               <input
                 type="number"
@@ -346,7 +423,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
             <label className="flex-1 text-sm text-slate-300 dark:text-slate-900">
               <span className="inline-flex items-center mb-1">
                 {t("trades.new_trade.labels.execution")}
-                <FieldHelp text={t("trades.new_trade.tooltips.execution_type")} />
+                <FieldHelp text={t("trades.new_trade.tooltips.execution_type")} align="start" />
               </span>
               <select {...register("execution_type")} className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2">
                 <option value="open">{t("trades.new_trade.options.execution.open")}</option>

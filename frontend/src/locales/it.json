@@ -10,6 +10,9 @@
       "stats": "Statistiche",
       "notes": "Note",
       "settings": "Impostazioni",
+      "brokers": "Broker",
+      "tickers": "Ticker",
+      "help": "Guida",
       "section_investments": "ETF & Obbligazioni",
       "section_settings": "Impostazioni"
     },
@@ -52,9 +55,11 @@
     },
     "account": {
       "title": "Il tuo account",
-      "description": "Modifica username, email e password del tuo profilo.",
+      "description": "Modifica username, email, fuso orario e password del tuo profilo.",
       "username": "Username",
       "email": "Email",
+      "timezone": "Fuso orario",
+      "timezone_placeholder": "— Seleziona fuso orario —",
       "change_password": "Cambia password",
       "current_password": "Password attuale",
       "new_password": "Nuova password",
@@ -87,6 +92,27 @@
       "save_error": "Errore durante il salvataggio."
     }
   },
+  "tickers": {
+    "page_title": "Ticker",
+    "page_subtitle": "Importa i ticker di mercato per l'autocompletamento del simbolo nel nuovo trade.",
+    "import_title": "Importa CSV",
+    "import_hint": "File CSV Euronext (separatore: ;). Prima riga = intestazione, righe 2-4 = metadati, dati dal rigo 5.",
+    "import_btn": "Importa",
+    "import_clear_btn": "Svuota e reimporta",
+    "import_success": "Importazione completata: {{imported}} nuovi, {{updated}} aggiornati, {{skipped}} saltati. Totale in DB: {{total}}.",
+    "import_error": "Errore durante l'importazione.",
+    "db_count": "{{total}} ticker nel database",
+    "db_empty": "Nessun ticker ancora importato.",
+    "clear_confirm": "Vuoi davvero eliminare tutti i ticker? L'operazione non è reversibile.",
+    "clear_success": "Database ticker svuotato.",
+    "search_placeholder": "Cerca per simbolo o nome...",
+    "col_symbol": "Simbolo",
+    "col_name": "Nome",
+    "col_isin": "ISIN",
+    "col_market": "Mercato",
+    "col_currency": "Valuta",
+    "no_results": "Nessun risultato."
+  },
   "brokers": {
     "page_title": "Impostazioni - Brokers",
     "page_subtitle": "Gestisci l'anagrafica broker da associare agli account.",
@@ -101,7 +127,32 @@
     "success_deleted": "Broker eliminato.",
     "error_generic": "Operazione non riuscita",
     "error_invalid_name": "Inserisci un nome broker valido",
-    "confirm_delete": "Eliminare broker #{{id}} ({{name}})?"
+    "confirm_delete": "Eliminare broker #{{id}} ({{name}})?",
+    "tab_brokers": "Broker",
+    "tab_markets": "Mercati",
+    "markets_title": "Gestione Mercati",
+    "markets_subtitle": "Censisci i mercati disponibili da associare ai broker.",
+    "exchange_name": "Nome mercato",
+    "exchange_mic": "MIC",
+    "exchange_suffix": "Suffisso ticker",
+    "exchange_country": "Paese",
+    "exchange_currency": "Valuta",
+    "exchange_timezone": "Fuso orario",
+    "exchange_open": "Apertura",
+    "exchange_close": "Chiusura",
+    "exchange_add": "Aggiungi mercato",
+    "exchange_empty": "Nessun mercato presente.",
+    "exchange_loading": "Caricamento mercati...",
+    "exchange_success_added": "Mercato aggiunto con successo.",
+    "exchange_success_updated": "Mercato aggiornato.",
+    "exchange_success_deleted": "Mercato eliminato.",
+    "exchange_confirm_delete": "Eliminare il mercato #{{id}} ({{name}})?",
+    "exchange_linked": "Mercato collegato al broker.",
+    "exchange_unlinked": "Mercato scollegato dal broker.",
+    "markets_column": "Mercati",
+    "exchange_seed_directa": "Importa mercati Directa",
+    "exchange_seed_directa_hint": "Importa i mercati standard di Directa SIM (salta quelli già presenti)",
+    "exchange_seed_directa_success": "Mercati Directa importati con successo."
   },
   "accounts": {
     "page_title": "Accounts e Portafogli",
@@ -139,6 +190,8 @@
   },
   "calendar": {
     "title": "Calendario",
+    "tab_calendar": "Calendario",
+    "tab_markets": "Mercati",
     "prev_month": "Mese precedente",
     "today": "Oggi",
     "next_month": "Mese successivo",
@@ -148,7 +201,14 @@
     "latest_executions": "Ultimi eseguiti",
     "notes": "Note",
     "note_fallback": "Nota",
-    "more_notes": "note"
+    "more_notes": "note",
+    "markets_empty": "Nessun mercato configurato. Importa i mercati dalla sezione Broker → Mercati.",
+    "markets_tz_label": "Fuso orario",
+    "markets_now": "Ora attuale",
+    "markets_open": "Aperto",
+    "markets_upcoming": "Prossimo",
+    "markets_closed": "Chiuso",
+    "markets_holiday": "Chiuso oggi (weekend/festivo)"
   },
   "trade_images": {
     "title": "Immagini Trade #{{id}}",
@@ -483,5 +543,16 @@
     "col_type": "Tipo",
     "col_exchange": "Borsa",
     "col_currency": "Valuta"
+  },
+  "help": {
+    "nav": {
+      "title": "Manuale",
+      "getting_started": "Guida introduttiva",
+      "trades": "Gestione Trade",
+      "accounts": "Conti e Broker",
+      "tickers": "Ticker",
+      "calendar": "Calendario e Mercati",
+      "settings": "Impostazioni"
+    }
   }
 }

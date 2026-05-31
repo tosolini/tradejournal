@@ -21,6 +21,7 @@ class UserResponse(BaseModel):
     email: EmailStr
     username: str
     role: str
+    timezone: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -41,6 +42,7 @@ class UserPreferencesUpdate(BaseModel):
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     username: Optional[str] = None
+    timezone: Optional[str] = None
     current_password: Optional[str] = None
     new_password: Optional[str] = Field(default=None, min_length=8)
 
@@ -102,6 +104,45 @@ class BrokerUpdate(BaseModel):
     capital_gain_rate: Decimal | None = None
 
 
+class ExchangeCreate(BaseModel):
+    name: str
+    mic: str | None = None
+    suffix: str | None = None
+    country: str | None = None
+    currency: str = "EUR"
+    timezone: str | None = None
+    open_time: str | None = None
+    close_time: str | None = None
+    closed_on_weekends: bool = True
+
+
+class ExchangeUpdate(BaseModel):
+    name: str | None = None
+    mic: str | None = None
+    suffix: str | None = None
+    country: str | None = None
+    currency: str | None = None
+    timezone: str | None = None
+    open_time: str | None = None
+    close_time: str | None = None
+    closed_on_weekends: bool | None = None
+
+
+class ExchangeResponse(BaseModel):
+    id: int
+    name: str
+    mic: str | None
+    suffix: str | None
+    country: str | None
+    currency: str
+    timezone: str | None
+    open_time: str | None
+    close_time: str | None
+    closed_on_weekends: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class BrokerResponse(BaseModel):
     id: int
     name: str
@@ -110,6 +151,7 @@ class BrokerResponse(BaseModel):
     fee_currency: str
     capital_gain_mode: str
     capital_gain_rate: Decimal
+    exchanges: list["ExchangeResponse"] = []
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -420,3 +462,21 @@ class PortfolioHistoryPoint(BaseModel):
     value: float
     cost: float
     return_pct: float
+
+
+class TickerResponse(BaseModel):
+    id: int
+    name: str
+    isin: Optional[str] = None
+    symbol: str
+    market: str
+    currency: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TickerImportResult(BaseModel):
+    imported: int
+    updated: int
+    skipped: int
+    total: int

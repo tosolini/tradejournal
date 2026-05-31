@@ -13,6 +13,8 @@ import { TradeDetailPage } from "./pages/TradeDetailPage";
 import { TradeEditPage } from "./pages/TradeEditPage";
 import { TradeImagesPage } from "./pages/TradeImagesPage";
 import { TradesPage } from "./pages/TradesPage";
+import TickersPage from "./pages/TickersPage";
+import HelpPage from "./pages/HelpPage";
 
 function Protected({ children }: { children: JSX.Element }) {
   const token = localStorage.getItem("token");
@@ -44,7 +46,11 @@ export default function App() {
                 <Route path="/stats" element={<DashboardPage />} />
                 <Route path="/notes" element={<NotesPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/brokers" element={<BrokersPage />} />
                 <Route path="/settings/brokers" element={<BrokersPage />} />
+                <Route path="/tickers" element={<TickersPage />} />
+                <Route path="/help" element={<HelpPage />} />
+                <Route path="/help/:section" element={<HelpPage />} />
               </Routes>
             </Layout>
           </Protected>

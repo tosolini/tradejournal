@@ -10,6 +10,9 @@
       "stats": "Stats",
       "notes": "Notes",
       "settings": "Settings",
+      "brokers": "Brokers",
+      "tickers": "Tickers",
+      "help": "Help",
       "section_investments": "ETF & Bonds",
       "section_settings": "Settings"
     },
@@ -52,9 +55,11 @@
     },
     "account": {
       "title": "Your Account",
-      "description": "Update your username, email and password.",
+      "description": "Update your username, email, timezone and password.",
       "username": "Username",
       "email": "Email",
+      "timezone": "Timezone",
+      "timezone_placeholder": "— Select timezone —",
       "change_password": "Change password",
       "current_password": "Current password",
       "new_password": "New password",
@@ -87,6 +92,27 @@
       "save_error": "Error while saving."
     }
   },
+  "tickers": {
+    "page_title": "Tickers",
+    "page_subtitle": "Import market tickers for symbol autocomplete when creating a new trade.",
+    "import_title": "Import CSV",
+    "import_hint": "Euronext CSV file (delimiter: ;). First row = header, rows 2-4 = metadata, data from row 5.",
+    "import_btn": "Import",
+    "import_clear_btn": "Clear & re-import",
+    "import_success": "Import complete: {{imported}} new, {{updated}} updated, {{skipped}} skipped. Total in DB: {{total}}.",
+    "import_error": "Error during import.",
+    "db_count": "{{total}} tickers in database",
+    "db_empty": "No tickers imported yet.",
+    "clear_confirm": "Are you sure you want to delete all tickers? This cannot be undone.",
+    "clear_success": "Ticker database cleared.",
+    "search_placeholder": "Search by symbol or name...",
+    "col_symbol": "Symbol",
+    "col_name": "Name",
+    "col_isin": "ISIN",
+    "col_market": "Market",
+    "col_currency": "Currency",
+    "no_results": "No results found."
+  },
   "brokers": {
     "page_title": "Settings - Brokers",
     "page_subtitle": "Manage the broker registry linked to accounts.",
@@ -101,7 +127,32 @@
     "success_deleted": "Broker deleted.",
     "error_generic": "Operation failed",
     "error_invalid_name": "Enter a valid broker name",
-    "confirm_delete": "Delete broker #{{id}} ({{name}})?"
+    "confirm_delete": "Delete broker #{{id}} ({{name}})?",
+    "tab_brokers": "Brokers",
+    "tab_markets": "Markets",
+    "markets_title": "Markets Management",
+    "markets_subtitle": "Manage the available markets to associate with brokers.",
+    "exchange_name": "Market name",
+    "exchange_mic": "MIC",
+    "exchange_suffix": "Ticker suffix",
+    "exchange_country": "Country",
+    "exchange_currency": "Currency",
+    "exchange_timezone": "Timezone",
+    "exchange_open": "Open",
+    "exchange_close": "Close",
+    "exchange_add": "Add market",
+    "exchange_empty": "No markets available.",
+    "exchange_loading": "Loading markets...",
+    "exchange_success_added": "Market added successfully.",
+    "exchange_success_updated": "Market updated.",
+    "exchange_success_deleted": "Market deleted.",
+    "exchange_confirm_delete": "Delete market #{{id}} ({{name}})?",
+    "exchange_linked": "Market linked to broker.",
+    "exchange_unlinked": "Market unlinked from broker.",
+    "markets_column": "Markets",
+    "exchange_seed_directa": "Import Directa Markets",
+    "exchange_seed_directa_hint": "Import standard Directa SIM markets (skips existing ones)",
+    "exchange_seed_directa_success": "Directa markets imported successfully."
   },
   "accounts": {
     "page_title": "Accounts and Portfolios",
@@ -139,6 +190,8 @@
   },
   "calendar": {
     "title": "Calendar",
+    "tab_calendar": "Calendar",
+    "tab_markets": "Markets",
     "prev_month": "Previous month",
     "today": "Today",
     "next_month": "Next month",
@@ -148,7 +201,14 @@
     "latest_executions": "Latest executions",
     "notes": "Notes",
     "note_fallback": "Note",
-    "more_notes": "notes"
+    "more_notes": "notes",
+    "markets_empty": "No markets configured. Import markets from Broker → Markets.",
+    "markets_tz_label": "Timezone",
+    "markets_now": "Current time",
+    "markets_open": "Open",
+    "markets_upcoming": "Upcoming",
+    "markets_closed": "Closed",
+    "markets_holiday": "Closed today (weekend/holiday)"
   },
   "trade_images": {
     "title": "Trade Images #{{id}}",
@@ -483,5 +543,16 @@
     "col_type": "Type",
     "col_exchange": "Exchange",
     "col_currency": "Currency"
+  },
+  "help": {
+    "nav": {
+      "title": "Manual",
+      "getting_started": "Getting Started",
+      "trades": "Managing Trades",
+      "accounts": "Accounts & Brokers",
+      "tickers": "Tickers",
+      "calendar": "Calendar & Markets",
+      "settings": "Settings"
+    }
   }
 }

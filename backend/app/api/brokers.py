@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
 from app.deps import get_current_user
@@ -68,6 +68,7 @@ def create_broker(
     db.add(broker)
     db.commit()
     db.refresh(broker)
+    broker = db.execute(select(Broker).options(selectinload(Broker.exchanges)).where(Broker.id == broker.id)).scalar_one()
     return broker
 
 
@@ -76,7 +77,9 @@ def list_brokers(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return db.execute(select(Broker).where(Broker.user_id == current_user.id)).scalars().all()
+    return db.execute(
+        select(Broker).options(selectinload(Broker.exchanges)).where(Broker.user_id == current_user.id)
+    ).scalars().all()
 
 
 @router.patch("/{broker_id}", response_model=BrokerResponse)
@@ -116,6 +119,7 @@ def update_broker(
 
     db.commit()
     db.refresh(broker)
+    broker = db.execute(select(Broker).options(selectinload(Broker.exchanges)).where(Broker.id == broker.id)).scalar_one()
     return broker
 
 

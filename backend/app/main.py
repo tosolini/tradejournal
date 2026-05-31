@@ -4,8 +4,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import inspect, text
 
-from app.api import accounts, assets, auth, admin, brokers, calendar, dashboard, holdings, notes, portfolio, snapshots, trades, uploads
-from app.bootstrap import ensure_seed_admin
+from app.api import accounts, assets, auth, admin, brokers, calendar, dashboard, exchanges, holdings, notes, portfolio, snapshots, tickers, trades, uploads
+from app.bootstrap import ensure_seed_admin, ensure_seed_exchanges
 from app.config import settings
 from app.database import Base, engine
 from app.scheduler import start_scheduler, stop_scheduler
@@ -19,19 +19,20 @@ def ensure_runtime_schema_compatibility() -> None:
         user_columns = {column["name"] for column in inspector.get_columns("users")}
         with engine.begin() as conn:
             if "preferences" not in user_columns:
-                conn.execute(text("ALTER TABLE users ADD COLUMN preferences JSONB DEFAULT '{}'::jsonb"))
-                conn.execute(text("UPDATE users SET preferences = '{}'::jsonb WHERE preferences IS NULL"))
-                conn.execute(text("ALTER TABLE users ALTER COLUMN preferences SET NOT NULL"))
+                conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS preferences JSONB NOT NULL DEFAULT '{}'::jsonb"))
+            if "timezone" not in user_columns:
+                conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone VARCHAR(64)"))
+
+    if "accounts" not in table_names:
+        return
 
     if "accounts" not in table_names:
         return
 
     account_columns = {column["name"] for column in inspector.get_columns("accounts")}
-    if "broker_id" in account_columns:
-        pass
-    else:
+    if "broker_id" not in account_columns:
         with engine.begin() as conn:
-            conn.execute(text("ALTER TABLE accounts ADD COLUMN broker_id INTEGER"))
+            conn.execute(text("ALTER TABLE accounts ADD COLUMN IF NOT EXISTS broker_id INTEGER"))
 
     if "brokers" not in table_names:
         return
@@ -39,25 +40,15 @@ def ensure_runtime_schema_compatibility() -> None:
     broker_columns = {column["name"] for column in inspector.get_columns("brokers")}
     with engine.begin() as conn:
         if "fee_mode" not in broker_columns:
-            conn.execute(text("ALTER TABLE brokers ADD COLUMN fee_mode VARCHAR(16) DEFAULT 'fixed'"))
-            conn.execute(text("UPDATE brokers SET fee_mode = 'fixed' WHERE fee_mode IS NULL"))
-            conn.execute(text("ALTER TABLE brokers ALTER COLUMN fee_mode SET NOT NULL"))
+            conn.execute(text("ALTER TABLE brokers ADD COLUMN IF NOT EXISTS fee_mode VARCHAR(16) NOT NULL DEFAULT 'fixed'"))
         if "fee_value" not in broker_columns:
-            conn.execute(text("ALTER TABLE brokers ADD COLUMN fee_value NUMERIC(18, 6) DEFAULT 0"))
-            conn.execute(text("UPDATE brokers SET fee_value = 0 WHERE fee_value IS NULL"))
-            conn.execute(text("ALTER TABLE brokers ALTER COLUMN fee_value SET NOT NULL"))
+            conn.execute(text("ALTER TABLE brokers ADD COLUMN IF NOT EXISTS fee_value NUMERIC(18, 6) NOT NULL DEFAULT 0"))
         if "fee_currency" not in broker_columns:
-            conn.execute(text("ALTER TABLE brokers ADD COLUMN fee_currency VARCHAR(8) DEFAULT 'EUR'"))
-            conn.execute(text("UPDATE brokers SET fee_currency = 'EUR' WHERE fee_currency IS NULL"))
-            conn.execute(text("ALTER TABLE brokers ALTER COLUMN fee_currency SET NOT NULL"))
+            conn.execute(text("ALTER TABLE brokers ADD COLUMN IF NOT EXISTS fee_currency VARCHAR(8) NOT NULL DEFAULT 'EUR'"))
         if "capital_gain_mode" not in broker_columns:
-            conn.execute(text("ALTER TABLE brokers ADD COLUMN capital_gain_mode VARCHAR(16) DEFAULT 'immediate'"))
-            conn.execute(text("UPDATE brokers SET capital_gain_mode = 'immediate' WHERE capital_gain_mode IS NULL"))
-            conn.execute(text("ALTER TABLE brokers ALTER COLUMN capital_gain_mode SET NOT NULL"))
+            conn.execute(text("ALTER TABLE brokers ADD COLUMN IF NOT EXISTS capital_gain_mode VARCHAR(16) NOT NULL DEFAULT 'immediate'"))
         if "capital_gain_rate" not in broker_columns:
-            conn.execute(text("ALTER TABLE brokers ADD COLUMN capital_gain_rate NUMERIC(5, 2) DEFAULT 26"))
-            conn.execute(text("UPDATE brokers SET capital_gain_rate = 26 WHERE capital_gain_rate IS NULL"))
-            conn.execute(text("ALTER TABLE brokers ALTER COLUMN capital_gain_rate SET NOT NULL"))
+            conn.execute(text("ALTER TABLE brokers ADD COLUMN IF NOT EXISTS capital_gain_rate NUMERIC(5, 2) NOT NULL DEFAULT 26"))
 
     if "trades" not in table_names:
         return
@@ -65,9 +56,34 @@ def ensure_runtime_schema_compatibility() -> None:
     trade_columns = {column["name"] for column in inspector.get_columns("trades")}
     with engine.begin() as conn:
         if "close_reason" not in trade_columns:
-            conn.execute(text("ALTER TABLE trades ADD COLUMN close_reason VARCHAR(32)"))
+            conn.execute(text("ALTER TABLE trades ADD COLUMN IF NOT EXISTS close_reason VARCHAR(32)"))
         if "closed_at" not in trade_columns:
-            conn.execute(text("ALTER TABLE trades ADD COLUMN closed_at TIMESTAMP WITH TIME ZONE"))
+            conn.execute(text("ALTER TABLE trades ADD COLUMN IF NOT EXISTS closed_at TIMESTAMP WITH TIME ZONE"))
+
+    if "exchanges" not in table_names:
+        return
+
+    exchange_columns = {column["name"] for column in inspector.get_columns("exchanges")}
+    with engine.begin() as conn:
+        if "closed_on_weekends" not in exchange_columns:
+            conn.execute(text("ALTER TABLE exchanges ADD COLUMN IF NOT EXISTS closed_on_weekends BOOLEAN NOT NULL DEFAULT TRUE"))
+
+        # Fix stale closed_on_weekends=TRUE for 24/7 exchanges (LMAX and CME)
+        no_weekend_close_names = [
+            "LMAX Forex",
+            "LMAX Criptovalute",
+            "LMAX CFD su Indici",
+            "LMAX Commodities",
+            "CME",
+        ]
+        placeholders = ", ".join(f"'{n}'" for n in no_weekend_close_names)
+        conn.execute(text(
+            f"UPDATE exchanges SET closed_on_weekends = FALSE"
+            f" WHERE name IN ({placeholders}) AND closed_on_weekends = TRUE"
+        ))
+
+    # Ensure tickers table unique constraint exists (created by SQLAlchemy metadata)
+    # The table is created by Base.metadata.create_all, no ALTER needed
 
 
 @asynccontextmanager
@@ -75,11 +91,28 @@ async def lifespan(_app: FastAPI):
     Base.metadata.create_all(bind=engine)
     ensure_runtime_schema_compatibility()
     ensure_seed_admin()
+    _seed_exchanges_for_admin()
     start_scheduler()
     try:
         yield
     finally:
         stop_scheduler()
+
+
+def _seed_exchanges_for_admin() -> None:
+    """Seed Directa exchanges for the admin user at startup if enabled."""
+    if not settings.seed_admin_enabled:
+        return
+    from sqlalchemy import select
+    from app.database import SessionLocal
+    from app.models import User
+
+    with SessionLocal() as db:
+        admin = db.execute(
+            select(User).where(User.username == settings.seed_admin_username)
+        ).scalar_one_or_none()
+        if admin:
+            ensure_seed_exchanges(admin.id)
 
 
 app = FastAPI(title="TradeJournal API", lifespan=lifespan)
@@ -103,6 +136,8 @@ app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(accounts.router)
 app.include_router(brokers.router)
+app.include_router(exchanges.router)
+app.include_router(exchanges.broker_router)
 app.include_router(assets.router)
 app.include_router(holdings.router)
 app.include_router(portfolio.router)
@@ -111,4 +146,5 @@ app.include_router(notes.router)
 app.include_router(uploads.router)
 app.include_router(dashboard.router)
 app.include_router(calendar.router)
+app.include_router(tickers.router)
 app.include_router(snapshots.router)
