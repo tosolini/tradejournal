@@ -206,18 +206,18 @@ export function TradeEditPage() {
   };
 
   if (!tradeId) {
-    return <div className="text-sm text-red-400">{t("trade_edit.invalid_trade")}</div>;
+    return <div className="text-sm text-red-400 dark:text-red-600">{t("trade_edit.invalid_trade")}</div>;
   }
 
   if (isLoading || !data) {
-    return <div className="text-sm text-slate-400">{t("trade_edit.loading")}</div>;
+    return <div className="text-sm text-slate-400 dark:text-slate-900">{t("trade_edit.loading")}</div>;
   }
 
   return (
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-semibold">{t("trade_edit.title", { id: tradeId })}</h1>
-        <p className="text-sm text-slate-400">{t("trade_edit.subtitle")}</p>
+        <p className="text-sm text-slate-400 dark:text-slate-900">{t("trade_edit.subtitle")}</p>
       </div>
 
       <form
@@ -225,11 +225,11 @@ export function TradeEditPage() {
         onSubmit={form.handleSubmit((values) => saveMutation.mutate(values))}
       >
         <div className="grid gap-3 md:grid-cols-4">
-          <label className="text-sm text-slate-300">
+          <label className="text-sm text-slate-300 dark:text-slate-900">
             {t("trade_edit.fields.symbol")}
-            <input {...form.register("symbol")} className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" />
+            <input {...form.register("symbol")} className="mt-1 w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2" />
           </label>
-          <label className="text-sm text-slate-300">
+          <label className="text-sm text-slate-300 dark:text-slate-900">
             {t("trade_edit.fields.executed_at")}
             <div className="relative mt-1">
               <input
@@ -239,12 +239,12 @@ export function TradeEditPage() {
                   form.register("executed_at").ref(element);
                   executedAtInputRef.current = element;
                 }}
-                className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 pr-11"
+                className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 pr-11"
               />
               <button
                 type="button"
                 onClick={openDateTimePicker}
-                className="absolute right-1 top-1/2 -translate-y-1/2 rounded bg-slate-800 px-2 py-1 text-xs text-slate-200 hover:bg-slate-700"
+                className="absolute right-1 top-1/2 -translate-y-1/2 rounded bg-slate-800 dark:bg-slate-100 px-2 py-1 text-xs text-slate-200 dark:text-slate-900 hover:bg-slate-700"
                 title={t("trade_edit.fields.open_picker")}
                 aria-label={t("trade_edit.fields.open_picker")}
               >
@@ -257,42 +257,42 @@ export function TradeEditPage() {
               </button>
             </div>
           </label>
-          <label className="text-sm text-slate-300">
+          <label className="text-sm text-slate-300 dark:text-slate-900">
             {t("trade_edit.fields.direction")}
-            <select {...form.register("direction")} className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2">
+            <select {...form.register("direction")} className="mt-1 w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2">
               <option value="long">{t("trade_edit.options.long")}</option>
               <option value="short">{t("trade_edit.options.short")}</option>
             </select>
           </label>
-          <label className="text-sm text-slate-300">
+          <label className="text-sm text-slate-300 dark:text-slate-900">
             {t("trade_edit.fields.execution_type")}
-            <select {...form.register("execution_type")} className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2">
+            <select {...form.register("execution_type")} className="mt-1 w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2">
               <option value="open">{t("trade_edit.options.open")}</option>
               <option value="partial">{t("trade_edit.options.partial")}</option>
               <option value="close">{t("trade_edit.options.close")}</option>
             </select>
           </label>
-          <label className="text-sm text-slate-300">
+          <label className="text-sm text-slate-300 dark:text-slate-900">
             {t("trade_edit.fields.quantity")}
-            <input type="number" step="0.000001" {...form.register("quantity")} className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" />
+            <input type="number" step="0.000001" {...form.register("quantity")} className="mt-1 w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2" />
           </label>
         </div>
 
         <div className="grid gap-3 md:grid-cols-4">
-          <label className="text-sm text-slate-300">
+          <label className="text-sm text-slate-300 dark:text-slate-900">
             {t("trade_edit.fields.entry_price")}
-            <input type="number" step="0.000001" {...form.register("entry_price")} className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2" />
+            <input type="number" step="0.000001" {...form.register("entry_price")} className="mt-1 w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2" />
           </label>
-          <div className="text-sm text-slate-300">
+          <div className="text-sm text-slate-300 dark:text-slate-900">
             {t("trade_edit.fields.auto_fee")}
-            <div className="mt-1 rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200">
+            <div className="mt-1 rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 text-sm text-slate-200 dark:text-slate-900">
               {estimatedFee === null
                 ? "-"
                 : `${estimatedFee.value.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 6 })} ${estimatedFee.currency}`}
             </div>
-            <span className="mt-1 block text-xs text-slate-400">{t("trade_edit.fields.auto_fee_hint")}</span>
+            <span className="mt-1 block text-xs text-slate-400 dark:text-slate-900">{t("trade_edit.fields.auto_fee_hint")}</span>
           </div>
-          <label className="text-sm text-slate-300">
+          <label className="text-sm text-slate-300 dark:text-slate-900">
             {t("trade_edit.fields.take_profit")}
             <input type="number" step="0.000001" {...form.register("take_profit")} className="mt-1 w-full rounded border border-emerald-500/50 bg-emerald-500/10 px-3 py-2 text-emerald-200" />
           </label>
@@ -302,7 +302,7 @@ export function TradeEditPage() {
         </div>
 
         <div className="grid gap-3 md:grid-cols-4">
-          <label className="text-sm text-slate-300">
+          <label className="text-sm text-slate-300 dark:text-slate-900">
             {t("trade_edit.fields.stop_loss")}
             <input type="number" step="0.000001" {...form.register("stop_loss")} className="mt-1 w-full rounded border border-red-500/50 bg-red-500/10 px-3 py-2 text-red-200" />
           </label>
@@ -318,7 +318,7 @@ export function TradeEditPage() {
         ) : null}
 
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={() => navigate(`/trades/${tradeId}`)} className="rounded bg-slate-700 px-4 py-2 text-sm font-semibold text-slate-200">
+          <button type="button" onClick={() => navigate(`/trades/${tradeId}`)} className="rounded bg-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 dark:text-slate-900">
             {t("common.cancel")}
           </button>
           <button type="submit" disabled={saveMutation.isPending} className="rounded bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-900">

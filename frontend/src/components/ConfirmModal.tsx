@@ -14,13 +14,13 @@ export function ConfirmModal({ message, confirmLabel, onConfirm, onCancel, isPen
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="w-full max-w-sm rounded-xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
-        <p className="mb-5 text-slate-200">{message}</p>
+        <p className="mb-5 text-slate-200 dark:text-slate-900">{message}</p>
         <div className="flex justify-end gap-3">
           <button
             type="button"
             onClick={onCancel}
             disabled={isPending}
-            className="rounded bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-200 disabled:opacity-50"
+            className="rounded bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-200 dark:text-slate-900 disabled:opacity-50"
           >
             {t("common.cancel")}
           </button>

@@ -414,6 +414,7 @@
     "no_notes_yet": "No notes yet.",
     "no_notes_match": "No notes match current filters.",
     "tag_input_placeholder": "Aggiungi tag e premi invio",
+    "rich_editor_placeholder": "Scrivi i dettagli della tua nota...",
     "rename_tag_prompt": "Nuovo nome tag",
     "delete_tag_confirm": "Eliminare il tag \"{{tag}}\" da tutte le note?",
     "rename_tag_confirm": "Rinomina"

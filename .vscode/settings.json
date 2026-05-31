@@ -1,0 +1,9 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "docker-compose": true,
+        "/^docker --version && which docker && docker ps --format 'table \\{\\{\\.Names\\}\\}\\\\t\\{\\{\\.Status\\}\\}\\\\t\\{\\{\\.Ports\\}\\}'$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

@@ -38,11 +38,18 @@ function ChartPanel() {
     if (!ref.current) {
       return;
     }
+    const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
     const chart = createChart(ref.current, {
       width: ref.current.clientWidth,
       height: 280,
-      layout: { background: { color: "#111827" }, textColor: "#94a3b8" },
-      grid: { vertLines: { color: "#1e293b" }, horzLines: { color: "#1e293b" } },
+      layout: {
+        background: { color: isDark ? '#111827' : '#ffffff' },
+        textColor: isDark ? '#94a3b8' : '#475569',
+      },
+      grid: {
+        vertLines: { color: isDark ? '#1e293b' : '#e2e8f0' },
+        horzLines: { color: isDark ? '#1e293b' : '#e2e8f0' },
+      },
     });
     const series = chart.addAreaSeries({
       lineColor: "#2dd4bf",
@@ -93,13 +100,13 @@ export function DashboardPage() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-semibold">{t("dashboard.title")}</h1>
-        <p className="text-sm text-slate-400">{t("dashboard.subtitle")}</p>
+        <p className="text-sm text-slate-400 dark:text-slate-900">{t("dashboard.subtitle")}</p>
       </div>
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {cards.map((card) => (
           <article key={card.label} className="card p-4">
-            <div className="text-sm text-slate-400">{card.label}</div>
-            <div className="mt-2 text-2xl font-semibold text-teal-200">{card.value}</div>
+            <div className="text-sm text-slate-400 dark:text-slate-900">{card.label}</div>
+            <div className="mt-2 text-2xl font-semibold text-teal-200 dark:text-teal-900">{card.value}</div>
           </article>
         ))}
       </section>

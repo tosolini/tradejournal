@@ -39,21 +39,21 @@ export function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <form onSubmit={handleSubmit(onSubmit)} className="card w-full max-w-md p-6">
-        <h1 className="mb-2 text-2xl font-semibold text-teal-200">TradeJournal</h1>
-        <p className="mb-6 text-sm text-slate-400">{t("login.subtitle")}</p>
+        <h1 className="mb-2 text-2xl font-semibold text-teal-200 dark:text-teal-900">TradeJournal</h1>
+        <p className="mb-6 text-sm text-slate-400 dark:text-slate-900">{t("login.subtitle")}</p>
         <div className="space-y-4">
           <input
             {...register("username_or_email")}
-            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2"
+            className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2"
             placeholder={t("login.username_or_email")}
           />
           <input
             type="password"
             {...register("password")}
-            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2"
+            className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2"
             placeholder={t("login.password")}
           />
-          {error ? <div className="text-sm text-red-400">{error}</div> : null}
+          {error ? <div className="text-sm text-red-400 dark:text-red-600">{error}</div> : null}
           <button className="w-full rounded-lg bg-teal-500 px-3 py-2 font-medium text-slate-900">
             {t("login.submit")}
           </button>

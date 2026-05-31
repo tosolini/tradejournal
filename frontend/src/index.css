@@ -46,3 +46,82 @@ a {
   text-decoration: underline;
   text-underline-offset: 4px;
 }
+
+/* ─── Light theme overrides ──────────────────────────────── */
+[data-theme="light"] {
+  --bg: #f8fafc;
+  --bg-soft: #f1f5f9;
+  --panel: #ffffff;
+  --panel-alt: #f8fafc;
+  --text: #1e293b;
+  --muted: #64748b;
+  --accent: #0d9488;
+  --accent-2: #2563eb;
+  --danger: #dc2626;
+}
+
+[data-theme="light"] body {
+  color: #1e293b;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+[data-theme="light"] .card {
+  background: #ffffff;
+  border: 1px solid rgba(100, 116, 139, 0.2);
+}
+
+.notes-quill .ql-toolbar.ql-snow {
+  border: 0;
+  border-bottom: 1px solid rgba(100, 116, 139, 0.35);
+  background: rgba(15, 23, 42, 0.75);
+}
+
+.notes-quill .ql-container.ql-snow {
+  border: 0;
+  min-height: 170px;
+}
+
+.notes-quill .ql-editor {
+  min-height: 170px;
+  color: #e2e8f0;
+  line-height: 1.55;
+}
+
+.notes-quill .ql-snow .ql-picker,
+.notes-quill .ql-snow .ql-stroke,
+.notes-quill .ql-snow .ql-fill {
+  color: #cbd5e1;
+  stroke: #cbd5e1;
+  fill: #cbd5e1;
+}
+
+.notes-rich-content p {
+  margin: 0.35rem 0;
+}
+
+.notes-rich-content ul,
+.notes-rich-content ol {
+  margin: 0.35rem 0;
+  padding-left: 1.2rem;
+}
+
+.notes-rich-content a {
+  color: #5eead4;
+  text-decoration: underline;
+}
+
+[data-theme="light"] .notes-quill .ql-toolbar.ql-snow {
+  background: #f8fafc;
+}
+
+[data-theme="light"] .notes-quill .ql-editor {
+  color: #1e293b;
+}
+
+[data-theme="light"] .notes-quill .ql-snow .ql-picker,
+[data-theme="light"] .notes-quill .ql-snow .ql-stroke,
+[data-theme="light"] .notes-quill .ql-snow .ql-fill {
+  color: #334155;
+  stroke: #334155;
+  fill: #334155;
+}

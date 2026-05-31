@@ -21,40 +21,40 @@ function OnboardingBanner({ user, onDismiss }: { user: User; onDismiss: () => vo
     <section className="card border border-teal-500/40 bg-teal-500/5 p-4">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-teal-200">{t("settings.onboarding.title")}</h2>
-          <p className="mt-1 text-sm text-slate-400">{t("settings.onboarding.description")}</p>
+          <h2 className="text-lg font-semibold text-teal-200 dark:text-teal-900">{t("settings.onboarding.title")}</h2>
+          <p className="mt-1 text-sm text-slate-400 dark:text-slate-900">{t("settings.onboarding.description")}</p>
         </div>
         <button
           onClick={onDismiss}
-          className="shrink-0 rounded bg-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-600"
+          className="shrink-0 rounded bg-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-200 dark:text-slate-900 hover:bg-slate-600"
         >
           {t("settings.onboarding.dismiss")}
         </button>
       </div>
       {isDefaultAdmin && (
-        <div className="mb-3 rounded border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+        <div className="mb-3 rounded border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200 dark:text-amber-800">
           {t("settings.onboarding.default_credentials_warning")}
         </div>
       )}
       <ol className="space-y-2 text-sm">
         <li className="flex items-center gap-2">
           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-500 text-xs font-bold text-slate-900">✓</span>
-          <span className="text-slate-300">{t("settings.onboarding.step_login")}</span>
+          <span className="text-slate-300 dark:text-slate-900">{t("settings.onboarding.step_login")}</span>
         </li>
         <li className="flex items-center gap-2">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-500 text-xs font-bold text-slate-400">2</span>
-          <span className="text-slate-300">{t("settings.onboarding.step_credentials")}</span>
+          <span className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-500 text-xs font-bold text-slate-400 dark:text-slate-900">2</span>
+          <span className="text-slate-300 dark:text-slate-900">{t("settings.onboarding.step_credentials")}</span>
         </li>
         <li className="flex items-center gap-2">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-500 text-xs font-bold text-slate-400">3</span>
-          <span className="text-slate-300">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-500 text-xs font-bold text-slate-400 dark:text-slate-900">3</span>
+          <span className="text-slate-300 dark:text-slate-900">
             {t("settings.onboarding.step_broker")}{" "}
             <Link to="/settings/brokers" className="text-teal-400 underline">{t("settings.registry.brokers_button")}</Link>
           </span>
         </li>
         <li className="flex items-center gap-2">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-500 text-xs font-bold text-slate-400">4</span>
-          <span className="text-slate-300">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-500 text-xs font-bold text-slate-400 dark:text-slate-900">4</span>
+          <span className="text-slate-300 dark:text-slate-900">
             {t("settings.onboarding.step_account")}{" "}
             <Link to="/accounts" className="text-teal-400 underline">{t("layout.nav.accounts")}</Link>
           </span>
@@ -113,57 +113,57 @@ function AccountSection({ user }: { user: User }) {
   return (
     <section className="card p-4">
       <h2 className="mb-1 text-lg font-semibold">{t("settings.account.title")}</h2>
-      <p className="mb-4 text-sm text-slate-400">{t("settings.account.description")}</p>
+      <p className="mb-4 text-sm text-slate-400 dark:text-slate-900">{t("settings.account.description")}</p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-1 block text-xs text-slate-400">{t("settings.account.username")}</label>
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("settings.account.username")}</label>
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200"
+              className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2 text-sm text-slate-200 dark:text-slate-900"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-400">{t("settings.account.email")}</label>
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("settings.account.email")}</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200"
+              className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2 text-sm text-slate-200 dark:text-slate-900"
             />
           </div>
         </div>
-        <div className="border-t border-slate-700/60 pt-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">{t("settings.account.change_password")}</p>
+        <div className="border-t border-slate-700/60 dark:border-slate-300/60 pt-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-900">{t("settings.account.change_password")}</p>
           <div className="grid gap-4 md:grid-cols-3">
             <div>
-              <label className="mb-1 block text-xs text-slate-400">{t("settings.account.current_password")}</label>
+              <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("settings.account.current_password")}</label>
               <input
                 type="password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200"
+                className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2 text-sm text-slate-200 dark:text-slate-900"
                 autoComplete="current-password"
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs text-slate-400">{t("settings.account.new_password")}</label>
+              <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("settings.account.new_password")}</label>
               <input
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200"
+                className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2 text-sm text-slate-200 dark:text-slate-900"
                 autoComplete="new-password"
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs text-slate-400">{t("settings.account.confirm_password")}</label>
+              <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("settings.account.confirm_password")}</label>
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200"
+                className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2 text-sm text-slate-200 dark:text-slate-900"
                 autoComplete="new-password"
               />
             </div>
@@ -172,8 +172,8 @@ function AccountSection({ user }: { user: User }) {
         {errorMsg && <p className="text-sm text-rose-400">{errorMsg}</p>}
         {successMsg && <p className="text-sm text-teal-400">{successMsg}</p>}
         <div className="flex items-center justify-between">
-          <div className="text-xs text-slate-500">
-            {t("settings.account.role_label")}: <span className="font-medium text-slate-300">{user.role}</span>
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {t("settings.account.role_label")}: <span className="font-medium text-slate-300 dark:text-slate-900">{user.role}</span>
           </div>
           <button
             type="submit"
@@ -231,46 +231,46 @@ function UserFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
-        <h2 className="mb-4 text-lg font-semibold text-teal-200">
+      <div className="w-full max-w-md rounded-xl border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white p-6 shadow-2xl">
+        <h2 className="mb-4 text-lg font-semibold text-teal-200 dark:text-teal-900">
           {isEdit ? t("settings.admin_users.edit_user") : t("settings.admin_users.new_user")}
         </h2>
         <div className="space-y-3">
           <div>
-            <label className="mb-1 block text-xs text-slate-400">{t("settings.account.username")}</label>
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("settings.account.username")}</label>
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full rounded border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-200"
+              className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 px-3 py-2 text-sm text-slate-200 dark:text-slate-900"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-400">{t("settings.account.email")}</label>
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("settings.account.email")}</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-200"
+              className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 px-3 py-2 text-sm text-slate-200 dark:text-slate-900"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-400">
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">
               {isEdit ? t("settings.admin_users.new_password_optional") : t("settings.account.new_password")}
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-200"
+              className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 px-3 py-2 text-sm text-slate-200 dark:text-slate-900"
               autoComplete="new-password"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-400">{t("settings.account.role_label")}</label>
+            <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("settings.account.role_label")}</label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="w-full rounded border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-200"
+              className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 px-3 py-2 text-sm text-slate-200 dark:text-slate-900"
             >
               <option value="user">user</option>
               <option value="admin">admin</option>
@@ -281,7 +281,7 @@ function UserFormModal({
         <div className="mt-5 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="rounded bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-200"
+            className="rounded bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-200 dark:text-slate-900"
           >
             {t("common.cancel")}
           </button>
@@ -319,7 +319,7 @@ function AdminUsersSection({ currentUser }: { currentUser: User }) {
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold">{t("settings.admin_users.title")}</h2>
-          <p className="text-sm text-slate-400">{t("settings.admin_users.description")}</p>
+          <p className="text-sm text-slate-400 dark:text-slate-900">{t("settings.admin_users.description")}</p>
         </div>
         <button
           onClick={() => setModalState({ mode: "create" })}
@@ -332,7 +332,7 @@ function AdminUsersSection({ currentUser }: { currentUser: User }) {
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-slate-700 text-xs uppercase text-slate-400">
+            <tr className="border-b border-slate-700 dark:border-slate-300 text-xs uppercase text-slate-400 dark:text-slate-900">
               <th className="px-3 py-2">{t("settings.account.username")}</th>
               <th className="px-3 py-2">{t("settings.account.email")}</th>
               <th className="px-3 py-2">{t("settings.account.role_label")}</th>
@@ -342,20 +342,20 @@ function AdminUsersSection({ currentUser }: { currentUser: User }) {
           <tbody>
             {users.map((u) => (
               <tr key={u.id} className="border-b border-slate-800/80 hover:bg-slate-800/40">
-                <td className="px-3 py-2 font-medium text-teal-200">
+                <td className="px-3 py-2 font-medium text-teal-200 dark:text-teal-900">
                   {u.username}
                   {u.id === currentUser.id && (
-                    <span className="ml-2 rounded-full bg-teal-500/20 px-1.5 py-0.5 text-[10px] text-teal-300">
+                    <span className="ml-2 rounded-full bg-teal-500/20 px-1.5 py-0.5 text-[10px] text-teal-300 dark:text-teal-900">
                       {t("settings.admin_users.you")}
                     </span>
                   )}
                 </td>
-                <td className="px-3 py-2 text-slate-300">{u.email}</td>
+                <td className="px-3 py-2 text-slate-300 dark:text-slate-900">{u.email}</td>
                 <td className="px-3 py-2">
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                     u.role === "admin"
-                      ? "bg-amber-500/20 text-amber-300"
-                      : "bg-slate-700/60 text-slate-400"
+                      ? "bg-amber-500/20 text-amber-300 dark:text-amber-700"
+                      : "bg-slate-700/60 text-slate-400 dark:text-slate-900"
                   }`}>
                     {u.role}
                   </span>
@@ -400,12 +400,12 @@ function AdminUsersSection({ currentUser }: { currentUser: User }) {
 
       {deleteId !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
-            <p className="mb-4 text-slate-200">{t("settings.admin_users.confirm_delete")}</p>
+          <div className="w-full max-w-sm rounded-xl border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white p-6 shadow-2xl">
+            <p className="mb-4 text-slate-200 dark:text-slate-900">{t("settings.admin_users.confirm_delete")}</p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setDeleteId(null)}
-                className="rounded bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-200"
+                className="rounded bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-200 dark:text-slate-900"
               >
                 {t("common.cancel")}
               </button>
@@ -462,13 +462,13 @@ export function SettingsPage() {
 
       <section className="card p-4">
         <h2 className="mb-2 text-lg font-semibold">{t("settings.language.title")}</h2>
-        <p className="mb-4 text-sm text-slate-400">{t("settings.language.description")}</p>
-        <label className="text-sm text-slate-200" htmlFor="language-switch">
+        <p className="mb-4 text-sm text-slate-400 dark:text-slate-900">{t("settings.language.description")}</p>
+        <label className="text-sm text-slate-200 dark:text-slate-900" htmlFor="language-switch">
           {t("settings.language.label")}
         </label>
         <select
           id="language-switch"
-          className="mt-2 w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 md:w-auto"
+          className="mt-2 w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2 md:w-auto"
           value={currentLanguage}
           onChange={(event) => {
             void i18n.changeLanguage(event.target.value);
@@ -481,7 +481,7 @@ export function SettingsPage() {
 
       <section className="card p-4">
         <h2 className="mb-2 text-lg font-semibold">{t("settings.registry.title")}</h2>
-        <p className="mb-4 text-sm text-slate-400">{t("settings.registry.description")}</p>
+        <p className="mb-4 text-sm text-slate-400 dark:text-slate-900">{t("settings.registry.description")}</p>
         <Link
           to="/settings/brokers"
           className="inline-flex rounded bg-sky-500 px-3 py-2 text-sm font-semibold text-slate-950"
@@ -492,7 +492,7 @@ export function SettingsPage() {
 
       <section className="card p-4">
         <h2 className="mb-2 text-lg font-semibold">{t("settings.session.title")}</h2>
-        <p className="mb-4 text-sm text-slate-400">{t("settings.session.description")}</p>
+        <p className="mb-4 text-sm text-slate-400 dark:text-slate-900">{t("settings.session.description")}</p>
         <button
           onClick={() => {
             localStorage.removeItem("token");

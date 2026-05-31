@@ -2,13 +2,15 @@
 
 #
 
-Self-hosted trading journal MVP (FastAPI + React + PostgreSQL) with weighted-average PnL, daily notes, image support, monthly journal calendar, and mark-to-market snapshots.
+Self-hosted trading journal MVP (FastAPI + React + PostgreSQL) with weighted-average PnL, daily notes, image support, monthly journal calendar, mark-to-market snapshots, user management, light/dark theme support, and portfolio tracking for ETFs and bonds.
 
-This project is a personal trading journal application designed to help traders track their performance, analyze their trades, and maintain a daily trading log. It includes features such as weighted-average PnL calculations, daily notes with mood presets and market condition tags, image uploads for trade annotations, and a monthly journal calendar for easy navigation.
+This project is a personal trading journal application designed to help traders track their performance, analyze their trades, manage users and permissions, and maintain a daily trading log. It includes features such as weighted-average PnL calculations, daily notes with mood presets and market condition tags, image uploads for trade annotations, a monthly journal calendar for easy navigation, portfolio snapshots, and asset registries for instruments such as ETFs and bonds.
 
-On broker you can set fee-aware net values, which are used in the trade detail page to provide more accurate profit/loss projections and summaries.
+On broker you can set fee-aware net values, which are used in the trade detail page and portfolio calculations to provide more accurate profit/loss projections and summaries.
 
 Trade page can also show net value after each execution, with fee and tax-aware calculations, which can be useful for intraday trade management and quick close decisions.
+
+The frontend also supports persistent light/dark theme switching, while the settings area includes profile management and admin-only user management flows.
 
 You can also upload images related to trades, such as annotated charts or screenshots, and view them in the trade detail page. There is a dedicated endpoint to serve annotated images, which can be used for quick reference without needing to download the original image.
 
@@ -24,8 +26,8 @@ The entire project is meant to be used on localhost or private networks. **Do no
 
 ## Current version
 
-- Backend: `0.1.2` (`backend/pyproject.toml`)
-- Frontend: `0.1.2` (`frontend/package.json`)
+- Backend: `0.1.3` (`backend/pyproject.toml`)
+- Frontend: `0.1.3` (`frontend/package.json`)
 
 ## Quick start
 
@@ -58,12 +60,13 @@ Override via env variables:
 
 Always change these values outside local development.
 
-Beware: at this stage there is no user management UI, so credentials are only manageable via env vars and direct DB access.
-
 ## Implemented features
 
 - JWT auth (register/login/me)
 - User profile preferences persisted in DB (`users.preferences` JSONB)
+- User account settings (email, username, password change)
+- Admin user management (list/create/update/delete users)
+- Persistent light/dark theme preference in frontend
 - Accounts CRUD
 - Broker CRUD + assignment to accounts
 - Trades CRUD with weighted-average metrics
@@ -71,6 +74,8 @@ Beware: at this stage there is no user management UI, so credentials are only ma
 - Trade detail page with TP/SL projections and net calculations
 - Trade image upload + annotated image endpoint
 - Dashboard KPIs
+- Assets registry CRUD with instrument types including ETF, stock, bond, and fund
+- Portfolio summary, holdings detail, and history endpoints
 - Daily notes with:
 	- mood presets (`up`, `down`, `stale`)
 	- market condition tags with suggestions
@@ -137,14 +142,27 @@ Trade list with sorting, quick actions, and customizable visible columns.
 	- `POST /api/auth/register`
 	- `POST /api/auth/login`
 	- `GET /api/auth/me`
+	- `PATCH /api/auth/me`
 	- `GET /api/auth/preferences`
 	- `PATCH /api/auth/preferences`
+
+- Admin user management
+	- `GET /api/admin/users`
+	- `POST /api/admin/users`
+	- `PATCH /api/admin/users/{user_id}`
+	- `DELETE /api/admin/users/{user_id}`
 
 - Accounts
 	- `POST /api/accounts`
 	- `GET /api/accounts`
 	- `PATCH /api/accounts/{account_id}`
 	- `DELETE /api/accounts/{account_id}`
+
+- Assets
+	- `POST /api/assets/`
+	- `GET /api/assets/`
+	- `PATCH /api/assets/{asset_id}`
+	- `DELETE /api/assets/{asset_id}`
 
 - Brokers
 	- `POST /api/brokers`
@@ -183,6 +201,11 @@ Trade list with sorting, quick actions, and customizable visible columns.
 - Market calendar
 	- `GET /api/market-calendar/today`
 	- `GET /api/market-calendar/journal-month`
+
+- Portfolio
+	- `GET /api/portfolio/details`
+	- `GET /api/portfolio/summary`
+	- `GET /api/portfolio/history`
 
 - Snapshots
 	- `GET /api/snapshots`
