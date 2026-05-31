@@ -69,6 +69,7 @@ function AccountSection({ user }: { user: User }) {
   const qc = useQueryClient();
   const [email, setEmail] = useState(user.email);
   const [username, setUsername] = useState(user.username);
+  const [timezone, setTimezone] = useState(user.timezone ?? "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -102,6 +103,7 @@ function AccountSection({ user }: { user: User }) {
     const payload: UserUpdate = {};
     if (email !== user.email) payload.email = email;
     if (username !== user.username) payload.username = username;
+    if (timezone !== (user.timezone ?? "")) payload.timezone = timezone || null;
     if (newPassword) {
       payload.current_password = currentPassword;
       payload.new_password = newPassword;
@@ -133,6 +135,19 @@ function AccountSection({ user }: { user: User }) {
               className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2 text-sm text-slate-200 dark:text-slate-900"
             />
           </div>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("settings.account.timezone")}</label>
+          <select
+            value={timezone}
+            onChange={(e) => setTimezone(e.target.value)}
+            className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2 text-sm text-slate-200 dark:text-slate-900"
+          >
+            <option value="">{t("settings.account.timezone_placeholder")}</option>
+            {(Intl as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf?.("timeZone").map((tz) => (
+              <option key={tz} value={tz}>{tz}</option>
+            ))}
+          </select>
         </div>
         <div className="border-t border-slate-700/60 dark:border-slate-300/60 pt-4">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-900">{t("settings.account.change_password")}</p>

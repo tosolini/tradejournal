@@ -22,6 +22,7 @@ export function Layout({ children }: PropsWithChildren) {
         { to: "/calendar", label: t("layout.nav.calendar") },
         { to: "/trades", label: t("layout.nav.trades") },
         { to: "/notes", label: t("layout.nav.notes") },
+        { to: "/help", label: t("layout.nav.help") },
       ],
     },
     {
@@ -35,6 +36,8 @@ export function Layout({ children }: PropsWithChildren) {
       label: t("layout.nav.section_settings"),
       items: [
         { to: "/accounts", label: t("layout.nav.accounts") },
+        { to: "/brokers", label: t("layout.nav.brokers") },
+        { to: "/tickers", label: t("layout.nav.tickers") },
         { to: "/settings", label: t("layout.nav.settings") },
       ],
     },

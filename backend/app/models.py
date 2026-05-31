@@ -2,7 +2,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import Date, DateTime, ForeignKey, Numeric, String, Text, UniqueConstraint, func
+from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Index, Integer, Numeric, String, Table, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -26,12 +26,41 @@ class User(TimestampMixin, Base):
     username: Mapped[str] = mapped_column(String(120), unique=True, index=True)
     hashed_password: Mapped[str] = mapped_column(String(255))
     role: Mapped[str] = mapped_column(String(20), default="user")
+    timezone: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     preferences: Mapped[dict[str, object]] = mapped_column(JSONB, default=dict)
 
     accounts: Mapped[list["Account"]] = relationship(back_populates="owner")
     brokers: Mapped[list["Broker"]] = relationship(back_populates="owner")
     assets: Mapped[list["Asset"]] = relationship(back_populates="owner")
     holdings: Mapped[list["Holding"]] = relationship(back_populates="owner")
+    exchanges: Mapped[list["Exchange"]] = relationship(back_populates="owner")
+
+
+class Exchange(TimestampMixin, Base):
+    __tablename__ = "exchanges"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    mic: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)
+    suffix: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)
+    country: Mapped[Optional[str]] = mapped_column(String(8), nullable=True)
+    currency: Mapped[str] = mapped_column(String(8), default="EUR")
+    timezone: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    open_time: Mapped[Optional[str]] = mapped_column(String(8), nullable=True)
+    close_time: Mapped[Optional[str]] = mapped_column(String(8), nullable=True)
+    closed_on_weekends: Mapped[bool] = mapped_column(default=True)
+
+    owner: Mapped["User"] = relationship(back_populates="exchanges")
+    brokers: Mapped[list["Broker"]] = relationship(secondary="broker_exchanges", back_populates="exchanges")
+
+
+broker_exchanges = Table(
+    "broker_exchanges",
+    Base.metadata,
+    Column("broker_id", Integer, ForeignKey("brokers.id", ondelete="CASCADE"), primary_key=True),
+    Column("exchange_id", Integer, ForeignKey("exchanges.id", ondelete="CASCADE"), primary_key=True),
+)
 
 
 class Broker(TimestampMixin, Base):
@@ -48,6 +77,7 @@ class Broker(TimestampMixin, Base):
 
     owner: Mapped[User] = relationship(back_populates="brokers")
     accounts: Mapped[list["Account"]] = relationship(back_populates="broker")
+    exchanges: Mapped[list["Exchange"]] = relationship(secondary="broker_exchanges", back_populates="brokers")
 
 
 class Account(TimestampMixin, Base):
@@ -216,3 +246,18 @@ class PortfolioSnapshot(TimestampMixin, Base):
     total_cost: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0"))
     total_return: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0"))
     total_return_pct: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"))
+
+
+
+class Ticker(Base):
+    __tablename__ = "tickers"
+    __table_args__ = (
+        UniqueConstraint("symbol", "market", name="uq_ticker_symbol_market"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), index=True)
+    isin: Mapped[Optional[str]] = mapped_column(String(20), nullable=True, index=True)
+    symbol: Mapped[str] = mapped_column(String(32), index=True)
+    market: Mapped[str] = mapped_column(String(128), index=True)
+    currency: Mapped[Optional[str]] = mapped_column(String(8), nullable=True)

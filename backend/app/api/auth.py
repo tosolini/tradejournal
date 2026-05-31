@@ -100,6 +100,9 @@ def update_me(
             raise localized_error(status_code=400, code="errors.user_already_exists")
         current_user.username = payload.username
 
+    if payload.timezone is not None:
+        current_user.timezone = payload.timezone or None
+
     db.commit()
     db.refresh(current_user)
     return current_user

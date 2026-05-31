@@ -122,6 +122,19 @@ export type Account = {
   cash_balance: string;
 };
 
+export type Exchange = {
+  id: number;
+  name: string;
+  mic: string | null;
+  suffix: string | null;
+  country: string | null;
+  currency: string;
+  timezone: string | null;
+  open_time: string | null;
+  close_time: string | null;
+  closed_on_weekends: boolean;
+};
+
 export type Broker = {
   id: number;
   name: string;
@@ -130,16 +143,20 @@ export type Broker = {
   fee_currency: string;
   capital_gain_mode: "immediate" | "year_end";
   capital_gain_rate: string;
+  exchanges: Exchange[];
 };
 
-function xhrRequest<T>(method: string, path: string, body?: string): Promise<T> {
+function xhrRequest<T>(method: string, path: string, body?: string | FormData): Promise<T> {
   return new Promise((resolve, reject) => {
     const token = localStorage.getItem("token");
     const locale = i18n.resolvedLanguage || i18n.language || "en";
     const url = API_BASE + path;
     const xhr = new XMLHttpRequest();
     xhr.open(method, url, true);
-    xhr.setRequestHeader("Content-Type", "application/json");
+    // Don't set Content-Type for FormData — browser sets it automatically with boundary
+    if (!(body instanceof FormData)) {
+      xhr.setRequestHeader("Content-Type", "application/json");
+    }
     xhr.setRequestHeader("Accept-Language", locale);
     if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
     xhr.onload = () => {
@@ -169,7 +186,7 @@ function xhrRequest<T>(method: string, path: string, body?: string): Promise<T> 
 
 export async function api<T>(path: string, options?: RequestInit): Promise<T> {
   const method = options?.method || "GET";
-  const body = options?.body as string | undefined;
+  const body = options?.body as string | FormData | undefined;
   return xhrRequest<T>(method, path, body);
 }
 
@@ -185,11 +202,13 @@ export type User = {
   email: string;
   username: string;
   role: string;
+  timezone?: string | null;
 };
 
 export type UserUpdate = {
   email?: string;
   username?: string;
+  timezone?: string | null;
   current_password?: string;
   new_password?: string;
 };
@@ -362,6 +381,23 @@ export function deleteHolding(id: number): Promise<void> {
   return api(`/api/holdings/${id}`, { method: "DELETE" });
 }
 
+// ── Exchanges ───────────────────────────────────────
+export const exchangesApi = {
+  list: () => api<Exchange[]>("/api/exchanges"),
+  create: (payload: Omit<Exchange, "id">) =>
+    api<Exchange>("/api/exchanges", { method: "POST", body: JSON.stringify(payload) }),
+  update: (id: number, payload: Partial<Omit<Exchange, "id">>) =>
+    api<Exchange>(`/api/exchanges/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  delete: (id: number) =>
+    api<{ deleted: boolean }>(`/api/exchanges/${id}`, { method: "DELETE" }),
+  linkToBroker: (brokerId: number, exchangeId: number) =>
+    api<Exchange[]>(`/api/brokers/${brokerId}/exchanges/${exchangeId}`, { method: "POST" }),
+  unlinkFromBroker: (brokerId: number, exchangeId: number) =>
+    api<{ unlinked: boolean }>(`/api/brokers/${brokerId}/exchanges/${exchangeId}`, { method: "DELETE" }),
+  seedDirecta: () =>
+    api<Exchange[]>("/api/exchanges/seed/directa", { method: "POST" }),
+};
+
 // ── Portfolio ───────────────────────────────────────
 export function fetchPortfolioDetails(accountId?: number): Promise<HoldingDetail[]> {
   const params = accountId ? `?account_id=${accountId}` : "";
@@ -377,3 +413,37 @@ export function fetchPortfolioHistory(accountId?: number): Promise<PortfolioHist
   const params = accountId ? `?account_id=${accountId}` : "";
   return api(`/api/portfolio/history${params}`);
 }
+
+// ── Tickers ─────────────────────────────────────────
+export type Ticker = {
+  id: number;
+  name: string;
+  isin: string | null;
+  symbol: string;
+  market: string;
+  currency: string | null;
+};
+
+export type TickerImportResult = {
+  imported: number;
+  updated: number;
+  skipped: number;
+  total: number;
+};
+
+export const tickersApi = {
+  search: (q: string, limit = 10): Promise<Ticker[]> =>
+    api(`/api/tickers/search?q=${encodeURIComponent(q)}&limit=${limit}`),
+
+  count: (): Promise<{ total: number }> =>
+    api("/api/tickers/count"),
+
+  import: (file: File): Promise<TickerImportResult> => {
+    const form = new FormData();
+    form.append("file", file);
+    return api("/api/tickers/import", { method: "POST", body: form });
+  },
+
+  clear: (): Promise<void> =>
+    api("/api/tickers", { method: "DELETE" }),
+};
