@@ -461,7 +461,7 @@ export function TradeDetailPage() {
       ) : null}
 
       <section className="card p-4">
-        <div className="mb-3 text-lg font-semibold">{t("trade_detail.chart_title")}</div>
+        <div className="mb-3 text-lg font-semibold">{t("trade_detail.chart_title") + " " + t("trade_detail.chart_info")}</div>
         <TradingViewChart symbol={trade.symbol} market={trade.market || undefined} />
         <div className="mt-2 text-xs text-slate-400 dark:text-slate-900">{t("trade_detail.chart_symbol_hint")}</div>
       </section>

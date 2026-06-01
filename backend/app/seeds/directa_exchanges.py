@@ -183,7 +183,7 @@ DIRECTA_EXCHANGES = [
         "country": "GB",
         "currency": "USD",
         "timezone": "UTC",
-        "open_time": "23:05",
+        "open_time": "00:00",
         "close_time": "23:00",
         "closed_on_weekends": False,
         # Domenica sera – venerdì sera; chiusura tecnica 23:00–23:05 ogni giorno
@@ -242,8 +242,8 @@ DIRECTA_EXCHANGES = [
         "country": "US",
         "currency": "USD",
         "timezone": "America/New_York",
-        "open_time": "15:30",   # ora italiana (CET): 09:30 ET → 15:30 CET
-        "close_time": "22:00",  # 16:00 ET → 22:00 CET
+        "open_time": "09:30",   # ora italiana (CET): 09:30 ET → 15:30 CET
+        "close_time": "16:00",  # 16:00 ET → 22:00 CET
         # Pre-market 13:00–15:30 (CET); Post-market 22:00–23:00 (CET)
     },
     {
@@ -253,8 +253,8 @@ DIRECTA_EXCHANGES = [
         "country": "US",
         "currency": "USD",
         "timezone": "America/New_York",
-        "open_time": "15:30",
-        "close_time": "22:00",
+        "open_time": "09:30",
+        "close_time": "16:00",
         # Pre-market 13:00–15:30 (CET); Post-market 22:00–23:00 (CET)
     },
     {
@@ -264,8 +264,8 @@ DIRECTA_EXCHANGES = [
         "country": "US",
         "currency": "USD",
         "timezone": "America/New_York",
-        "open_time": "15:30",
-        "close_time": "22:00",
+        "open_time": "09:30",
+        "close_time": "16:00",
     },
     {
         "name": "OTC Markets",
@@ -274,8 +274,8 @@ DIRECTA_EXCHANGES = [
         "country": "US",
         "currency": "USD",
         "timezone": "America/New_York",
-        "open_time": "15:30",
-        "close_time": "22:00",
+        "open_time": "09:30",
+        "close_time": "16:00",
         # Pre-market limitato: 14:45–15:30 (CET)
     },
     {
@@ -290,5 +290,41 @@ DIRECTA_EXCHANGES = [
         "closed_on_weekends": False,
         # CME-FX: 23:45–23:59 + 00:00–23:00
         # CME-CBOT: 23:45–02:00 + 02:00–14:45 + 15:30–20:20
+    },
+    # ─────────────────────────────────────────────────────────────
+    # Japan - Australia - Chinese Exchanges
+    # ─────────────────────────────────────────────────────────────
+    {
+        "name": "Tokyo Stock Exchange (TSE)",
+        "mic": "XTKS",
+        "suffix": None,
+        "country": "JP",
+        "currency": "JPY",
+        "timezone": "Asia/Tokyo",
+        "open_time": "09:00",   # ora italiana (CET): 09:00 JST → 02:00 CET
+        "close_time": "15:00",  # 15:00 JST → 08:00 CET
+        # Pre-market 01:00–02:00 (CET); Post-market 08:00–09:00 (CET)
+    },
+    {
+        "name": "Australian Sec. Exch. (ASX)",
+        "mic": "XASX",
+        "suffix": None,
+        "country": "AU",
+        "currency": "AUD",
+        "timezone": "Australia/Sydney",
+        "open_time": "10:00",   # ora italiana (CET): 10:00 AEST → 01:00 CET
+        "close_time": "16:00",  # 16:00 AEST → 07:00 CET
+        # Pre-market 00:00–01:00 (CET); Post-market 07:00–08:00 (CET)
+    },
+    {
+        "name": "Shanghai Stock Exchange (SSE)",
+        "mic": "XSHG",
+        "suffix": None,
+        "country": "CN",
+        "currency": "CNY",
+        "timezone": "Asia/Shanghai",
+        "open_time": "09:30",   # ora italiana (CET): 09:30 CST → 02:30 CET
+        "close_time": "15:00",  # 15:00 CST → 08:00 CET
+        # Pre-market 01:00–02:30 (CET); Post-market 08:00–09:00 (CET)
     },
 ]

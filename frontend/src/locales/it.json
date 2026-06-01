@@ -150,9 +150,9 @@
     "exchange_linked": "Mercato collegato al broker.",
     "exchange_unlinked": "Mercato scollegato dal broker.",
     "markets_column": "Mercati",
-    "exchange_seed_directa": "Importa mercati Directa",
+    "exchange_seed_directa": "Importa mercati",
     "exchange_seed_directa_hint": "Importa i mercati standard di Directa SIM (salta quelli già presenti)",
-    "exchange_seed_directa_success": "Mercati Directa importati con successo."
+    "exchange_seed_directa_success": "Mercati importati con successo."
   },
   "accounts": {
     "page_title": "Accounts e Portafogli",
@@ -328,6 +328,7 @@
       "fee": "Fee"
     },
     "chart_title": "Grafico",
+    "chart_info": "Nota: Il grafico si aggiorna solo dopo la chiusura dei mercati.",
     "chart_symbol_hint": "Puoi cercare un simbolo diverso direttamente nel grafico."
   },
   "trades": {
