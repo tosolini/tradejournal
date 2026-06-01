@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.deps import get_current_user
 from app.i18n import localized_error, translate
-from app.models import Account, Broker, Trade, TradeExecution, TradeImage, User
+from app.models import Account, Broker, Ticker, Trade, TradeExecution, TradeImage, User
 from app.schemas import (
     ExecutionCreate,
     ExecutionResponse,
@@ -109,6 +109,8 @@ def _trade_response_with_metrics(trade: Trade, executions: list[TradeExecution])
         payload["account_currency"] = trade.account.base_currency if trade.account else "EUR"
         payload["close_reason"] = trade.close_reason
         payload["closed_at"] = trade.closed_at
+        payload["ticker_id"] = trade.ticker_id
+        payload["isin"] = trade.ticker.isin if trade.ticker else trade.isin
         return TradeResponse.model_validate(payload)
 
     buys = [ex for ex in executions if ex.action.upper() == "BUY"]
@@ -139,8 +141,10 @@ def _trade_response_with_metrics(trade: Trade, executions: list[TradeExecution])
     payload = {
         "id": trade.id,
         "account_id": trade.account_id,
+        "ticker_id": trade.ticker_id,
         "market": trade.market,
         "symbol": trade.symbol,
+        "isin": trade.ticker.isin if trade.ticker else trade.isin,
         "side": trade.side,
         "status": trade.status,
         "strategy_name": trade.strategy_name,
@@ -174,7 +178,15 @@ def create_trade(
     if not account or account.user_id != current_user.id:
         raise localized_error(status_code=404, code="errors.account_not_found", request=request)
 
-    trade = Trade(user_id=current_user.id, **payload.model_dump())
+    data = payload.model_dump()
+    if payload.ticker_id:
+        ticker = db.get(Ticker, payload.ticker_id)
+        if ticker:
+            data["symbol"] = ticker.symbol
+            data["isin"] = ticker.isin
+            data["market"] = ticker.market
+
+    trade = Trade(user_id=current_user.id, **data)
     db.add(trade)
     db.commit()
     db.refresh(trade)
@@ -331,6 +343,13 @@ def update_trade(
         account = db.get(Account, updates["account_id"])
         if not account or account.user_id != current_user.id:
             raise localized_error(status_code=400, code="errors.account_not_found", request=request)
+
+    if "ticker_id" in updates and updates["ticker_id"]:
+        ticker = db.get(Ticker, updates["ticker_id"])
+        if ticker:
+            updates["symbol"] = ticker.symbol
+            updates["isin"] = ticker.isin
+            updates["market"] = ticker.market
 
     for field, value in updates.items():
         setattr(trade, field, value)

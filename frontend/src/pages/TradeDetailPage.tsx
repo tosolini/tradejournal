@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
 import { Account, Broker, Trade, TradeDetail, api, fetchTradeImageBlobUrl } from "../lib/api";
+import { TradingViewChart } from "../components/TradingViewChart";
 
 const closeTradeSchema = z.object({
   executed_at: z.string().min(1),
@@ -458,6 +459,12 @@ export function TradeDetailPage() {
           {closeSummary.tax_note ? <div className="mt-3 text-sm text-slate-400 dark:text-slate-900">{closeSummary.tax_note}</div> : null}
         </section>
       ) : null}
+
+      <section className="card p-4">
+        <div className="mb-3 text-lg font-semibold">{t("trade_detail.chart_title")}</div>
+        <TradingViewChart symbol={trade.symbol} market={trade.market || undefined} />
+        <div className="mt-2 text-xs text-slate-400 dark:text-slate-900">{t("trade_detail.chart_symbol_hint")}</div>
+      </section>
 
       {trade.status !== "close" ? (
         <section className="card p-4">

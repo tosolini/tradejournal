@@ -326,7 +326,9 @@
       "qty": "Qty",
       "price": "Price",
       "fee": "Fee"
-    }
+    },
+    "chart_title": "Grafico",
+    "chart_symbol_hint": "Puoi cercare un simbolo diverso direttamente nel grafico."
   },
   "trades": {
     "title": "Trade",

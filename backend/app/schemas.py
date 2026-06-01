@@ -161,6 +161,7 @@ class TradeCreate(BaseModel):
     market: str = "Euronext"
     symbol: str
     isin: Optional[str] = None
+    ticker_id: Optional[int] = None
     instrument_type: str = "stock"
     side: str = "long"
     status: str = "open"
@@ -177,6 +178,7 @@ class TradeUpdate(BaseModel):
     market: Optional[str] = None
     symbol: Optional[str] = None
     isin: Optional[str] = None
+    ticker_id: Optional[int] = None
     instrument_type: Optional[str] = None
     side: Optional[str] = None
     status: Optional[str] = None
@@ -191,8 +193,10 @@ class TradeUpdate(BaseModel):
 class TradeResponse(BaseModel):
     id: int
     account_id: int
+    ticker_id: Optional[int] = None
     market: str
     symbol: str
+    isin: Optional[str] = None
     side: str
     status: str
     strategy_name: Optional[str]
