@@ -21,7 +21,7 @@
       "new_note": "New Note"
     },
     "version": "Version",
-    "tosolini_site_aria": "Tosolini Website",
+    "tosolini_site_aria": "Walter Tosolini Website",
     "copyright": "All rights reserved."
   },
   "login": {
@@ -327,7 +327,7 @@
       "price": "Price",
       "fee": "Fee"
     },
-    "chart_title": "Chart",
+    "chart_title": "TradingView",
     "chart_info": "Chart is updated only after markets close.",
     "chart_symbol_hint": "You can search for a different symbol directly in the chart."
   },

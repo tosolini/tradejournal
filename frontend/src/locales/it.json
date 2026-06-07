@@ -21,7 +21,7 @@
       "new_note": "Nuova Nota"
     },
     "version": "Versione",
-    "tosolini_site_aria": "Sito Tosolini",
+    "tosolini_site_aria": "Sito di Walter Tosolini",
     "copyright": "Tutti i diritti riservati."
   },
   "login": {
@@ -327,8 +327,8 @@
       "price": "Price",
       "fee": "Fee"
     },
-    "chart_title": "Grafico",
-    "chart_info": "Nota: Il grafico si aggiorna solo dopo la chiusura dei mercati.",
+    "chart_title": "TradingView",
+    "chart_info": "grafici si aggiornano solo dopo la chiusura dei mercati.",
     "chart_symbol_hint": "Puoi cercare un simbolo diverso direttamente nel grafico."
   },
   "trades": {
