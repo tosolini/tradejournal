@@ -1,0 +1,66 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Rome"
+    groups:
+      react-ecosystem:
+        patterns:
+          - "react*"
+          - "@types/react*"
+      tanstack:
+        patterns:
+          - "@tanstack/*"
+      vite-ecosystem:
+        patterns:
+          - "vite*"
+          - "@vitejs/*"
+      tailwind-ecosystem:
+        patterns:
+          - "tailwindcss*"
+          - "@tailwindcss/*"
+          - "autoprefixer"
+          - "postcss"
+      i18n:
+        patterns:
+          - "i18next*"
+          - "react-i18next"
+    ignore:
+      # react-quill dipende da quill <=1.3.7 (CVE-2021-3163, nessuna patch upstream).
+      # Il rischio è mitigato dall'uso di DOMPurify su tutto l'output HTML.
+      - dependency-name: "react-quill"
+      - dependency-name: "quill"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "frontend"
+
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Rome"
+    groups:
+      fastapi-ecosystem:
+        patterns:
+          - "fastapi*"
+          - "uvicorn*"
+          - "starlette*"
+      pydantic-ecosystem:
+        patterns:
+          - "pydantic*"
+      sqlalchemy-ecosystem:
+        patterns:
+          - "sqlalchemy*"
+          - "alembic*"
+          - "psycopg*"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "backend"
