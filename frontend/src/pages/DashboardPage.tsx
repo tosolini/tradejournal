@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { createChart } from "lightweight-charts";
+import { createChart, AreaSeries } from "lightweight-charts";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../lib/api";
@@ -51,7 +51,7 @@ function ChartPanel() {
         horzLines: { color: isDark ? '#1e293b' : '#e2e8f0' },
       },
     });
-    const series = chart.addAreaSeries({
+    const series = chart.addSeries(AreaSeries, {
       lineColor: "#2dd4bf",
       topColor: "rgba(45,212,191,0.25)",
       bottomColor: "rgba(45,212,191,0.04)",

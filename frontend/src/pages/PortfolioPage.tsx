@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createChart } from "lightweight-charts";
+import { createChart, AreaSeries } from "lightweight-charts";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -75,7 +75,7 @@ function ChartPanel({ history }: { history: { date: string; value: number }[] })
       layout: { background: { color: "#111827" }, textColor: "#94a3b8" },
       grid: { vertLines: { color: "#1e293b" }, horzLines: { color: "#1e293b" } },
     });
-    const series = chart.addAreaSeries({
+    const series = chart.addSeries(AreaSeries, {
       lineColor: "#2dd4bf",
       topColor: "rgba(45,212,191,0.25)",
       bottomColor: "rgba(45,212,191,0.04)",
