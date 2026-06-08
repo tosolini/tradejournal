@@ -7,6 +7,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
 import { Account, Broker, Trade, TradeDetail, api, fetchTradeImageBlobUrl } from "../lib/api";
 import { TradingViewChart } from "../components/TradingViewChart";
+import { TradingViewTechnicalAnalysis } from "../components/TradingViewTechnicalAnalysis";
 
 const closeTradeSchema = z.object({
   executed_at: z.string().min(1),
@@ -157,6 +158,7 @@ export function TradeDetailPage() {
   });
   const [thumbnailUrls, setThumbnailUrls] = useState<Record<number, string>>({});
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"chart" | "technical" | "close" | "executions" | "images">("chart");
 
   const closeForm = useForm<CloseTradePayload>({
     resolver: zodResolver(closeTradeSchema),
@@ -460,13 +462,72 @@ export function TradeDetailPage() {
         </section>
       ) : null}
 
-      <section className="card p-4">
-        <div className="mb-3 text-lg font-semibold">{t("trade_detail.chart_title") + " " + t("trade_detail.chart_info")}</div>
-        <TradingViewChart symbol={trade.symbol} market={trade.market || undefined} />
-        <div className="mt-2 text-xs text-slate-400 dark:text-slate-900">{t("trade_detail.chart_symbol_hint")}</div>
-      </section>
+      {/* Tab Bar */}
+      <div className="flex gap-1 border-b border-slate-700/60 dark:border-slate-300/30">
+        <button onClick={() => setActiveTab("chart")}
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === "chart"
+              ? "border-b-2 border-teal-400 text-teal-300 dark:text-teal-700"
+              : "text-slate-400 hover:text-slate-200 dark:text-slate-600 dark:hover:text-slate-900"
+          }`}
+        >
+          {t("trade_detail.tab_chart")}
+        </button>
+        <button onClick={() => setActiveTab("technical")}
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === "technical"
+              ? "border-b-2 border-teal-400 text-teal-300 dark:text-teal-700"
+              : "text-slate-400 hover:text-slate-200 dark:text-slate-600 dark:hover:text-slate-900"
+          }`}
+        >
+          {t("trade_detail.tab_technical")}
+        </button>
+        <button onClick={() => setActiveTab("close")}
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === "close"
+              ? "border-b-2 border-teal-400 text-teal-300 dark:text-teal-700"
+              : "text-slate-400 hover:text-slate-200 dark:text-slate-600 dark:hover:text-slate-900"
+          }`}
+        >
+          {t("trade_detail.tab_close")}
+        </button>
+        <button onClick={() => setActiveTab("executions")}
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === "executions"
+              ? "border-b-2 border-teal-400 text-teal-300 dark:text-teal-700"
+              : "text-slate-400 hover:text-slate-200 dark:text-slate-600 dark:hover:text-slate-900"
+          }`}
+        >
+          {t("trade_detail.tab_executions")}
+        </button>
+        <button onClick={() => setActiveTab("images")}
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === "images"
+              ? "border-b-2 border-teal-400 text-teal-300 dark:text-teal-700"
+              : "text-slate-400 hover:text-slate-200 dark:text-slate-600 dark:hover:text-slate-900"
+          }`}
+        >
+          {t("trade_detail.tab_images")}
+        </button>
+      </div>
 
-      {trade.status !== "close" ? (
+      {/* Chart Tab */}
+      {activeTab === "chart" && (
+        <section className="card p-4">
+          <TradingViewChart symbol={trade.symbol} market={trade.market || undefined} />
+          <div className="mt-2 text-xs text-slate-400 dark:text-slate-900">{t("trade_detail.chart_symbol_hint")}</div>
+        </section>
+      )}
+
+      {/* Technical Analysis Tab */}
+      {activeTab === "technical" && (
+        <section className="card p-4">
+          <TradingViewTechnicalAnalysis symbol={trade.symbol} market={trade.market || undefined} />
+        </section>
+      )}
+
+      {/* Close Tab */}
+      {activeTab === "close" && trade.status !== "close" ? (
         <section className="card p-4">
           <div className="mb-3 text-lg font-semibold">{t("trade_detail.close_trade")}</div>
           <form className="grid gap-3 md:grid-cols-4" onSubmit={closeForm.handleSubmit((values) => closeTrade.mutate(values))}>
@@ -526,83 +587,93 @@ export function TradeDetailPage() {
             {t("trade_detail.close_hint")}
           </div>
         </section>
+      ) : activeTab === "close" ? (
+        <section className="card p-4">
+          <div className="text-sm text-slate-400 dark:text-slate-900">{t("trade_detail.tab_close_closed")}</div>
+        </section>
       ) : null}
 
-      <section className="card overflow-x-auto">
-        <div className="border-b border-slate-700/80 px-4 py-3 text-lg font-semibold">{t("trade_detail.executions")}</div>
-        <table className="min-w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-700 dark:border-slate-300 text-left text-slate-400 dark:text-slate-900">
-              <th className="px-3 py-2">{t("trade_detail.columns.date")}</th>
-              <th className="px-3 py-2">{t("trade_detail.columns.action")}</th>
-              <th className="px-3 py-2">{t("trade_detail.columns.qty")}</th>
-              <th className="px-3 py-2">{t("trade_detail.columns.price")}</th>
-              <th className="px-3 py-2">{t("trade_detail.columns.fee")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {executions.length ? (
-              executions.map((execution) => (
-                <tr key={execution.id} className="border-b border-slate-800/80">
-                  <td className="px-3 py-2">{new Date(execution.executed_at).toLocaleString()}</td>
-                  <td className="px-3 py-2">{execution.action}</td>
-                  <td className="px-3 py-2">{formatMetric(execution.quantity)}</td>
-                  <td className="px-3 py-2">{formatMoney(execution.price, execution.currency)}</td>
-                  <td className="px-3 py-2">{formatMoney(execution.fee, execution.currency)}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={5} className="px-3 py-2 text-slate-400 dark:text-slate-900">{t("trade_detail.no_executions")}</td>
+      {/* Executions Tab */}
+      {activeTab === "executions" && (
+        <section className="card overflow-x-auto">
+          <div className="border-b border-slate-700/80 px-4 py-3 text-lg font-semibold">{t("trade_detail.executions")}</div>
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-700 dark:border-slate-300 text-left text-slate-400 dark:text-slate-900">
+                <th className="px-3 py-2">{t("trade_detail.columns.date")}</th>
+                <th className="px-3 py-2">{t("trade_detail.columns.action")}</th>
+                <th className="px-3 py-2">{t("trade_detail.columns.qty")}</th>
+                <th className="px-3 py-2">{t("trade_detail.columns.price")}</th>
+                <th className="px-3 py-2">{t("trade_detail.columns.fee")}</th>
               </tr>
-            )}
-          </tbody>
-        </table>
-      </section>
+            </thead>
+            <tbody>
+              {executions.length ? (
+                executions.map((execution) => (
+                  <tr key={execution.id} className="border-b border-slate-800/80">
+                    <td className="px-3 py-2">{new Date(execution.executed_at).toLocaleString()}</td>
+                    <td className="px-3 py-2">{execution.action}</td>
+                    <td className="px-3 py-2">{formatMetric(execution.quantity)}</td>
+                    <td className="px-3 py-2">{formatMoney(execution.price, execution.currency)}</td>
+                    <td className="px-3 py-2">{formatMoney(execution.fee, execution.currency)}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="px-3 py-2 text-slate-400 dark:text-slate-900">{t("trade_detail.no_executions")}</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </section>
+      )}
 
-      <section className="card p-4">
-        <div className="mb-3 text-lg font-semibold">{t("trade_detail.trade_images")}</div>
-        {data.images.length ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {data.images.map((image) => (
-              <button
-                key={image.id}
-                type="button"
-                onClick={async () => {
-                  if (zoomImageUrl) {
-                    URL.revokeObjectURL(zoomImageUrl);
-                  }
-                  const variant = image.annotated_path ? "annotated" : "original";
-                  try {
-                    const zoomUrl = await fetchTradeImageBlobUrl(image.id, variant);
-                    setZoomImageUrl(zoomUrl);
-                  } catch {
-                    setZoomImageUrl(null);
-                  }
-                }}
-                className="overflow-hidden rounded border border-slate-700 dark:border-slate-300 text-left"
-              >
-                <div className="aspect-video bg-slate-900 dark:bg-white">
-                  {thumbnailUrls[image.id] ? (
-                    <img
-                      src={thumbnailUrls[image.id]}
-                      alt={`Trade image ${image.id}`}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-xs text-slate-500 dark:text-slate-400">{t("trade_detail.preview_unavailable")}</div>
-                  )}
-                </div>
-                <div className="px-2 py-1 text-xs text-slate-300 dark:text-slate-900">
-                  #{image.id} {image.annotated_path ? t("trade_detail.annotated") : t("trade_detail.original")}
-                </div>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="text-sm text-slate-400 dark:text-slate-900">{t("trade_detail.no_images")}</div>
-        )}
-      </section>
+      {/* Images Tab */}
+      {activeTab === "images" && (
+        <section className="card p-4">
+          <div className="mb-3 text-lg font-semibold">{t("trade_detail.trade_images")}</div>
+          {data.images.length ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {data.images.map((image) => (
+                <button
+                  key={image.id}
+                  type="button"
+                  onClick={async () => {
+                    if (zoomImageUrl) {
+                      URL.revokeObjectURL(zoomImageUrl);
+                    }
+                    const variant = image.annotated_path ? "annotated" : "original";
+                    try {
+                      const zoomUrl = await fetchTradeImageBlobUrl(image.id, variant);
+                      setZoomImageUrl(zoomUrl);
+                    } catch {
+                      setZoomImageUrl(null);
+                    }
+                  }}
+                  className="overflow-hidden rounded border border-slate-700 dark:border-slate-300 text-left"
+                >
+                  <div className="aspect-video bg-slate-900 dark:bg-white">
+                    {thumbnailUrls[image.id] ? (
+                      <img
+                        src={thumbnailUrls[image.id]}
+                        alt={`Trade image ${image.id}`}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-xs text-slate-500 dark:text-slate-400">{t("trade_detail.preview_unavailable")}</div>
+                    )}
+                  </div>
+                  <div className="px-2 py-1 text-xs text-slate-300 dark:text-slate-900">
+                    #{image.id} {image.annotated_path ? t("trade_detail.annotated") : t("trade_detail.original")}
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="text-sm text-slate-400 dark:text-slate-900">{t("trade_detail.no_images")}</div>
+          )}
+        </section>
+      )}
 
       {zoomImageUrl ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-4">
