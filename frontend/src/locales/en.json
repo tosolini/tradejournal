@@ -21,7 +21,7 @@
       "new_note": "New Note"
     },
     "version": "Version",
-    "tosolini_site_aria": "Tosolini Website",
+    "tosolini_site_aria": "Walter Tosolini Website",
     "copyright": "All rights reserved."
   },
   "login": {
@@ -150,9 +150,9 @@
     "exchange_linked": "Market linked to broker.",
     "exchange_unlinked": "Market unlinked from broker.",
     "markets_column": "Markets",
-    "exchange_seed_directa": "Import Directa Markets",
+    "exchange_seed_directa": "Import Markets",
     "exchange_seed_directa_hint": "Import standard Directa SIM markets (skips existing ones)",
-    "exchange_seed_directa_success": "Directa markets imported successfully."
+    "exchange_seed_directa_success": "Markets imported successfully."
   },
   "accounts": {
     "page_title": "Accounts and Portfolios",
@@ -326,7 +326,10 @@
       "qty": "Qty",
       "price": "Price",
       "fee": "Fee"
-    }
+    },
+    "chart_title": "TradingView",
+    "chart_info": "Chart is updated only after markets close.",
+    "chart_symbol_hint": "You can search for a different symbol directly in the chart."
   },
   "trades": {
     "title": "Trades",

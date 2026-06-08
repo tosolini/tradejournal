@@ -41,7 +41,9 @@ async function parseApiError(response: Response): Promise<ApiError> {
 export type Trade = {
   id: number;
   account_id: number;
+  ticker_id?: number | null;
   symbol: string;
+  isin?: string | null;
   market: string;
   side: string;
   status: string;

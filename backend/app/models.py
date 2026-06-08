@@ -102,6 +102,7 @@ class Trade(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id"), index=True)
+    ticker_id: Mapped[Optional[int]] = mapped_column(ForeignKey("tickers.id"), nullable=True, index=True)
     market: Mapped[str] = mapped_column(String(80), default="Euronext")
     symbol: Mapped[str] = mapped_column(String(32), index=True)
     isin: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
@@ -118,6 +119,7 @@ class Trade(TimestampMixin, Base):
     closed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     account: Mapped[Account] = relationship(back_populates="trades")
+    ticker: Mapped[Optional["Ticker"]] = relationship()
     executions: Mapped[list["TradeExecution"]] = relationship(
         back_populates="trade", cascade="all, delete-orphan"
     )

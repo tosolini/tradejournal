@@ -1,11 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
-import { Account, Broker, TradeDetail, api } from "../lib/api";
+import { Account, Broker, Ticker, TradeDetail, api, tickersApi } from "../lib/api";
 
 const editSchema = z.object({
   symbol: z.string().trim().min(1),
@@ -69,11 +69,63 @@ export function TradeEditPage() {
   const qc = useQueryClient();
   const executedAtInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Symbol autocomplete
+  const [symbolInput, setSymbolInput] = useState("");
+  const [selectedTicker, setSelectedTicker] = useState<Ticker | null>(null);
+  const [symbolSuggestions, setSymbolSuggestions] = useState<Ticker[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const symbolDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const symbolContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (symbolContainerRef.current && !symbolContainerRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
   const { data, isLoading } = useQuery({
     queryKey: ["trade-detail", tradeId],
     queryFn: () => api<TradeDetail>(`/api/trades/${tradeId}`),
     enabled: tradeId > 0,
   });
+
+  // Populate symbol input when data loads
+  useEffect(() => {
+    if (data?.trade.symbol && !symbolInput) {
+      setSymbolInput(data.trade.symbol);
+      if (data.trade.ticker_id && data.trade.isin) {
+        setSelectedTicker({ id: data.trade.ticker_id, symbol: data.trade.symbol, isin: data.trade.isin, name: "", market: data.trade.market, currency: null });
+      }
+    }
+  }, [data?.trade.symbol]);
+
+  async function handleSymbolInput(value: string) {
+    setSymbolInput(value);
+    form.setValue("symbol", value.toUpperCase());
+    setSelectedTicker(null);
+    if (symbolDebounceRef.current) clearTimeout(symbolDebounceRef.current);
+    if (value.trim().length < 1) {
+      setSymbolSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    symbolDebounceRef.current = setTimeout(async () => {
+      const results = await tickersApi.search(value, 8);
+      setSymbolSuggestions(results);
+      setShowSuggestions(results.length > 0);
+    }, 300);
+  }
+
+  function selectSymbol(ticker: Ticker) {
+    setSymbolInput(ticker.symbol);
+    setSelectedTicker(ticker);
+    form.setValue("symbol", ticker.symbol, { shouldValidate: true });
+    setShowSuggestions(false);
+  }
 
   const firstExecution = data?.executions?.[0];
   const { data: accounts } = useQuery({
@@ -113,6 +165,7 @@ export function TradeEditPage() {
         method: "PATCH",
         body: JSON.stringify({
           symbol: values.symbol,
+          ...(selectedTicker && { ticker_id: selectedTicker.id }),
           side: values.direction,
           status: values.execution_type === "open" ? "open" : values.execution_type,
           target_price: values.take_profit,
@@ -225,10 +278,47 @@ export function TradeEditPage() {
         onSubmit={form.handleSubmit((values) => saveMutation.mutate(values))}
       >
         <div className="grid gap-3 md:grid-cols-4">
-          <label className="text-sm text-slate-300 dark:text-slate-900">
-            {t("trade_edit.fields.symbol")}
-            <input {...form.register("symbol")} className="mt-1 w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2" />
-          </label>
+          <div className="text-sm text-slate-300 dark:text-slate-900" ref={symbolContainerRef}>
+            <span>{t("trade_edit.fields.symbol")}</span>
+            {selectedTicker?.isin && (
+              <span className="ml-2 font-mono text-xs text-slate-400 dark:text-slate-500">
+                [isin:{selectedTicker.isin}]
+              </span>
+            )}
+            {/* Hidden field for react-hook-form validation */}
+            <input type="hidden" {...form.register("symbol")} />
+            <div className="relative mt-1">
+              <input
+                type="text"
+                value={symbolInput}
+                onChange={(e) => handleSymbolInput(e.target.value)}
+                onFocus={() => symbolSuggestions.length > 0 && setShowSuggestions(true)}
+                className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 uppercase"
+                autoComplete="off"
+              />
+              {showSuggestions && (
+                <ul className="absolute left-0 top-full z-50 mt-1 w-full max-h-48 overflow-y-auto rounded border border-slate-600 dark:border-slate-300 bg-slate-900 dark:bg-white shadow-xl">
+                  {symbolSuggestions.map((tk) => (
+                    <li
+                      key={tk.id}
+                      onMouseDown={() => selectSymbol(tk)}
+                      className="flex cursor-pointer items-baseline gap-2 px-3 py-2 hover:bg-slate-700/60 dark:hover:bg-slate-100"
+                    >
+                      <span className="font-mono font-semibold text-teal-400 dark:text-teal-700 text-sm shrink-0">
+                        {tk.symbol}
+                      </span>
+                      <span className="truncate text-xs text-slate-300 dark:text-slate-600">
+                        {tk.name}
+                      </span>
+                      <span className="ml-auto shrink-0 text-[10px] text-slate-500 dark:text-slate-400">
+                        {tk.market}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
           <label className="text-sm text-slate-300 dark:text-slate-900">
             {t("trade_edit.fields.executed_at")}
             <div className="relative mt-1">

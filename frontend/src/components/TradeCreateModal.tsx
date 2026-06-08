@@ -69,6 +69,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
 
   // Symbol autocomplete state
   const [symbolInput, setSymbolInput] = useState("");
+  const [selectedTicker, setSelectedTicker] = useState<Ticker | null>(null);
   const [symbolSuggestions, setSymbolSuggestions] = useState<Ticker[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const symbolDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -88,6 +89,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
   async function handleSymbolInput(value: string) {
     setSymbolInput(value);
     setValue("symbol", value.toUpperCase());
+    setSelectedTicker(null);
     if (symbolDebounceRef.current) clearTimeout(symbolDebounceRef.current);
     if (value.trim().length < 1) {
       setSymbolSuggestions([]);
@@ -103,6 +105,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
 
   function selectSymbol(ticker: Ticker) {
     setSymbolInput(ticker.symbol);
+    setSelectedTicker(ticker);
     setValue("symbol", ticker.symbol, { shouldValidate: true });
     setShowSuggestions(false);
   }
@@ -147,6 +150,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
           account_id: values.account_id,
           market: "Euronext",
           symbol: values.symbol,
+          ...(selectedTicker && { ticker_id: selectedTicker.id }),
           instrument_type: "stock",
           side: values.direction,
           status: values.execution_type === "open" ? "open" : values.execution_type,
@@ -172,6 +176,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
       qc.invalidateQueries({ queryKey: ["recent-executions"] });
       reset();
       setSymbolInput("");
+      setSelectedTicker(null);
       setSymbolSuggestions([]);
       onClose();
     },
@@ -270,6 +275,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
               </span>
               {/* Hidden field for react-hook-form validation */}
               <input type="hidden" {...register("symbol")} />
+
               <div className="relative">
                 <input
                   type="text"
