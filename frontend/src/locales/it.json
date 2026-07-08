@@ -327,6 +327,12 @@
       "price": "Price",
       "fee": "Fee"
     },
+    "tab_chart": "Grafico",
+    "tab_technical": "Analisi Tecnica",
+    "tab_close": "Chiudi",
+    "tab_executions": "Eseguiti",
+    "tab_images": "Immagini",
+    "tab_close_closed": "Questo trade è già chiuso.",
     "chart_title": "TradingView",
     "chart_info": "grafici si aggiornano solo dopo la chiusura dei mercati.",
     "chart_symbol_hint": "Puoi cercare un simbolo diverso direttamente nel grafico."

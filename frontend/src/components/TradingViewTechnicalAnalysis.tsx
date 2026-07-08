@@ -1,18 +1,29 @@
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useTheme } from "../contexts/ThemeContext";
 import { resolveTvSymbol } from "../lib/tv-exchange";
 
-interface TradingViewChartProps {
+interface TradingViewTechnicalAnalysisProps {
   symbol: string;
   market?: string;
   height?: number;
+  interval?: string;
+  showIntervalTabs?: boolean;
 }
 
-export function TradingViewChart({ symbol, market, height = 500 }: TradingViewChartProps) {
+export function TradingViewTechnicalAnalysis({
+  symbol,
+  market,
+  height = 500,
+  interval = "1h",
+  showIntervalTabs = true,
+}: TradingViewTechnicalAnalysisProps) {
   const { theme } = useTheme();
+  const { i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
 
   const tvSymbol = resolveTvSymbol(symbol, market);
+  const locale = i18n.language?.slice(0, 2) || "en";
 
   useEffect(() => {
     const container = containerRef.current;
@@ -22,53 +33,43 @@ export function TradingViewChart({ symbol, market, height = 500 }: TradingViewCh
 
     const widgetDiv = document.createElement("div");
     widgetDiv.className = "tradingview-widget-container__widget";
-    widgetDiv.style.cssText = `height:${height - 32}px;width:100%`;
     container.appendChild(widgetDiv);
 
     const copyright = document.createElement("div");
     copyright.className = "tradingview-widget-copyright";
     copyright.innerHTML =
       '<a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">' +
-      '<span style="color:#2962FF">Track all markets on TradingView</span></a>';
+      '<span style="color:#2962FF">Technical analysis by TradingView</span></a>';
     container.appendChild(copyright);
 
     const script = document.createElement("script");
     script.type = "text/javascript";
     script.src =
-      "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+      "https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js";
     script.async = true;
     script.innerHTML = JSON.stringify({
+      interval,
       width: "100%",
+      isTransparent: false,
       height: height,
       symbol: tvSymbol,
-      hide_side_toolbar: false,
-      hide_top_toolbar: false,
-      hide_legend: false,
-      hide_volume: false,
-      interval: "D",
-      timezone: "Etc/UTC",
-      withdateranges: false,
-      theme: theme,
-      style: "1",
-      locale: "it",
-      allow_symbol_change: true,
-      calendar: false,
-      details: false,
-      studies: ["STD;MA%Ribbon"],
-      support_host: "https://www.tradingview.com",
+      showIntervalTabs,
+      displayMode: "multiple",
+      locale,
+      colorTheme: theme,
     });
     container.appendChild(script);
 
     return () => {
       container.innerHTML = "";
     };
-  }, [tvSymbol, theme, height]);
+  }, [tvSymbol, theme, locale, interval, showIntervalTabs, height]);
 
   return (
     <div
       className="tradingview-widget-container"
       ref={containerRef}
-      style={{ height: `${height}px`, width: "100%" }}
+      style={{ width: "100%" }}
     />
   );
 }
