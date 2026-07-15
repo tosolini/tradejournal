@@ -1,0 +1,35 @@
+name: Dependabot PR Notification
+
+on:
+  pull_request:
+    types: [opened, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send email notification
+        uses: dawidd6/action-send-mail@v4
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "[Dependabot] ${{ github.event.pull_request.title }}"
+          to: ${{ secrets.NOTIFICATION_EMAIL }}
+          from: Dependabot Notifier
+          body: |
+            A new Dependabot pull request has been opened:
+
+            Repository: ${{ github.repository }}
+            PR #: ${{ github.event.pull_request.number }}
+            Title: ${{ github.event.pull_request.title }}
+            Branch: ${{ github.event.pull_request.head.ref }}
+            URL: ${{ github.event.pull_request.html_url }}
+
+            Description:
+            ${{ github.event.pull_request.body }}
