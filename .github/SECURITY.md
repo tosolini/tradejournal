@@ -26,3 +26,4 @@ Ci impegniamo a rispondere entro **72 ore** e a rilasciare una patch nel più br
 | Pacchetto | CVE | Severity | Mitigazione |
 |-----------|-----|----------|-------------|
 | `quill` ≤ 1.3.7 (via `react-quill`) | CVE-2021-3163 | Medium | Tutto l'output HTML dell'editor è sanitizzato tramite [DOMPurify](https://github.com/cure53/DOMPurify) prima del rendering. Non esiste una versione corretta di `quill` v1 disponibile upstream. |
+| `quill` 2.0.3 (via `react-quill-new`) | CVE-2025-15056 | Low | Tutto l'output HTML dell'editor è sanitizzato tramite [DOMPurify](https://github.com/cure53/DOMPurify) prima del rendering (`NotesPage.tsx:696`). Non esiste una versione corretta di `quill` v2 disponibile upstream. |
