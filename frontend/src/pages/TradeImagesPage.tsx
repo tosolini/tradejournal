@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { ImageAnnotationEditor } from "../components/ImageAnnotationEditor";
-import { TradeDetail, api, fetchTradeImageBlobUrl } from "../lib/api";
+import { API_BASE, TradeDetail, api, fetchTradeImageBlobUrl } from "../lib/api";
 
 export function TradeImagesPage() {
   const { t } = useTranslation();
@@ -32,7 +32,7 @@ export function TradeImagesPage() {
       const token = localStorage.getItem("token");
       const form = new FormData();
       form.append("file", file);
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:18000"}/api/uploads/trade/${tradeId}`, {
+      const response = await fetch(`${API_BASE}/api/uploads/trade/${tradeId}`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         body: form,
@@ -163,7 +163,7 @@ export function TradeImagesPage() {
     form.append("file", new File([blob], `annotated-${selectedImageId}.png`, { type: "image/png" }));
 
     const response = await fetch(
-      `${import.meta.env.VITE_API_BASE_URL || "http://localhost:18000"}/api/uploads/trade-images/${selectedImageId}/annotated`,
+      `${API_BASE}/api/uploads/trade-images/${selectedImageId}/annotated`,
       {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,

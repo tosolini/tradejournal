@@ -1,6 +1,8 @@
 import i18n from "./i18n";
 
-const API_BASE = "http://localhost:18000";
+const rawApiBase = String(import.meta.env.VITE_API_BASE_URL || "").trim();
+const normalizedApiBase = rawApiBase.replace(/\/+$/, "");
+export const API_BASE = normalizedApiBase.endsWith("/api") ? normalizedApiBase.slice(0, -4) : normalizedApiBase;
 
 export class ApiError extends Error {
   status: number;
