@@ -118,10 +118,11 @@ def _seed_exchanges_for_admin() -> None:
 app = FastAPI(title="TradeJournal API", lifespan=lifespan)
 
 allowed_origins = [origin.strip() for origin in settings.cors_origins.split(",") if origin.strip()]
+allow_all = "*" in allowed_origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
+    allow_origins=["*"] if allow_all else allowed_origins,
+    allow_credentials=not allow_all,
     allow_methods=["*"],
     allow_headers=["*"],
 )
