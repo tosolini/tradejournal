@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { AccountsPage } from "./pages/AccountsPage";

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolverTyped } from "../lib/zod-resolver";
 import { useTranslation } from "react-i18next";
 import { ApiError, Broker, Exchange, api, exchangesApi } from "../lib/api";
 import { ConfirmModal } from "../components/ConfirmModal";
@@ -240,12 +240,12 @@ export function BrokersPage() {
 
   // Forms
   const { register: registerBroker, handleSubmit: handleBrokerSubmit, reset: resetBroker, formState: { errors: brokerErrors } } = useForm<BrokerPayload>({
-    resolver: zodResolver(brokerSchema),
+    resolver: zodResolverTyped(brokerSchema),
     defaultValues: { name: "", fee_mode: "fixed", fee_value: 0, fee_currency: "EUR", capital_gain_mode: "immediate", capital_gain_rate: 26 },
   });
 
   const { register: registerExchange, handleSubmit: handleExchangeSubmit, reset: resetExchange, formState: { errors: exchangeErrors } } = useForm<ExchangePayload>({
-    resolver: zodResolver(exchangeSchema),
+    resolver: zodResolverTyped(exchangeSchema),
     defaultValues: { name: "", mic: "", suffix: "", country: "", currency: "EUR", timezone: "", open_time: "", close_time: "" },
   });
 

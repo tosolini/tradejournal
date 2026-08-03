@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolverTyped } from "../lib/zod-resolver";
 import { useTranslation } from "react-i18next";
 import { Account, ApiError, Broker, api } from "../lib/api";
 import { ConfirmModal } from "../components/ConfirmModal";
@@ -142,7 +142,7 @@ export function AccountsPage() {
     reset,
     formState: { errors },
   } = useForm<AccountPayload>({
-    resolver: zodResolver(accountSchema),
+    resolver: zodResolverTyped(accountSchema),
     defaultValues: {
       name: "",
       base_currency: "EUR",

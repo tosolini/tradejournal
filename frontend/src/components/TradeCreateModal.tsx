@@ -1,4 +1,4 @@
-import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolverTyped } from "../lib/zod-resolver";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -129,7 +129,7 @@ export function TradeCreateModal({ open, onClose }: Props) {
     setValue,
     formState: { errors },
   } = useForm<TradeModalPayload>({
-    resolver: zodResolver(tradeModalSchema),
+    resolver: zodResolverTyped(tradeModalSchema),
     defaultValues: {
       account_id: 0,
       symbol: "",

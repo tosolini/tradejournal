@@ -1,4 +1,4 @@
-import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolverTyped } from "../lib/zod-resolver";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -161,7 +161,7 @@ export function TradeDetailPage() {
   const [activeTab, setActiveTab] = useState<"chart" | "technical" | "close" | "executions" | "images">("chart");
 
   const closeForm = useForm<CloseTradePayload>({
-    resolver: zodResolver(closeTradeSchema),
+    resolver: zodResolverTyped(closeTradeSchema),
     defaultValues: {
       executed_at: datetimeLocalNow(),
       price: 0,

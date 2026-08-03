@@ -1,4 +1,4 @@
-import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolverTyped } from "../lib/zod-resolver";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -140,7 +140,7 @@ export function TradeEditPage() {
   });
 
   const form = useForm<EditPayload>({
-    resolver: zodResolver(editSchema),
+    resolver: zodResolverTyped(editSchema),
     values: data
       ? {
           symbol: data.trade.symbol,
