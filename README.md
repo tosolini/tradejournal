@@ -31,11 +31,106 @@ The entire project is meant to be used on localhost or private networks. **Do no
 
 more details on change log and versioning strategy in the [CHANGELOG.md](CHANGELOG.md) file.
 
-## Quick start
+## Quick start — published images (recommended)
 
-1. Copy the env file.
-2. Start the stack with Docker Compose.
-3. Open frontend and API docs.
+Pre-built images are published to GitHub Container Registry for `linux/amd64` and `linux/arm64`:
+
+- `ghcr.io/tosolini/tradejournal/backend`
+- `ghcr.io/tosolini/tradejournal/frontend`
+
+Tags: `main` (latest build of the `main` branch), a short commit SHA, and semver tags like `0.1.5` / `0.1` once a release is tagged. Pin to a specific tag instead of `main` for reproducible deployments.
+
+1. Copy the env file and adjust secrets (`JWT_SECRET_KEY`, `POSTGRES_PASSWORD`, admin credentials).
+2. Save the compose file below as `docker-compose.prod.yml`.
+3. Start the stack (this pulls the images, starts PostgreSQL, runs migrations, then starts the apps).
+
+```bash
+cp .env.example .env
+docker compose -f docker-compose.prod.yml up -d
+```
+
+```yaml
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  backend:
+    image: ghcr.io/tosolini/tradejournal/backend:main
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES}
+      APP_TIMEZONE: ${APP_TIMEZONE}
+      MARKET_CLOSE_CUTOFF: ${MARKET_CLOSE_CUTOFF}
+      MEDIA_ROOT: ${MEDIA_ROOT}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      SEED_ADMIN_ENABLED: ${SEED_ADMIN_ENABLED}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL}
+      SEED_ADMIN_USERNAME: ${SEED_ADMIN_USERNAME}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
+    depends_on:
+      - db
+    ports:
+      - "18000:8000"
+    volumes:
+      - media_data:/app/media
+
+  frontend:
+    image: ghcr.io/tosolini/tradejournal/frontend:main
+    depends_on:
+      - backend
+    ports:
+      - "15173:80"
+
+volumes:
+  db_data:
+  media_data:
+```
+
+- Frontend: http://localhost:15173
+- API docs: http://localhost:18000/docs
+- Backend health: http://localhost:18000/health
+
+How it works:
+
+- The backend image runs `alembic upgrade head` at startup (retrying until PostgreSQL accepts connections), then starts uvicorn.
+- The frontend image serves the SPA through nginx and proxies `/api/` and `/health` to the backend service (default `http://backend:8000`, using Docker DNS — the service name `backend` above matches this default).
+- The browser only ever talks to the frontend origin (same-origin proxy), so CORS is never triggered on this path. If you call the backend directly instead, set `CORS_ORIGINS` to your frontend origin, or `*` (wildcard disables credentialed CORS; auth is Bearer-header only).
+- Media uploads are stored under `MEDIA_ROOT` (default `/app/media`), mounted as the `media_data` volume.
+
+### Cross-host deployment (frontend and backend on different machines)
+
+Run the frontend with `BACKEND_URL` pointing at the reachable backend (the proxy stays same-origin for the browser, so CORS is not involved):
+
+```yaml
+  frontend:
+    image: ghcr.io/tosolini/tradejournal/frontend:main
+    environment:
+      BACKEND_URL: http://192.168.1.20:18000
+    ports:
+      - "15173:80"
+```
+
+## Optional: build from source
+
+### Production images
+
+Build the same images locally instead of pulling them:
+
+```bash
+docker build -f docker/backend.Dockerfile -t ghcr.io/tosolini/tradejournal/backend:main ./backend
+docker build -f docker/frontend.Dockerfile -t ghcr.io/tosolini/tradejournal/frontend:main ./frontend
+```
+
+The production Dockerfiles live in `docker/` (the `backend/Dockerfile` and `frontend/Dockerfile` are dev-only and used by the dev compose stack).
+
+### Development stack (hot reload)
 
 ```bash
 cp .env.example .env
