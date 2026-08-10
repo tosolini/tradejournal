@@ -9,11 +9,20 @@ permissions:
 
 jobs:
   notify:
-    if: github.actor == 'dependabot[bot]'
+    # Gate on the PR author, not the actor: on `reopened` events the actor is
+    # whoever reopened the PR, which would silently skip dependabot PRs.
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
+    env:
+      # Skip the email step until the SMTP secrets are fully configured;
+      # otherwise every dependabot PR fails the check on an empty `to:`.
+      MAIL_CONFIGURED: ${{ secrets.SMTP_SERVER != '' && secrets.SMTP_PORT != '' && secrets.SMTP_USERNAME != '' && secrets.SMTP_PASSWORD != '' && secrets.NOTIFICATION_EMAIL != '' }}
     steps:
       - name: Send email notification
-        uses: dawidd6/action-send-mail@v4
+        if: env.MAIL_CONFIGURED == 'true'
+        # Pinned to commit SHA of v4 to avoid supply-chain risk now that this
+        # workflow runs with repository secrets available (pull_request_target).
+        uses: dawidd6/action-send-mail@611879133a9569642c41be66f4a323286e9b8a3b
         with:
           server_address: ${{ secrets.SMTP_SERVER }}
           server_port: ${{ secrets.SMTP_PORT }}
