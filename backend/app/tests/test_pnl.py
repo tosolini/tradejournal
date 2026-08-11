@@ -70,3 +70,38 @@ def test_realized_separate_from_unrealized():
     result = compute_weighted_average_pnl(executions, market_price=Decimal("190"))
     assert result.net_realized_pnl == Decimal("20.000000")
     assert result.unrealized_pnl == Decimal("-30.000000")
+
+
+def test_sell_first_opens_short_and_buy_closes():
+    executions = [
+        DummyExecution("SELL", "10", "14", "0", dt(1)),
+        DummyExecution("BUY", "10", "12.30", "0", dt(2)),
+    ]
+    result = compute_weighted_average_pnl(executions)
+    assert result.position_qty == Decimal("0.000000")
+    assert result.net_realized_pnl == Decimal("17.000000")
+    assert result.gross_proceeds == Decimal("140.000000")
+    assert result.gross_invested_amount == Decimal("123.000000")
+
+
+def test_short_partial_close_keeps_short_entry_price():
+    executions = [
+        DummyExecution("SELL", "10", "14", "0", dt(1)),
+        DummyExecution("BUY", "6", "12", "0", dt(2)),
+    ]
+    result = compute_weighted_average_pnl(executions, market_price=Decimal("13"))
+    assert result.position_qty == Decimal("-4.000000")
+    assert result.average_entry_price == Decimal("14.000000")
+    assert result.net_realized_pnl == Decimal("12.000000")
+    assert result.unrealized_pnl == Decimal("4.000000")
+
+
+def test_over_close_flips_position_and_opens_opposite():
+    executions = [
+        DummyExecution("SELL", "10", "14", "0", dt(1)),
+        DummyExecution("BUY", "16", "12", "0", dt(2)),
+    ]
+    result = compute_weighted_average_pnl(executions)
+    assert result.position_qty == Decimal("6.000000")
+    assert result.average_entry_price == Decimal("12.000000")
+    assert result.net_realized_pnl == Decimal("20.000000")
