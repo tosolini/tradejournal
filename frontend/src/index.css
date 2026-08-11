@@ -40,6 +40,29 @@ a {
   border-radius: 14px;
 }
 
+.fade-up {
+  opacity: 0;
+  animation: fadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-up {
+    opacity: 1;
+    animation: none;
+  }
+}
+
 .titlelogo {
   text-decoration: underline;
   text-underline-offset: 4px;

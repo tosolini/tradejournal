@@ -451,3 +451,60 @@ export const tickersApi = {
   clear: (): Promise<void> =>
     api("/api/tickers", { method: "DELETE" }),
 };
+
+// ── Dashboard ───────────────────────────────────────
+export type TradeStat = {
+  symbol: string;
+  side: string;
+  status: string;
+  net_pnl: string;
+  return_pct: number;
+  closed_date: string | null;
+};
+
+export type MonthlyPnlPoint = {
+  month: string; // "YYYY-MM"
+  realized: string;
+  count: number;
+};
+
+export type DashboardAllocation = {
+  symbol: string;
+  name: string;
+  instrument_type: string;
+  market_value: string;
+  weight_pct: number;
+};
+
+export type DashboardKpis = {
+  trade_count: number;
+  wins: number;
+  losses: number;
+  breakeven: number;
+  win_rate: number;
+  profit_factor: number;
+  gross_wins: string;
+  gross_losses: string;
+  avg_win: string;
+  avg_loss: string;
+  best_trade: TradeStat | null;
+  worst_trade: TradeStat | null;
+  top_trades: TradeStat[];
+  monthly_pnl: MonthlyPnlPoint[];
+  open_positions: number;
+  realized_pnl: string;
+  unrealized_pnl: string;
+  total_pnl: string;
+  kpi_currency: string;
+  capital_gain_tax_estimate: string;
+  capital_gain_loss_offset: string;
+  capital_gain_currency: string;
+  equity_curve: { date: string; value: number }[];
+  portfolio_history: PortfolioHistoryPoint[];
+  asset_allocation: DashboardAllocation[];
+  asset_classes: DashboardAllocation[];
+};
+
+export function dashboardKpis(): Promise<DashboardKpis> {
+  return api("/api/dashboard/kpis");
+}

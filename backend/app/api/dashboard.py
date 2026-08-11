@@ -8,7 +8,8 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.deps import get_current_user
-from app.models import PositionDailySnapshot, Trade, TradeExecution, User
+from app.models import Account, PortfolioSnapshot, PositionDailySnapshot, Trade, TradeExecution, User
+from app.services.portfolio import get_holding_details
 from app.services.pnl import compute_weighted_average_pnl
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
@@ -18,13 +19,37 @@ router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 def dashboard_kpis(
     db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
-    trades = db.execute(select(Trade).where(Trade.user_id == current_user.id)).scalars().all()
+    trades = (
+        db.execute(
+            select(Trade).where(Trade.user_id == current_user.id).order_by(Trade.created_at)
+        )
+        .scalars()
+        .all()
+    )
+
+    executions_by_trade: dict[int, list[TradeExecution]] = defaultdict(list)
+    if trades:
+        executions = (
+            db.execute(
+                select(TradeExecution).where(
+                    TradeExecution.trade_id.in_([trade.id for trade in trades])
+                )
+            )
+            .scalars()
+            .all()
+        )
+        for execution in executions:
+            executions_by_trade[execution.trade_id].append(execution)
+
     currencies: set[str] = set()
     yearly_tax_currency: set[str] = set()
     wins = 0
     losses = 0
+    breakeven = 0
     realized = Decimal("0")
     unrealized = Decimal("0")
+    gross_wins = Decimal("0")
+    gross_losses = Decimal("0")
     open_positions = 0
     current_year = date.today().year
     year_start = datetime(current_year, 1, 1, tzinfo=UTC)
@@ -32,43 +57,64 @@ def dashboard_kpis(
     year_end_buckets: dict[int, Decimal] = defaultdict(lambda: Decimal("0"))
     year_end_rates: dict[int, Decimal] = {}
     loss_offset = Decimal("0")
+    monthly: dict[str, dict] = {}
+    trade_rows: list[dict] = []
 
     for trade in trades:
         if trade.account and trade.account.base_currency:
             currencies.add(str(trade.account.base_currency).upper())
-        executions = db.execute(
-            select(TradeExecution).where(TradeExecution.trade_id == trade.id)
-        ).scalars().all()
+        executions = executions_by_trade.get(trade.id, [])
         if not executions:
             continue
-        if trade.status == "close":
-            closed_at = trade.closed_at or max(execution.executed_at for execution in executions)
-            if closed_at.tzinfo is None:
-                closed_at = closed_at.replace(tzinfo=UTC)
-            if closed_at >= year_start:
-                pnl = compute_weighted_average_pnl(executions)
-                broker = trade.account.broker if trade.account and trade.account.broker else None
-                broker_id = broker.id if broker else trade.account_id
-                mode = str(broker.capital_gain_mode if broker else "immediate").lower()
-                rate = Decimal(str(broker.capital_gain_rate if broker else Decimal("26")))
-                yearly_tax_currency.add((trade.account.base_currency if trade.account else "EUR").upper())
-                if mode == "year_end":
-                    year_end_buckets[broker_id] += pnl.net_realized_pnl
-                    year_end_rates[broker_id] = rate
-                else:
-                    taxable = pnl.net_realized_pnl if pnl.net_realized_pnl > 0 else Decimal("0")
-                    immediate_tax += taxable * rate / Decimal("100")
-                    if pnl.net_realized_pnl < 0:
-                        loss_offset += abs(pnl.net_realized_pnl)
         pnl = compute_weighted_average_pnl(executions)
-        realized += pnl.net_realized_pnl
+        net = pnl.net_realized_pnl
+        closed_at = trade.closed_at or max(execution.executed_at for execution in executions)
+        if closed_at.tzinfo is None:
+            closed_at = closed_at.replace(tzinfo=UTC)
+
+        realized += net
         unrealized += pnl.unrealized_pnl
-        if pnl.net_realized_pnl > 0:
-            wins += 1
-        elif pnl.net_realized_pnl < 0:
-            losses += 1
         if pnl.position_qty > 0:
             open_positions += 1
+
+        if trade.status == "close":
+            if net > 0:
+                wins += 1
+                gross_wins += net
+            elif net < 0:
+                losses += 1
+                gross_losses += abs(net)
+            else:
+                breakeven += 1
+
+        broker = trade.account.broker if trade.account and trade.account.broker else None
+        broker_id = broker.id if broker else trade.account_id
+        mode = str(broker.capital_gain_mode if broker else "immediate").lower()
+        rate = Decimal(str(broker.capital_gain_rate if broker else Decimal("26")))
+        yearly_tax_currency.add((trade.account.base_currency if trade.account else "EUR").upper())
+        if closed_at >= year_start:
+            if mode == "year_end":
+                year_end_buckets[broker_id] += net
+                year_end_rates.setdefault(broker_id, rate)
+            else:
+                taxable = net if net > 0 else Decimal("0")
+                immediate_tax += taxable * rate / Decimal("100")
+                if net < 0:
+                    loss_offset += abs(net)
+
+        month_key = closed_at.strftime("%Y-%m")
+        bucket = monthly.setdefault(month_key, {"realized": Decimal("0"), "count": 0})
+        bucket["realized"] += net
+        bucket["count"] += 1
+
+        trade_rows.append(
+            {
+                "trade": trade,
+                "net": net,
+                "return_pct": pnl.return_pct,
+                "closed_at": closed_at,
+            }
+        )
 
     for broker_id, net_pnl in year_end_buckets.items():
         rate = year_end_rates.get(broker_id, Decimal("26"))
@@ -94,10 +140,136 @@ def dashboard_kpis(
 
     tax_currency = next(iter(yearly_tax_currency), kpi_currency)
 
+    win_rate = (
+        Decimal(wins) / Decimal(wins + losses) * Decimal("100")
+    ) if (wins + losses) > 0 else Decimal("0")
+    profit_factor = (
+        gross_wins / gross_losses if gross_losses > 0 else (gross_wins if wins > 0 else Decimal("0"))
+    )
+    avg_win = gross_wins / wins if wins > 0 else Decimal("0")
+    avg_loss = gross_losses / losses if losses > 0 else Decimal("0")
+
+    nonzero = [row for row in trade_rows if row["net"] != 0]
+    best = max(nonzero, key=lambda row: row["net"]) if nonzero else None
+    worst = min(nonzero, key=lambda row: row["net"]) if nonzero else None
+
+    def trade_stat(row: dict) -> dict:
+        trade = row["trade"]
+        return {
+            "symbol": trade.symbol,
+            "side": trade.side,
+            "status": trade.status,
+            "net_pnl": str(row["net"]),
+            "return_pct": float(row["return_pct"]),
+            "closed_date": row["closed_at"].date().isoformat() if trade.status == "close" else None,
+        }
+
+    top_trades = [trade_stat(row) for row in sorted(trade_rows, key=lambda r: r["net"], reverse=True)[:8]]
+
+    monthly_pnl = [
+        {"month": key, "realized": str(bucket["realized"]), "count": bucket["count"]}
+        for key, bucket in sorted(monthly.items())
+    ]
+
+    account_ids = (
+        db.execute(select(Account.id).where(Account.user_id == current_user.id)).scalars().all()
+    )
+    portfolio_snapshots: list[PortfolioSnapshot] = []
+    if account_ids:
+        portfolio_snapshots = (
+            db.execute(
+                select(PortfolioSnapshot)
+                .where(PortfolioSnapshot.account_id.in_(account_ids))
+                .order_by(PortfolioSnapshot.snapshot_date)
+            )
+            .scalars()
+            .all()
+        )
+    by_date: dict[date, dict[str, Decimal]] = defaultdict(
+        lambda: {"value": Decimal("0"), "cost": Decimal("0")}
+    )
+    for snap in portfolio_snapshots:
+        by_date[snap.snapshot_date]["value"] += snap.total_value
+        by_date[snap.snapshot_date]["cost"] += snap.total_cost
+
+    portfolio_history = []
+    for snapshot_date in sorted(by_date):
+        value = by_date[snapshot_date]["value"]
+        cost = by_date[snapshot_date]["cost"]
+        return_pct = (value - cost) / cost * Decimal("100") if cost else Decimal("0")
+        portfolio_history.append(
+            {
+                "date": snapshot_date.isoformat(),
+                "value": float(value),
+                "cost": float(cost),
+                "return_pct": float(return_pct),
+            }
+        )
+
+    holding_details = get_holding_details(db, current_user.id)
+    by_symbol: dict[str, dict] = {}
+    total_market_value = Decimal("0")
+    for holding in holding_details:
+        total_market_value += holding.market_value
+        entry = by_symbol.setdefault(
+            holding.asset_symbol,
+            {
+                "name": holding.asset_name,
+                "instrument_type": holding.instrument_type,
+                "market_value": Decimal("0"),
+            },
+        )
+        entry["market_value"] += holding.market_value
+
+    sorted_symbols = sorted(
+        by_symbol.items(), key=lambda item: item[1]["market_value"], reverse=True
+    )
+    asset_allocation = [
+        {
+            "symbol": symbol,
+            "name": entry["name"],
+            "instrument_type": entry["instrument_type"],
+            "market_value": str(entry["market_value"]),
+            "weight_pct": float(
+                entry["market_value"] / total_market_value * Decimal("100")
+            )
+            if total_market_value
+            else 0.0,
+        }
+        for symbol, entry in sorted_symbols[:8]
+    ]
+
+    by_class: dict[str, Decimal] = defaultdict(lambda: Decimal("0"))
+    for symbol, entry in by_symbol.items():
+        by_class[entry["instrument_type"]] += entry["market_value"]
+    asset_classes = [
+        {
+            "instrument_type": instrument_type,
+            "market_value": str(market_value),
+            "weight_pct": float(market_value / total_market_value * Decimal("100"))
+            if total_market_value
+            else 0.0,
+        }
+        for instrument_type, market_value in sorted(
+            by_class.items(), key=lambda item: item[1], reverse=True
+        )
+    ]
+
     return {
         "trade_count": len(trades),
         "wins": wins,
         "losses": losses,
+        "breakeven": breakeven,
+        "win_rate": float(win_rate),
+        "profit_factor": float(profit_factor),
+        "gross_wins": str(gross_wins),
+        "gross_losses": str(gross_losses),
+        "avg_win": str(avg_win),
+        "avg_loss": str(avg_loss),
+        "best_trade": trade_stat(best) if best else None,
+        "worst_trade": trade_stat(worst) if worst else None,
+        "top_trades": top_trades,
+        "monthly_pnl": monthly_pnl,
         "open_positions": open_positions,
         "realized_pnl": str(realized),
         "unrealized_pnl": str(unrealized),
@@ -107,4 +279,7 @@ def dashboard_kpis(
         "capital_gain_loss_offset": str(loss_offset),
         "capital_gain_currency": tax_currency,
         "equity_curve": equity_curve,
+        "portfolio_history": portfolio_history,
+        "asset_allocation": asset_allocation,
+        "asset_classes": asset_classes,
     }
