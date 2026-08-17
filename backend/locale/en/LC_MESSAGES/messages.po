@@ -80,3 +80,9 @@ msgstr "Image file not found"
 
 msgid "notes.tax_deferred_dashboard"
 msgstr "Tax calculation deferred to year-end in dashboard"
+
+msgid "errors.ledger_entry_not_found"
+msgstr "Cash ledger entry not found"
+
+msgid "errors.invalid_ledger_type"
+msgstr "Entry type must be 'deposit' or 'withdrawal'"

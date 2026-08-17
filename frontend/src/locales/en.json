@@ -5,6 +5,7 @@
       "calendar": "Calendar",
       "accounts": "Accounts",
       "portfolio": "Portfolio",
+      "performance": "Performance",
       "assets": "Assets",
       "trades": "Trades",
       "stats": "Stats",
@@ -48,6 +49,15 @@
       "description": "Manage master data used by operational forms.",
       "brokers_button": "Manage Brokers"
     },
+    "data": {
+      "title": "Data Export & Import",
+      "description": "Export all your data as a JSON file, or restore from a previous export.",
+      "export_btn": "Export all data",
+      "exporting": "Exporting…",
+      "import_btn": "Import data",
+      "import_success": "Data imported successfully. Reload the page to see changes.",
+      "import_error": "Import failed. Check the file format and try again."
+    },
     "session": {
       "title": "Session",
       "description": "Local JWT logout.",
@@ -90,6 +100,15 @@
       "you": "you",
       "confirm_delete": "Are you sure you want to delete this user?",
       "save_error": "Error while saving."
+    },
+    "snapshots": {
+      "title": "Daily Snapshots",
+      "description": "Configure when the backend records your daily portfolio and asset values. Default is 23:55.",
+      "time_label": "Snapshot time",
+      "save": "Save",
+      "saving": "Saving...",
+      "saved": "Snapshot time saved",
+      "error": "Failed to save snapshot time"
     }
   },
   "tickers": {
@@ -169,7 +188,25 @@
     "error_create": "Account creation failed.",
     "error_invalid_cash": "Invalid capital",
     "error_invalid_data": "Invalid account data",
-    "confirm_delete": "Delete account #{{id}} ({{name}})?"
+    "confirm_delete": "Delete account #{{id}} ({{name}})?",
+    "ledger_title": "Cash Ledger",
+    "ledger_subtitle": "Record deposits and withdrawals to keep the daily P&L cash-adjusted.",
+    "ledger_account": "Account",
+    "ledger_deposit": "Deposit",
+    "ledger_withdrawal": "Withdrawal",
+    "ledger_date": "Date",
+    "ledger_amount": "Amount",
+    "ledger_description": "Description (optional)",
+    "ledger_add": "Add",
+    "ledger_saving": "Adding...",
+    "ledger_delete": "Delete entry",
+    "ledger_delete_confirm": "Delete this cash ledger entry?",
+    "ledger_error": "Failed to add ledger entry.",
+    "ledger_empty": "No entries yet for this account.",
+    "ledger_totals_in": "Total in",
+    "ledger_totals_out": "Total out",
+    "ledger_totals_net": "Net",
+    "ledger_type": "Type"
   },
   "common": {
     "cancel": "Cancel",
@@ -224,7 +261,9 @@
     "col_status": "Status",
     "col_closed": "Closed",
     "col_return": "Return",
-    "col_pnl": "Net PnL"
+    "col_pnl": "Net PnL",
+    "all_assets_pnl": "Daily P&L (All Assets)",
+    "no_daily_pnl": "No daily snapshots yet."
   },
   "calendar": {
     "title": "Calendar",
@@ -356,8 +395,14 @@
       "net_pnl_after_fees": "Net PnL after fees",
       "capital_gain": "Capital gain",
       "tax_estimate": "Tax estimate",
-      "net_pnl_after_tax": "Net PnL after tax"
+      "net_pnl_after_tax": "Net PnL after tax",
+      "market_price": "Market Price",
+      "market_value": "Market Value",
+      "unrealized_pnl": "Unrealized PnL",
+      "current_return_pct": "Current Return %"
     },
+    "current_market": "Current Market",
+    "market_data_note": "Prices refresh every 5 minutes via Yahoo Finance.",
     "columns": {
       "date": "Date",
       "action": "Action",
@@ -479,6 +524,32 @@
         "auto_fee": "Calculated from broker fee rule (fixed or percentage).",
         "take_profit": "Leave empty if you do not want to set it now.",
         "stop_loss": "Leave empty if you do not want to set it now."
+      },
+      "quick_btn": "Quick Trade",
+      "wizard": {
+        "step1": "Account & Ticker",
+        "step2": "Entry & Size",
+        "step3": "Direction",
+        "step4": "Take Profit",
+        "step5": "Stop Loss",
+        "step6": "Execute",
+        "back": "Back",
+        "next": "Next",
+        "shares_btn": "Shares",
+        "value_btn": "Value",
+        "value_label": "Entry value (€)",
+        "percent_label": "Percentage",
+        "price_label": "Price level",
+        "percent_btn": "%",
+        "price_btn": "Price",
+        "mode": "Mode:",
+        "long_desc": "Buy low, sell high",
+        "short_desc": "Sell high, buy low",
+        "execution_title": "Execution & Confirm",
+        "summary": "Trade Summary",
+        "shares_estimate": "Estimated shares",
+        "notional": "Notional",
+        "value_required": "Enter a value greater than 0."
       }
     }
   },
@@ -524,7 +595,9 @@
     "rich_editor_placeholder": "Write your note details...",
     "rename_tag_prompt": "New tag name",
     "delete_tag_confirm": "Delete tag \"{{tag}}\" from all notes?",
-    "rename_tag_confirm": "Rename"
+    "rename_tag_confirm": "Rename",
+    "symbol": "Ticker Symbol",
+    "symbol_placeholder": "Search ticker..."
   },
   "portfolio": {
     "title": "Portfolio",
@@ -599,7 +672,25 @@
       "accounts": "Accounts & Brokers",
       "tickers": "Tickers",
       "calendar": "Calendar & Markets",
-      "settings": "Settings"
+      "settings": "Settings",
+      "dashboard": "Dashboard, Performance & Portfolio"
     }
+  },
+  "performance": {
+    "title": "Performance",
+    "subtitle": "Daily portfolio snapshots, day-by-day P&L and monthly calendar.",
+    "total_value": "Portfolio Value",
+    "cumulative_pnl": "Cumulative P&L",
+    "total_return": "Total Return",
+    "best_day": "Best Day",
+    "worst_day": "Worst Day",
+    "equity_title": "Portfolio Value over Time",
+    "daily_title": "Daily P&L (last 30 days)",
+    "calendar_title": "P&L Calendar",
+    "day_detail": "Detail — {{date}}",
+    "day_pnl": "Day P&L",
+    "win_days": "{{pct}}% green days",
+    "prev_month": "Previous month",
+    "next_month": "Next month"
   }
 }

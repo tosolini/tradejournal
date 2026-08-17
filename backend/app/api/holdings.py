@@ -32,6 +32,8 @@ def create_holding(
         asset_id=payload.asset_id,
         quantity=payload.quantity,
         avg_cost=payload.avg_cost,
+        entry_date=payload.entry_date,
+        exit_date=payload.exit_date,
     )
     db.add(holding)
     db.commit()

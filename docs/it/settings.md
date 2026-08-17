@@ -1,64 +1,89 @@
 # Impostazioni e Profilo
 
-## Profilo utente
+Vai su **Impostazioni** nella barra laterale per gestire il tuo profilo e le preferenze dell'applicazione.
 
-Vai su **Impostazioni** nel menu laterale per gestire il tuo profilo.
+## Onboarding
+
+Dopo il primo accesso, un banner eliminabile ti guida nella configurazione iniziale: cambia le credenziali, collega un broker, crea un conto e inizia a compilare il diario. Avvisa inoltre se è ancora in uso l'account amministratore predefinito.
+
+## Account
 
 ### Fuso orario
 
-Il campo **Fuso orario** è fondamentale per il corretto funzionamento del calendario dei mercati.
+Il campo **Fuso orario** è essenziale per il corretto funzionamento del calendario dei mercati.
 
 - Seleziona la tua zona geografica (es. `Europe/Rome` per l'Italia)
-- Il calendario dei mercati convertirà automaticamente tutti gli orari nella tua timezone
-- Se non configurato, viene usata la timezone del browser (potrebbe differire)
+- Il calendario dei mercati convertirà automaticamente tutti gli orari nel tuo fuso
+- Se non configurato, viene usato il fuso del browser (può differire)
 
-**Timezone comuni:**
+**Fusi orari comuni:**
 
-| Timezone | Descrizione |
+| Fuso orario | Descrizione |
 |---|---|
 | `Europe/Rome` | Italia (CET/CEST) |
 | `Europe/London` | Regno Unito (GMT/BST) |
-| `America/New_York` | USA Est (EST/EDT) |
-| `America/Chicago` | USA Centrale (CST/CDT) |
+| `America/New_York` | Stati Uniti Est (EST/EDT) |
+| `America/Chicago` | Stati Uniti Centro (CST/CDT) |
 | `Asia/Tokyo` | Giappone (JST) |
 
-### Cambio email e password
+### Email, Nome utente e Password
 
-Per motivi di sicurezza, la modifica di email o password richiede la conferma della **password attuale**.
+La modifica di email o password richiede la conferma della **password corrente**.
 
-1. Inserisci la **password attuale** nel campo dedicato
-2. Inserisci la nuova email o nuova password
+1. Inserisci la **password corrente** nell'apposito campo
+2. Inserisci la nuova email o la nuova password
 3. Clicca **Salva modifiche**
 
----
+Il tuo ruolo viene mostrato in sola lettura.
 
-## Preferenze
+## Utenti Admin (solo admin)
 
-### Lingua
+Se il tuo account ha il ruolo `admin`, la sezione **Utenti Admin** ti consente di:
+
+- Elencare tutti gli utenti con il loro ruolo
+- Creare utenti (nome utente, email, password opzionale, ruolo `user` o `admin`)
+- Modificare gli utenti (email, nome utente, password, ruolo)
+- Eliminare utenti — non puoi eliminare te stesso né revocare il tuo ruolo admin
+
+## Lingua
 
 L'applicazione supporta:
-- 🇮🇹 **Italiano** (default)
-- 🇬🇧 **English**
 
-La lingua viene rilevata automaticamente dal browser. Può essere cambiata nelle impostazioni.
+- 🇮🇹 **Italiano**
+- 🇬🇧 **Inglese** (predefinito)
 
-### Tema
+La lingua viene rilevata automaticamente dal browser e può essere cambiata qui; il manuale in-app segue la selezione.
 
-Puoi alternare tra tema **scuro** (dark) e tema **chiaro** (light) tramite il pulsante ☀️/🌙 nella barra in alto.
+## Export / Import Dati
 
-La preferenza viene salvata nel browser.
+- **Esporta tutto** — scarica un backup JSON completo (`tradejournal-export-<data>.json`) di tutti i tuoi dati: borse, broker, conti, ticker, trade, esecuzioni, immagini, note giornaliere, assets, posizioni, snapshot giornalieri, libro cassa e snapshot di portafoglio
+- **Importa tutto** — ripristina un backup JSON creato con Esporta
+
+> ⚠️ L'import è **additivo/upsert**: i record corrispondenti vengono aggiornati in base alle chiavi naturali, i nuovi vengono creati; un import non elimina mai nulla.
+
+## Ora Snapshot
+
+Imposta l'orario (default `23:55`) in cui il backend esegue il **job di snapshot giornaliero**:
+
+- **Snapshot di posizione** — per ogni trade aperto, recupera il prezzo di chiusura e salva quantità, valore di mercato, P&L realizzato e non realizzato
+- **Snapshot di portafoglio** — per ogni conto, valore totale, costo, rendimento e rendimento % (usati dalla pagina Performance e dalle curve patrimoniali)
+
+Il job viene eseguito una volta al giorno, nel fuso orario del server configurato con `APP_TIMEZONE`. In questa sezione puoi anche eseguire ricalcoli manuali per popolare una data.
+
+## Sessione
+
+- **Logout** — termina la sessione corrente e torna alla pagina di login
 
 ---
 
 ## Sicurezza
 
-- Le sessioni hanno una durata limitata (token JWT con scadenza)
-- Alla scadenza del token verrai reindirizzato alla pagina di login
+- L'autenticazione usa token JWT con durata limitata; alla scadenza vieni reindirizzato alla pagina di login
+- La registrazione crea sempre un account `user` standard — il ruolo `admin` viene concesso solo da un amministratore
 - Non condividere mai le tue credenziali
 - Usa una password robusta di almeno 8 caratteri
+- Le immagini caricate sui trade sono limitate a PNG/JPEG/GIF/WebP; gli altri file vengono rifiutati
 
----
+## Versione e Informazioni
 
-## Versione e informazioni
-
-La versione corrente dell'applicazione è visibile in fondo al menu laterale. In caso di problemi, includi queste informazioni nelle segnalazioni.
+La versione corrente dell'applicazione è mostrata in fondo alla barra laterale. Includi questa informazione quando segnali un problema.

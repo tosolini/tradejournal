@@ -23,6 +23,7 @@ from app.schemas import (
     TradeImageResponse,
 )
 from app.services.pnl import compute_weighted_average_pnl
+from app.services.price_provider import get_current_price
 
 router = APIRouter(prefix="/api/trades", tags=["trades"])
 
@@ -102,7 +103,9 @@ def _trade_closure_summary(
     )
 
 
-def _trade_response_with_metrics(trade: Trade, executions: list[TradeExecution]) -> TradeResponse:
+def _trade_response_with_metrics(
+    trade: Trade, executions: list[TradeExecution], market_price: Decimal | None = None
+) -> TradeResponse:
     if not executions:
         response = TradeResponse.model_validate(trade)
         payload = response.model_dump()
@@ -135,7 +138,7 @@ def _trade_response_with_metrics(trade: Trade, executions: list[TradeExecution])
     hold_end = latest_exec if sells else datetime.now(UTC)
     hold_hours = Decimal(str((hold_end - earliest_exec).total_seconds() / 3600))
 
-    pnl = compute_weighted_average_pnl(executions)
+    pnl = compute_weighted_average_pnl(executions, market_price=market_price)
     net_return = pnl.net_realized_pnl + pnl.unrealized_pnl
 
     payload = {
@@ -245,14 +248,21 @@ def trade_detail(
         select(TradeExecution).where(TradeExecution.trade_id == trade.id)
     ).scalars().all()
     images = db.execute(select(TradeImage).where(TradeImage.trade_id == trade.id)).scalars().all()
-    pnl = compute_weighted_average_pnl(executions) if executions else None
+
+    # Fetch market price for open trades
+    market_price = None
+    if trade.status == "open":
+        market_price = get_current_price(trade.symbol, trade.market)
+
+    pnl = compute_weighted_average_pnl(executions, market_price=market_price) if executions else None
     closure = _trade_closure_summary(trade, executions, request=request)
     return {
-        "trade": _trade_response_with_metrics(trade, executions),
+        "trade": _trade_response_with_metrics(trade, executions, market_price=market_price),
         "executions": [ExecutionResponse.model_validate(ex) for ex in executions],
         "images": [TradeImageResponse.model_validate(image) for image in images],
         "pnl": pnl.__dict__ if pnl else None,
         "closure": closure.model_dump() if closure else None,
+        "current_price": market_price,
     }
 
 

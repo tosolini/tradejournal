@@ -10,7 +10,7 @@ Euronext publishes a daily updated CSV file with all securities traded on its ma
 
 **How to download the file:**
 
-1. Go to [euronext.com](https://www.euronext.com/en/products/equities/list)
+1. Go to [euronext.com](https://live.euronext.com/en/products/equities/list)
 2. Scroll to the bottom of the page and find the link to download the full list as CSV
 3. The file is typically named `Euronext_Equities_YYYY-MM-DD.csv`
 

@@ -1,0 +1,43 @@
+services:
+  devcontainer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/workspace:cached
+      - node_modules:/workspace/frontend/node_modules
+    command: sleep infinity
+    environment:
+      DATABASE_URL: postgresql+psycopg://tradejournal:tradejournal@db:5432/tradejournal
+      JWT_SECRET_KEY: dev-secret-key-not-for-production
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: 1440
+      APP_TIMEZONE: Europe/Rome
+      MARKET_CLOSE_CUTOFF: "17:30"
+      MEDIA_ROOT: /workspace/backend/media
+      CORS_ORIGINS: "http://localhost:5173,http://127.0.0.1:5173"
+      SEED_ADMIN_ENABLED: "true"
+      SEED_ADMIN_EMAIL: admin@example.com
+      SEED_ADMIN_USERNAME: admin
+      SEED_ADMIN_PASSWORD: password123
+      VITE_BACKEND_PROXY: http://localhost:8000
+    depends_on:
+      - db
+    ports:
+      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:5173:5173"
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tradejournal
+      POSTGRES_USER: tradejournal
+      POSTGRES_PASSWORD: tradejournal
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+
+volumes:
+  postgres_data:
+  node_modules:

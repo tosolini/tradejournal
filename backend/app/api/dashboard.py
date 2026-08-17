@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.deps import get_current_user
 from app.models import Account, PortfolioSnapshot, PositionDailySnapshot, Trade, TradeExecution, User
-from app.services.portfolio import get_holding_details
+from app.services.portfolio import get_all_assets_pnl_series, get_holding_details
 from app.services.pnl import compute_weighted_average_pnl
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
@@ -280,6 +280,9 @@ def dashboard_kpis(
         "capital_gain_currency": tax_currency,
         "equity_curve": equity_curve,
         "portfolio_history": portfolio_history,
+        "all_assets_daily_pnl": [
+            point.model_dump() for point in get_all_assets_pnl_series(db, current_user.id)
+        ],
         "asset_allocation": asset_allocation,
         "asset_classes": asset_classes,
     }

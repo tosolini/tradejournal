@@ -1,7 +1,111 @@
+import time
 from datetime import date
 from decimal import Decimal
+from typing import Optional
+
+import yfinance as yf
+
+# In-memory TTL cache: {normalized_symbol: (timestamp, price_or_None)}
+_price_cache: dict[str, tuple[float, Optional[Decimal]]] = {}
+CACHE_TTL = 300  # 5 minutes
+
+# Hardcoded market → yfinance suffix mapping (covers common cases; Exchange model's
+# `suffix` field is the canonical source but requires DB access per call).
+_MARKET_SUFFIX: dict[str, str] = {
+    "borsa italiana": ".MI",
+    "euronext milan": ".MI",
+    "milan": ".MI",
+    "nyse": "",
+    "nasdaq": "",
+    "euronext paris": ".PA",
+    "euronext amsterdam": ".AS",
+    "euronext brussels": ".BR",
+    "euronext lisbon": ".LS",
+    "xetra": ".DE",
+    "frankfurt": ".DE",
+    "london": ".L",
+    "tokyo": ".T",
+    "toronto": ".TO",
+}
 
 
-def get_mock_close_price(symbol: str, snapshot_date: date) -> Decimal:
-    seed = (sum(ord(ch) for ch in symbol) + snapshot_date.toordinal()) % 150
-    return Decimal("90") + Decimal(seed) / Decimal("10")
+def _normalize_yfinance_symbol(symbol: str, market: Optional[str] = None) -> str:
+    """Convert trade symbol to yfinance ticker string.
+
+    Uses market name suffix mapping. Falls back to bare symbol (works for US stocks).
+    """
+    if market:
+        market_lower = market.strip().lower()
+        suffix = _MARKET_SUFFIX.get(market_lower, "")
+        if suffix:
+            return symbol.upper() + suffix
+    return symbol.upper()
+
+
+def get_current_price(
+    symbol: str, market: Optional[str] = None
+) -> Optional[Decimal]:
+    """Fetch the latest available price via yfinance with TTL caching.
+
+    Returns None if the symbol is unknown or the request fails (caller should
+    fall back to entry price = 0 unrealized PnL).
+    """
+    yf_symbol = _normalize_yfinance_symbol(symbol, market)
+    now = time.monotonic()
+
+    cached = _price_cache.get(yf_symbol)
+    if cached and (now - cached[0]) < CACHE_TTL:
+        return cached[1]
+
+    try:
+        ticker = yf.Ticker(yf_symbol)
+        info = ticker.info
+        # Try multiple price fields yfinance may populate
+        price = (
+            info.get("currentPrice")
+            or info.get("regularMarketPrice")
+            or info.get("previousClose")
+        )
+        if price is not None:
+            result = Decimal(str(price))
+            _price_cache[yf_symbol] = (now, result)
+            return result
+    except Exception:
+        pass
+
+    _price_cache[yf_symbol] = (now, None)
+    return None
+
+
+def get_close_price(
+    symbol: str,
+    target_date: date,
+    market: Optional[str] = None,
+) -> Optional[Decimal]:
+    """Fetch the closing price for a specific date via yfinance history.
+
+    Used by the daily snapshot job. Also uses cache to avoid redundant fetches.
+    """
+    yf_symbol = _normalize_yfinance_symbol(symbol, market)
+    cache_key = f"{yf_symbol}:{target_date.isoformat()}"
+    now = time.monotonic()
+
+    cached = _price_cache.get(cache_key)
+    if cached and (now - cached[0]) < CACHE_TTL:
+        return cached[1]
+
+    try:
+        ticker = yf.Ticker(yf_symbol)
+        # yfinance end date is exclusive — use next day to include target_date
+        from datetime import timedelta
+        end_date = (target_date + timedelta(days=1)).isoformat()
+        hist = ticker.history(start=target_date.isoformat(), end=end_date)
+        if not hist.empty:
+            close = Decimal(str(hist["Close"].iloc[-1]))
+            _price_cache[cache_key] = (now, close)
+            return close
+    except Exception:
+        pass
+
+    _price_cache[cache_key] = (now, None)
+    return None

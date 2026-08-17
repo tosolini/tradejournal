@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import inspect, text
 
-from app.api import accounts, assets, auth, admin, brokers, calendar, dashboard, exchanges, holdings, notes, portfolio, snapshots, tickers, trades, uploads
+from app.api import accounts, assets, auth, admin, brokers, calendar, dashboard, data, exchanges, holdings, ledger, notes, portfolio, snapshots, tickers, trades, uploads
 from app.bootstrap import ensure_seed_admin, ensure_seed_exchanges
 from app.config import settings
 from app.database import Base, engine
@@ -83,6 +83,26 @@ def ensure_runtime_schema_compatibility() -> None:
         ))
 
     # Ensure tickers table unique constraint exists (created by SQLAlchemy metadata)
+    if "daily_notes" in table_names:
+        note_columns = {column["name"] for column in inspector.get_columns("daily_notes")}
+        if "symbol" not in note_columns:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE daily_notes ADD COLUMN IF NOT EXISTS symbol VARCHAR(32)"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_daily_notes_symbol ON daily_notes (symbol)"))
+
+    if "cash_ledger_entries" in table_names:
+        ledger_columns = {column["name"] for column in inspector.get_columns("cash_ledger_entries")}
+        if "entry_date" not in ledger_columns:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE cash_ledger_entries ADD COLUMN IF NOT EXISTS entry_date DATE"))
+                conn.execute(
+                    text("UPDATE cash_ledger_entries SET entry_date = created_at::date WHERE entry_date IS NULL")
+                )
+                conn.execute(text("ALTER TABLE cash_ledger_entries ALTER COLUMN entry_date SET NOT NULL"))
+                conn.execute(
+                    text("CREATE INDEX IF NOT EXISTS ix_cash_ledger_entries_entry_date ON cash_ledger_entries (entry_date)")
+                )
+
     # The table is created by Base.metadata.create_all, no ALTER needed
 
 
@@ -141,6 +161,7 @@ app.include_router(exchanges.router)
 app.include_router(exchanges.broker_router)
 app.include_router(assets.router)
 app.include_router(holdings.router)
+app.include_router(ledger.router)
 app.include_router(portfolio.router)
 app.include_router(trades.router)
 app.include_router(notes.router)
@@ -149,3 +170,4 @@ app.include_router(dashboard.router)
 app.include_router(calendar.router)
 app.include_router(tickers.router)
 app.include_router(snapshots.router)
+app.include_router(data.router)

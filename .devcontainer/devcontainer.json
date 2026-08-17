@@ -1,0 +1,49 @@
+{
+    "name": "TradeJournal",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "devcontainer",
+    "workspaceFolder": "/workspace",
+    "forwardPorts": [8000, 5173, 5432],
+    "portsAttributes": {
+        "8000": { "label": "Backend API", "onAutoForward": "notify" },
+        "5173": { "label": "Frontend Dev", "onAutoForward": "openBrowser" },
+        "5432": { "label": "PostgreSQL", "onAutoForward": "ignore" }
+    },
+    "postCreateCommand": "pip install --no-cache-dir -e /workspace/backend[dev] && cd /workspace/frontend && npm ci",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-python.debugpy",
+                "dbaeumer.vscode-eslint",
+                "bradlc.vscode-tailwindcss",
+                "esbenp.prettier-vscode",
+                "ms-azuretools.vscode-docker"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.terminal.activateEnvironment": false,
+                "[python]": {
+                    "editor.formatOnSave": true,
+                    "editor.defaultFormatter": "ms-python.python"
+                },
+                "[typescript]": {
+                    "editor.formatOnSave": true,
+                    "editor.defaultFormatter": "esbenp.prettier-vscode"
+                },
+                "[typescriptreact]": {
+                    "editor.formatOnSave": true,
+                    "editor.defaultFormatter": "esbenp.prettier-vscode"
+                },
+                "files.watcherExclude": {
+                    "**/node_modules/**": true,
+                    "**/__pycache__/**": true,
+                    "**/.git/**": true
+                },
+                "typescript.updateImportsOnFileMove.enabled": "always",
+                "javascript.updateImportsOnFileMove.enabled": "always"
+            }
+        }
+    }
+}

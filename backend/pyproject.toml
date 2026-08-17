@@ -15,7 +15,9 @@ dependencies = [
   "passlib[bcrypt]>=1.7.4",
   "email-validator>=2.3.0",
   "python-multipart>=0.0.32",
-  "apscheduler>=3.11.3"
+  "apscheduler>=3.11.3",
+  "yfinance>=0.1.93",
+  "pandas>=2.0.0"
 ]
 
 [project.optional-dependencies]

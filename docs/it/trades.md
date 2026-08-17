@@ -1,60 +1,65 @@
 # Gestione Trade
 
-I trade sono il cuore di TradeJournal. Ogni operazione di acquisto o vendita viene registrata come un trade con tutti i dettagli necessari per l'analisi delle performance.
+Le operazioni (trade) sono il cuore di TradeJournal. Ogni acquisto o vendita viene registrato come un trade con tutti i dettagli necessari all'analisi delle performance. Commissioni e tassazione delle plusvalenze sono configurate per broker e applicate automaticamente a ogni calcolo.
 
-## Creare un nuovo trade
+## Creare una Nuova Operazione
 
-Clicca su **+ Nuovo Trade** nella barra laterale. Si apre una finestra con i campi da compilare.
+Clicca **+ Nuova operazione** nella barra laterale. La finestra offre due modalità:
 
-### Campi principali
+- **Procedura guidata (Wizard)** — predefinita, in 6 passi
+- **Veloce (Quick Trade)** — un unico modulo compatto con i campi essenziali
 
-| Campo | Descrizione |
+### La Procedura Guidata in 6 Passi
+
+| Passo | Cosa imposti |
 |---|---|
-| **Conto** | Il conto di trading su cui è stata eseguita l'operazione |
-| **Simbolo** | Il ticker del titolo (es. `ENEL.MI`, `AAPL`). Supporta autocompletamento se i ticker sono stati importati. |
-| **Direzione** | `Long` (acquisto) o `Short` (vendita allo scoperto) |
-| **Quantità** | Numero di unità/lotti negoziati |
-| **Prezzo di ingresso** | Prezzo a cui è stata aperta la posizione |
-| **Tipo di esecuzione** | `Market`, `Limit`, `Stop`, `Stop Limit` |
-| **Data e ora** | Data e orario di apertura (in formato locale) |
-| **Take Profit** | Livello di prezzo obiettivo per la chiusura in profitto |
-| **Stop Loss** | Livello di prezzo per limitare le perdite |
-| **Note** | Annotazioni libere sull'operazione |
+| 1. **Conto & Ticker** | Il conto di trading e il simbolo (con autocompletamento) |
+| 2. **Entry & Quantità** | Quantità — in **quote** o per **controvalore** (€) — più la commissione stimata |
+| 3. **Direzione** | **Long** o **Short** |
+| 4. **Take Profit** | Obiettivo — come **prezzo** o **%** dalla entry, con slider |
+| 5. **Stop Loss** | Limite — come **prezzo** o **%** dalla entry, con slider |
+| 6. **Esecuzione** | Tipo di esecuzione (`Apertura`, `Parziale`, `Chiusura`) e riepilogo completo prima del salvataggio |
 
-### Autocompletamento simbolo
+Ogni passo viene validato prima di proseguire; un indicatore mostra l'avanzamento. La procedura si azzera alla riapertura.
 
-Se hai importato i ticker (vedi sezione [Ticker](tickers.md)), il campo Simbolo propone suggerimenti durante la digitazione:
+### Autocompletamento del Simbolo
 
-1. Digita almeno 1-2 caratteri
-2. Appare un dropdown con i ticker corrispondenti (Simbolo + Nome + Mercato)
-3. Clicca sul ticker desiderato per selezionarlo
+Se hai importato i ticker (vedi [Ticker](tickers.md)), il campo simbolo mostra suggerimenti in tempo reale con simbolo, nome, ISIN e mercato. Se il ticker non è nel database, puoi sempre digitarlo manualmente.
 
-Se il ticker non è nel database, puoi comunque digitarlo manualmente.
-
-## Elenco trade
+## Elenco Trade
 
 La sezione **Trade** mostra tutte le operazioni in una tabella ordinabile e filtrabile.
 
-- **Filtri disponibili:** per data, conto, simbolo, direzione, stato
-- **Ordinamento:** per data, P&L, percentuale di rendimento
+- **Esecuzioni recenti** in alto (ultime 12, ricercabili), con collegamento al trade relativo
+- **Tabella trade:** ordinamento su qualsiasi colonna; **filtro stato** (Tutti / Aperti / Parziali / Chiusi) e ricerca testuale
+- **12 colonne opzionali** (Entry media, Exit media, Totale entry, Totale exit, Q.tà aperta, Durata, Rendimento, Rend. %, TP %, SL %, TP ass., SL ass.) — la visibilità delle colonne viene salvata
+- **Azioni di riga:** Visualizza, Modifica, Gestisci immagini, Chiusura rapida, Elimina
 
-## Dettaglio trade
+### Chiusura Rapida
 
-Cliccando su un trade si apre la pagina di dettaglio con:
+Dalla riga dell'elenco, apri il pannello **Chiusura rapida**: imposta il prezzo di uscita (pre-compilato con il TP o la entry media), scegli il motivo (`Manuale`, `Take profit`, `Stop loss`), aggiungi eventualmente una nota e chiudi. P&L e stima dell'imposta sulle plusvalenze vengono calcolati automaticamente.
 
-- Tutti i dati dell'operazione
-- Calcolo automatico di **P&L** (profitto/perdita) e percentuale
-- Sezione per allegare **immagini** (screenshot grafici, analisi)
-- Note dettagliate
+## Dettaglio Trade
 
-## Chiudere un trade
+Cliccando su un trade si apre la pagina di dettaglio con le schede:
 
-Dalla pagina di dettaglio o dalla lista, clicca **Modifica** per aggiornare il trade con:
+- **Panoramica** — simbolo, direzione, stato, TP/SL (prezzo, %, assoluto e netto di commissioni/tasse), rendimento
+- **Grafico** — grafico TradingView per il simbolo
+- **Tecnico** — widget di analisi tecnica TradingView
+- **Chiusura** — modulo di chiusura (data/ora, prezzo, motivo, nota) per i trade aperti
+- **Esecuzioni** — storico completo delle esecuzioni con commissioni broker calcolate automaticamente
+- **Immagini** — carica screenshot/annotazioni e visualizzale con zoom
 
-- Prezzo di uscita
-- Data di chiusura
-- Motivo di chiusura (Take Profit, Stop Loss, Manuale, Scadenza)
+### Trade Aperti: Mercato Corrente
 
-## Importare trade da CSV
+Per i trade aperti viene mostrato il **prezzo di mercato corrente** (via Yahoo Finance) con valore di mercato, P&L non realizzato e rendimento corrente %.
 
-È possibile importare trade in blocco tramite file CSV. Il formato supportato è compatibile con i principali export dei broker. Vai su **Trade → Importa** per accedere alla funzione.
+### Trade Chiusi: Riepilogo di Chiusura
+
+Per i trade chiusi viene mostrato un riepilogo: data e motivo di chiusura, prezzo/commissione di uscita, **P&L lordo**, commissioni totali, **P&L netto dopo le commissioni**, modalità e aliquota di tassazione del broker, **stima dell'imposta** e netto dopo le imposte.
+
+## Esecuzioni e Commissioni
+
+- Ogni esecuzione registra azione, quantità, prezzo, data, luogo e una nota opzionale
+- La **commissione viene calcolata automaticamente dalla configurazione del broker** (importo fisso o percentuale) e salvata con l'esecuzione
+- Aggiungi, modifica o elimina esecuzioni dalla pagina di dettaglio; le metriche (P&L a costo medio ponderato, durata, rendimenti) vengono ricalcolate

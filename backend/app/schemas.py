@@ -86,6 +86,32 @@ class AccountResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class CashLedgerCreate(BaseModel):
+    account_id: int
+    entry_type: str  # "deposit" | "withdrawal"
+    amount: Decimal
+    description: Optional[str] = None
+    entry_date: Optional[date] = None
+
+
+class CashLedgerUpdate(BaseModel):
+    entry_type: Optional[str] = None
+    amount: Optional[Decimal] = None
+    description: Optional[str] = None
+    entry_date: Optional[date] = None
+
+
+class CashLedgerResponse(BaseModel):
+    id: int
+    account_id: int
+    entry_type: str
+    amount: Decimal
+    description: Optional[str] = None
+    entry_date: date
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class BrokerCreate(BaseModel):
     name: str
     fee_mode: str = "fixed"
@@ -307,6 +333,7 @@ class TradeDetailResponse(BaseModel):
     images: list[TradeImageResponse]
     pnl: dict | None
     closure: TradeClosureSummary | None = None
+    current_price: Decimal | None = None
 
 
 class DailyNoteCreate(BaseModel):
@@ -316,6 +343,7 @@ class DailyNoteCreate(BaseModel):
     market_volatility: Optional[str] = None
     short_summary: Optional[str] = None
     rich_text: Optional[str] = None
+    symbol: Optional[str] = None
 
 
 class DailyNoteUpdate(BaseModel):
@@ -325,6 +353,7 @@ class DailyNoteUpdate(BaseModel):
     market_volatility: Optional[str] = None
     short_summary: Optional[str] = None
     rich_text: Optional[str] = None
+    symbol: Optional[str] = None
 
 
 class MarketConditionTagRenameRequest(BaseModel):
@@ -344,6 +373,7 @@ class DailyNoteResponse(BaseModel):
     market_volatility: Optional[str]
     short_summary: Optional[str]
     rich_text: Optional[str]
+    symbol: Optional[str]
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -466,6 +496,28 @@ class PortfolioHistoryPoint(BaseModel):
     value: float
     cost: float
     return_pct: float
+
+
+class DailyPnlPoint(BaseModel):
+    date: str
+    total_value: Decimal
+    total_cost: Decimal
+    total_return: Decimal
+    day_pnl: Decimal
+    day_pnl_pct: Decimal
+    cumulative_pnl: Decimal
+    net_cash_flow: Decimal = Decimal("0")
+
+
+class AllAssetsPnlPoint(BaseModel):
+    date: str
+    holdings_value: Decimal
+    trades_value: Decimal
+    total_value: Decimal
+    day_pnl: Decimal
+    day_pnl_pct: Decimal
+    cumulative_pnl: Decimal
+    net_cash_flow: Decimal = Decimal("0")
 
 
 class TickerResponse(BaseModel):

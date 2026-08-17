@@ -13,10 +13,9 @@ Go to **Broker** in the sidebar and click **+ New Broker**.
 | Field | Description |
 |---|---|
 | **Name** | Broker name (e.g. "Directa SIM") |
-| **Website** | Broker website URL |
 | **Commission** | Mode: `Fixed` (fixed amount per trade) or `Percentage` (% of value) |
 | **Commission value** | Amount or percentage |
-| **Commission currency** | Currency for commissions |
+| **Commission currency** | Currency for commissions (default EUR) |
 | **Capital gain tax** | Mode: `Immediate` (at close) or `Year end` |
 | **Tax rate** | Capital gains tax rate (default 26%) |
 
@@ -63,7 +62,7 @@ Go to **Accounts** and click **+ New Account**.
 | Field | Description |
 |---|---|
 | **Name** | Identifying name (e.g. "Main account", "Paper trading") |
-| **Broker** | Reference broker for this account |
+| **Broker** | Reference broker for this account (optional) |
 | **Currency** | Account denomination currency |
 | **Starting balance** | Initial account capital |
 | **Description** | Optional notes |
@@ -71,6 +70,24 @@ Go to **Accounts** and click **+ New Account**.
 ### Broker-Account Link
 
 An account is always associated with a single broker. This association:
+
 - Automatically applies the commissions configured in the broker
 - Uses the broker's tax rate for net P&L calculations
 - Limits symbol autocomplete to the broker's enabled markets
+
+### Cash Ledger
+
+Select an account to manage its **cash ledger** (deposits and withdrawals):
+
+- Record a **deposit** or **withdrawal** with date, amount and optional description
+- The ledger shows totals **In / Out / Net** for the account
+- Entries can be edited or deleted; the account's cash balance reflects the movements
+
+> ⚠️ An account with recorded trades cannot be deleted. Deleting an account removes its snapshots and ledger entries.
+
+---
+
+## Sections
+
+- **Brokers** — broker list with inline editing and a **Markets** tab for exchange management
+- **Markets** — all your exchanges with `Import Directa Markets` seeding

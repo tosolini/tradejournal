@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
@@ -8,7 +8,7 @@ import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import { TagInput } from "../components/TagInput";
 import { ConfirmModal } from "../components/ConfirmModal";
-import { api } from "../lib/api";
+import { Ticker, api, tickersApi } from "../lib/api";
 
 type NotePayload = {
   note_date: string;
@@ -17,6 +17,7 @@ type NotePayload = {
   market_volatility?: string;
   short_summary?: string;
   rich_text?: string;
+  symbol?: string;
 };
 
 type DailyNote = {
@@ -27,6 +28,7 @@ type DailyNote = {
   market_volatility?: string | null;
   short_summary?: string | null;
   rich_text?: string | null;
+  symbol?: string | null;
 };
 
 type UserPreferencesPayload = {
@@ -147,6 +149,14 @@ export function NotesPage() {
   const [renamePendingTag, setRenamePendingTag] = useState<{ old: string; next: string } | null>(null);
   const lastSavedFiltersRef = useRef<string>("");
   const noteDateInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Ticker autocomplete for notes
+  const [noteSymbolInput, setNoteSymbolInput] = useState("");
+  const [noteSelectedTicker, setNoteSelectedTicker] = useState<Ticker | null>(null);
+  const [noteSymbolSuggestions, setNoteSymbolSuggestions] = useState<Ticker[]>([]);
+  const [noteShowSuggestions, setNoteShowSuggestions] = useState(false);
+  const noteSymbolDebounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const noteSymbolContainerRef = useRef<HTMLDivElement>(null);
   const openNoteDatePicker = () => {
     const input = noteDateInputRef.current;
     if (!input) return;
@@ -193,6 +203,9 @@ export function NotesPage() {
       qc.invalidateQueries({ queryKey: ["notes", "market-condition-suggestions"] });
       setEditingNoteId(null);
       setMarketConditionTags([]);
+      setNoteSymbolInput("");
+      setNoteSelectedTicker(null);
+      setNoteSymbolSuggestions([]);
       reset({ note_date: new Date().toISOString().slice(0, 10), mood: "stale", market_volatility: "medium" });
       setIsNoteModalOpen(false);
     },
@@ -206,6 +219,9 @@ export function NotesPage() {
       qc.invalidateQueries({ queryKey: ["notes", "market-condition-suggestions"] });
       setEditingNoteId(null);
       setMarketConditionTags([]);
+      setNoteSymbolInput("");
+      setNoteSelectedTicker(null);
+      setNoteSymbolSuggestions([]);
       reset({ note_date: new Date().toISOString().slice(0, 10), mood: "stale", market_volatility: "medium" });
       setIsNoteModalOpen(false);
     },
@@ -260,6 +276,39 @@ export function NotesPage() {
     },
   });
 
+  // Ticker search handler for note symbol
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (noteSymbolContainerRef.current && !noteSymbolContainerRef.current.contains(e.target as Node)) {
+        setNoteShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const handleNoteSymbolInput = useCallback((value: string) => {
+    setNoteSymbolInput(value);
+    setNoteSelectedTicker(null);
+    clearTimeout(noteSymbolDebounceRef.current);
+    if (value.trim().length < 1) {
+      setNoteSymbolSuggestions([]);
+      setNoteShowSuggestions(false);
+      return;
+    }
+    noteSymbolDebounceRef.current = setTimeout(async () => {
+      const results = await tickersApi.search(value, 8);
+      setNoteSymbolSuggestions(results);
+      setNoteShowSuggestions(results.length > 0);
+    }, 300);
+  }, []);
+
+  const selectNoteSymbol = useCallback((ticker: Ticker) => {
+    setNoteSymbolInput(ticker.symbol);
+    setNoteSelectedTicker(ticker);
+    setNoteShowSuggestions(false);
+  }, []);
+
   const onSubmit = (values: NotePayload) => {
     const payload: NotePayload = {
       ...values,
@@ -268,6 +317,7 @@ export function NotesPage() {
       market_volatility: values.market_volatility || undefined,
       short_summary: values.short_summary || undefined,
       rich_text: values.rich_text || undefined,
+      symbol: noteSelectedTicker?.symbol || values.symbol || undefined,
     };
     if (editingNoteId) {
       updateNote.mutate({ noteId: editingNoteId, payload });
@@ -279,12 +329,15 @@ export function NotesPage() {
   const onEdit = (note: DailyNote) => {
     setEditingNoteId(note.id);
     setMarketConditionTags(parseMarketConditionTags(note.market_condition));
+    setNoteSymbolInput(note.symbol || "");
+    setNoteSelectedTicker(note.symbol ? { symbol: note.symbol } as Ticker : null);
     reset({
       note_date: note.note_date,
       mood: (note.mood as MoodValue | undefined) || "stale",
       market_volatility: note.market_volatility || "medium",
       short_summary: note.short_summary || "",
       rich_text: note.rich_text || "",
+      symbol: note.symbol || undefined,
     });
     setIsNoteModalOpen(true);
   };
@@ -292,6 +345,9 @@ export function NotesPage() {
   const onOpenCreateModal = () => {
     setEditingNoteId(null);
     setMarketConditionTags([]);
+    setNoteSymbolInput("");
+    setNoteSelectedTicker(null);
+    setNoteSymbolSuggestions([]);
     reset({ note_date: new Date().toISOString().slice(0, 10), mood: "stale", market_volatility: "medium" });
     setIsNoteModalOpen(true);
   };
@@ -299,6 +355,9 @@ export function NotesPage() {
   const onCancelModal = () => {
     setEditingNoteId(null);
     setMarketConditionTags([]);
+    setNoteSymbolInput("");
+    setNoteSelectedTicker(null);
+    setNoteSymbolSuggestions([]);
     reset({ note_date: new Date().toISOString().slice(0, 10), mood: "stale", market_volatility: "medium" });
     setIsNoteModalOpen(false);
   };
@@ -619,8 +678,18 @@ export function NotesPage() {
               }`}
             >
               <div className="mb-2 flex items-start justify-between gap-3">
-                <div className="text-sm text-slate-400 dark:text-slate-900">{note.note_date} - {note.short_summary || t("notes.no_summary")}</div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 min-w-0">
+                  <span className="text-sm font-semibold text-slate-100 dark:text-slate-900">{note.note_date}</span>
+                  {note.symbol ? (
+                    <span className="font-mono text-xs font-semibold text-teal-300 dark:text-teal-700 bg-teal-500/10 rounded px-1.5 py-0.5">
+                      {note.symbol}
+                    </span>
+                  ) : null}
+                  {note.short_summary ? (
+                    <span className="truncate text-sm text-slate-400 dark:text-slate-600">{note.short_summary}</span>
+                  ) : null}
+                </div>
+                <div className="flex gap-2 shrink-0">
                   <button
                     type="button"
                     onClick={() => onEdit(note)}
@@ -683,11 +752,7 @@ export function NotesPage() {
                     )}
                   </div>
                 </div>
-                {/* <div className="rounded border border-slate-700/70 dark:border-slate-200 bg-slate-900/60 dark:bg-slate-50 px-2 py-1 md:col-span-2">
-                  <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t("notes.short_summary")}</div>
-                  <div className="mt-1 font-medium text-teal-200 dark:text-teal-900">{note.short_summary || t("notes.no_summary")}</div>
-                </div> */}
-                <div className="rounded border border-slate-700/70 dark:border-slate-200 bg-slate-900/60 dark:bg-slate-50 px-2 py-1 md:col-span-2">
+                <div className="rounded border border-slate-700/70 dark:border-slate-200 bg-slate-900/60 dark:bg-slate-50 px-2 py-1 md:col-span-2 max-w-full overflow-hidden">
                   <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t("notes.notes")}</div>
                   {note.rich_text ? (
                     <div
@@ -747,6 +812,42 @@ export function NotesPage() {
                     <line x1="3" y1="10" x2="21" y2="10" />
                   </svg>
                 </button>
+              </div>
+              <div className="text-sm" ref={noteSymbolContainerRef}>
+                <label className="mb-1 block text-xs uppercase tracking-wide text-slate-400 dark:text-slate-900">{t("notes.symbol")}</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={noteSymbolInput}
+                    onChange={(e) => handleNoteSymbolInput(e.target.value)}
+                    onFocus={() => noteSymbolSuggestions.length > 0 && setNoteShowSuggestions(true)}
+                    className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2 uppercase"
+                    placeholder={t("notes.symbol_placeholder")}
+                    autoComplete="off"
+                  />
+                  {noteShowSuggestions && (
+                    <ul className="absolute left-0 top-full z-50 mt-1 w-full max-h-48 overflow-y-auto rounded border border-slate-600 dark:border-slate-300 bg-slate-900 dark:bg-white shadow-xl">
+                      {noteSymbolSuggestions.map((tk) => (
+                        <li
+                          key={tk.id}
+                          onMouseDown={() => selectNoteSymbol(tk)}
+                          className="flex cursor-pointer items-baseline gap-2 px-3 py-2 hover:bg-slate-700/60 dark:hover:bg-slate-100"
+                        >
+                          <span className="font-mono font-semibold text-teal-400 dark:text-teal-700 text-sm shrink-0">
+                            {tk.symbol}
+                          </span>
+                          <span className="truncate text-xs text-slate-300 dark:text-slate-600">{tk.name}</span>
+                          <span className="ml-auto shrink-0 text-[10px] text-slate-500 dark:text-slate-400">{tk.market}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                {noteSelectedTicker && (
+                  <p className="mt-1 text-xs text-teal-300 dark:text-teal-700">
+                    {noteSelectedTicker.name} — {noteSelectedTicker.market}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="block text-xs uppercase tracking-wide text-slate-400 dark:text-slate-900">{t("notes.mood")}</label>

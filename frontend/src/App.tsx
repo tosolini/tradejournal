@@ -8,6 +8,7 @@ import { CalendarPage } from "./pages/CalendarPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotesPage } from "./pages/NotesPage";
+import { PerformancePage } from "./pages/PerformancePage";
 import { PortfolioPage } from "./pages/PortfolioPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { TradeDetailPage } from "./pages/TradeDetailPage";
@@ -36,9 +37,11 @@ export default function App() {
             <Layout>
               <Routes>
                 <Route path="/" element={<DashboardPage />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/accounts" element={<AccountsPage />} />
                 <Route path="/portfolio" element={<PortfolioPage />} />
+                <Route path="/performance" element={<PerformancePage />} />
                 <Route path="/assets" element={<AssetsPage />} />
                 <Route path="/trades" element={<TradesPage />} />
                 <Route path="/trades/:tradeId" element={<TradeDetailPage />} />

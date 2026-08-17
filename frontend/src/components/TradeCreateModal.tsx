@@ -1,43 +1,66 @@
-import { zodResolverTyped } from "../lib/zod-resolver";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect, useCallback, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { Account, Broker, Ticker, Trade, api, tickersApi } from "../lib/api";
 
-const createTradeModalSchema = (t: (key: string) => string) =>
-  z.object({
-    account_id: z.coerce.number().int().positive(t("trades.new_trade.validation.account_required")),
-    symbol: z.string().trim().min(1, t("trades.new_trade.validation.symbol_required")),
-    quantity: z.coerce.number().positive(t("trades.new_trade.validation.quantity_positive")),
-    direction: z.enum(["long", "short"]),
-    execution_type: z.enum(["open", "close", "partial"]),
-    entry_price: z.coerce.number().positive(t("trades.new_trade.validation.entry_price_positive")),
-    take_profit: z.preprocess(
-      (value) => (value === "" ? undefined : value),
-      z.coerce.number().positive(t("trades.new_trade.validation.take_profit_positive")).optional()
-    ),
-    stop_loss: z.preprocess(
-      (value) => (value === "" ? undefined : value),
-      z.coerce.number().positive(t("trades.new_trade.validation.stop_loss_positive")).optional()
-    ),
-  });
+// ── Step definitions ─────────────────────────────────────────────────
+const STEPS = [
+  { key: "account_ticker", labelKey: "trades.new_trade.wizard.step1" },
+  { key: "entry_quantity", labelKey: "trades.new_trade.wizard.step2" },
+  { key: "direction", labelKey: "trades.new_trade.wizard.step3" },
+  { key: "take_profit", labelKey: "trades.new_trade.wizard.step4" },
+  { key: "stop_loss", labelKey: "trades.new_trade.wizard.step5" },
+  { key: "execution", labelKey: "trades.new_trade.wizard.step6" },
+] as const;
 
-type TradeModalPayload = z.infer<ReturnType<typeof createTradeModalSchema>>;
+type WizardStep = (typeof STEPS)[number]["key"];
+type Direction = "long" | "short";
+type ExecutionType = "open" | "close" | "partial";
+type PercentMode = "price" | "percent";
+
+interface WizardState {
+  step: number; // 0-based index
+  // Step 1 — Account & Ticker
+  accountId: number;
+  symbolInput: string;
+  selectedTicker: Ticker | null;
+  symbolSuggestions: Ticker[];
+  showSuggestions: boolean;
+  // Step 2 — Entry & Quantity
+  entryPrice: string;
+  quantityMode: "shares" | "value";
+  quantity: string; // number of shares
+  entryValue: string; // total value (when mode = "value")
+  // Step 3 — Direction
+  direction: Direction;
+  // Step 4 — Take Profit
+  tpMode: PercentMode;
+  tpPrice: string;
+  tpPercent: string;
+  // Step 5 — Stop Loss
+  slMode: PercentMode;
+  slPrice: string;
+  slPercent: string;
+  // Step 6 — Execution
+  executionType: ExecutionType;
+}
 
 type Props = {
   open: boolean;
   onClose: () => void;
 };
 
-function inferAction(direction: "long" | "short", executionType: "open" | "close" | "partial") {
-  if (executionType === "open") {
-    return direction === "long" ? "BUY" : "SELL";
-  }
+function inferAction(direction: Direction, executionType: ExecutionType) {
+  if (executionType === "open") return direction === "long" ? "BUY" : "SELL";
   return direction === "long" ? "SELL" : "BUY";
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────
+function clamp(v: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, v));
+}
+
+// ── Field info tooltip ────────────────────────────────────────────────
 function FieldHelp({ text, align = "center" }: { text: string; align?: "center" | "start" }) {
   const tooltipPos =
     align === "start"
@@ -54,7 +77,7 @@ function FieldHelp({ text, align = "center" }: { text: string; align?: "center" 
       </span>
       <span
         role="tooltip"
-        className={`pointer-events-none absolute ${tooltipPos} top-full z-30 mt-2 w-56 rounded border border-slate-600 bg-slate-800 dark:bg-slate-100 px-2 py-1 text-xs leading-snug text-slate-100 dark:text-slate-900 opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-within:opacity-100`}
+        className={`pointer-events-none absolute ${tooltipPos} top-full z-30 mt-2 w-56 rounded border border-slate-600 bg-slate-800 px-2 py-1 text-xs leading-snug text-slate-100 opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-within:opacity-100`}
       >
         {text}
       </span>
@@ -62,20 +85,165 @@ function FieldHelp({ text, align = "center" }: { text: string; align?: "center" 
   );
 }
 
-export function TradeCreateModal({ open, onClose }: Props) {
-  const { t, i18n } = useTranslation();
-  const tradeModalSchema = useMemo(() => createTradeModalSchema(t), [t]);
-  const qc = useQueryClient();
+// ── Stepped input (slider + number) ───────────────────────────────────
+function PercentSliderInput({
+  value,
+  onChange,
+  min,
+  max,
+  step = 0.25,
+  label,
+  suffix = "%",
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  min: number;
+  max: number;
+  step?: number;
+  label: string;
+  suffix?: string;
+}) {
+  const num = parseFloat(value) || 0;
+  const pct = clamp(((num - min) / (max - min)) * 100, 0, 100);
 
-  // Symbol autocomplete state
+  return (
+    <div className="space-y-2">
+      <div className="flex items-baseline justify-between">
+        <span className="text-xs text-slate-400 dark:text-slate-900">{label}</span>
+        <span className="font-mono text-sm font-semibold text-slate-200 dark:text-slate-900">
+          {num.toFixed(2)}{suffix}
+        </span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={num}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full h-2 appearance-none cursor-pointer rounded-full bg-slate-700 dark:bg-slate-300 accent-teal-500 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-teal-500 [&::-webkit-slider-thumb]:shadow-lg"
+        aria-label={label}
+      />
+      <input
+        type="number"
+        step={step}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 text-sm"
+      />
+    </div>
+  );
+}
+
+// ── Mode toggle ───────────────────────────────────────────────────────
+function ModeToggle({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="inline-flex rounded-lg border border-slate-700 dark:border-slate-300 overflow-hidden">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          className={`px-4 py-1.5 text-xs font-semibold transition ${
+            value === opt.value
+              ? "bg-teal-500 text-slate-900"
+              : "bg-transparent text-slate-400 dark:text-slate-600 hover:text-slate-200 dark:hover:text-slate-900"
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── Stepper header ────────────────────────────────────────────────────
+function StepIndicator({ current, total, labels }: { current: number; total: number; labels: string[] }) {
+  return (
+    <div className="mb-6">
+      <div className="flex items-center justify-between">
+        {Array.from({ length: total }).map((_, i) => (
+          <div key={i} className="flex items-center flex-1 last:flex-none">
+            <div className="flex flex-col items-center gap-1">
+              <div
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all duration-300 ${
+                  i === current
+                    ? "bg-teal-500 text-slate-900 shadow-lg shadow-teal-500/30 scale-110"
+                    : i < current
+                      ? "bg-teal-500/30 text-teal-300 dark:text-teal-700"
+                      : "bg-slate-700 dark:bg-slate-300 text-slate-400 dark:text-slate-600"
+                }`}
+              >
+                {i < current ? "✓" : i + 1}
+              </div>
+              <span
+                className={`hidden sm:block text-[10px] leading-tight text-center max-w-16 ${
+                  i === current
+                    ? "text-teal-400 dark:text-teal-700 font-semibold"
+                    : "text-slate-500 dark:text-slate-500"
+                }`}
+              >
+                {labels[i]}
+              </span>
+            </div>
+            {i < total - 1 && (
+              <div
+                className={`flex-1 h-px mx-2 transition-colors duration-500 ${
+                  i < current ? "bg-teal-500/60" : "bg-slate-700 dark:bg-slate-300"
+                }`}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+      {/* Mobile step label */}
+      <p className="mt-3 text-center text-xs text-slate-400 dark:text-slate-600 sm:hidden">
+        {labels[current]}
+      </p>
+    </div>
+  );
+}
+
+// ── Card wrapper for each step ────────────────────────────────────────
+function StepCard({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="animate-[fadeSlideIn_0.35s_ease-out] space-y-4">
+      <h3 className="text-base font-semibold text-slate-100 dark:text-slate-900">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+// ── Main Wizard Modal ─────────────────────────────────────────────────
+// ── Quick Trade Form (single-step legacy) ──────────────────────────────
+function QuickTradeForm({ onClose }: { onClose: () => void }) {
+  const { t, i18n } = useTranslation();
+  const qc = useQueryClient();
+  const numberLocale = i18n.resolvedLanguage === "it" ? "it-IT" : "en-US";
+
+  // State
+  const [accountId, setAccountId] = useState(0);
   const [symbolInput, setSymbolInput] = useState("");
   const [selectedTicker, setSelectedTicker] = useState<Ticker | null>(null);
   const [symbolSuggestions, setSymbolSuggestions] = useState<Ticker[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const symbolDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const symbolDebounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const symbolContainerRef = useRef<HTMLDivElement>(null);
+  const [quantity, setQuantity] = useState("1");
+  const [entryPrice, setEntryPrice] = useState("");
+  const [direction, setDirection] = useState<Direction>("long");
+  const [executionType, setExecutionType] = useState<ExecutionType>("open");
+  const [takeProfit, setTakeProfit] = useState("");
+  const [stopLoss, setStopLoss] = useState("");
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (symbolContainerRef.current && !symbolContainerRef.current.contains(e.target as Node)) {
@@ -86,11 +254,10 @@ export function TradeCreateModal({ open, onClose }: Props) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  async function handleSymbolInput(value: string) {
+  const handleSymbolInput = useCallback((value: string) => {
     setSymbolInput(value);
-    setValue("symbol", value.toUpperCase());
     setSelectedTicker(null);
-    if (symbolDebounceRef.current) clearTimeout(symbolDebounceRef.current);
+    clearTimeout(symbolDebounceRef.current);
     if (value.trim().length < 1) {
       setSymbolSuggestions([]);
       setShowSuggestions(false);
@@ -101,15 +268,323 @@ export function TradeCreateModal({ open, onClose }: Props) {
       setSymbolSuggestions(results);
       setShowSuggestions(results.length > 0);
     }, 300);
-  }
+  }, []);
 
-  function selectSymbol(ticker: Ticker) {
+  const selectSymbol = useCallback((ticker: Ticker) => {
     setSymbolInput(ticker.symbol);
     setSelectedTicker(ticker);
-    setValue("symbol", ticker.symbol, { shouldValidate: true });
     setShowSuggestions(false);
-  }
+  }, []);
 
+  const { data: accounts } = useQuery({
+    queryKey: ["accounts"],
+    queryFn: () => api<Account[]>("/api/accounts"),
+  });
+  const { data: brokers } = useQuery({
+    queryKey: ["brokers"],
+    queryFn: () => api<Broker[]>("/api/brokers"),
+  });
+
+  const ep = parseFloat(entryPrice) || 0;
+  const qty = parseFloat(quantity) || 0;
+
+  const estimatedFee = useMemo(() => {
+    if (!accounts?.length || !brokers?.length || !accountId || accountId <= 0 || !ep || !qty) return null;
+    const account = accounts.find((a) => a.id === accountId);
+    if (!account?.broker_id) return null;
+    const broker = brokers.find((b) => b.id === account.broker_id);
+    if (!broker) return null;
+    const feeValue = Number(broker.fee_value || 0);
+    if (!Number.isFinite(feeValue) || feeValue < 0) return null;
+    if (broker.fee_mode === "percent") {
+      return { value: (ep * qty * feeValue) / 100, currency: (broker.fee_currency || account.base_currency || "EUR").toUpperCase() };
+    }
+    return { value: feeValue, currency: (broker.fee_currency || account.base_currency || "EUR").toUpperCase() };
+  }, [accounts, brokers, accountId, ep, qty]);
+
+  const tpNum = parseFloat(takeProfit) || 0;
+  const slNum = parseFloat(stopLoss) || 0;
+  const tpPct = ep > 0 && tpNum > 0 ? ((tpNum - ep) / ep) * 100 : null;
+  const slPct = ep > 0 && slNum > 0
+    ? (direction === "long" ? ((ep - slNum) / ep) * 100 : ((slNum - ep) / ep) * 100)
+    : null;
+
+  // Validation
+  const isValid = accountId > 0 && symbolInput.trim().length > 0 && qty > 0 && ep > 0;
+
+  const createTrade = useMutation({
+    mutationFn: async () => {
+      const symbol = selectedTicker?.symbol || symbolInput.toUpperCase();
+      const created = await api<Trade>("/api/trades", {
+        method: "POST",
+        body: JSON.stringify({
+          account_id: accountId,
+          market: selectedTicker?.market || "Euronext",
+          symbol,
+          ...(selectedTicker && { ticker_id: selectedTicker.id }),
+          instrument_type: "stock",
+          side: direction,
+          status: executionType === "open" ? "open" : executionType,
+          target_price: tpNum > 0 ? tpNum : null,
+          stop_loss: slNum > 0 ? slNum : null,
+          tags: [],
+        }),
+      });
+      await api(`/api/trades/${created.id}/executions`, {
+        method: "POST",
+        body: JSON.stringify({
+          action: inferAction(direction, executionType),
+          executed_at: new Date().toISOString(),
+          quantity: qty,
+          price: ep,
+          currency: "EUR",
+        }),
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["trades"] });
+      qc.invalidateQueries({ queryKey: ["recent-executions"] });
+      onClose();
+    },
+  });
+
+  return (
+    <div className="space-y-4">
+      {/* Account + Symbol */}
+      <div className="grid grid-cols-2 gap-3">
+        <label className="text-sm text-slate-300 dark:text-slate-900">
+          <span className="inline-flex items-center mb-1">
+            {t("trades.new_trade.labels.account")}
+            <FieldHelp text={t("trades.new_trade.tooltips.account")} />
+          </span>
+          <select
+            value={accountId}
+            onChange={(e) => setAccountId(parseInt(e.target.value))}
+            className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2"
+          >
+            <option value={0}>{t("trades.new_trade.placeholders.select_account")}</option>
+            {accounts?.map((a) => (
+              <option key={a.id} value={a.id}>{a.name}</option>
+            ))}
+          </select>
+        </label>
+        <div className="text-sm" ref={symbolContainerRef}>
+          <span className="inline-flex items-center mb-1 text-slate-300 dark:text-slate-900">
+            {t("trades.new_trade.labels.symbol")}
+            <FieldHelp text={t("trades.new_trade.tooltips.symbol")} />
+          </span>
+          <div className="relative">
+            <input
+              type="text"
+              value={symbolInput}
+              onChange={(e) => handleSymbolInput(e.target.value)}
+              onFocus={() => symbolSuggestions.length > 0 && setShowSuggestions(true)}
+              className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 uppercase"
+              placeholder={t("trades.new_trade.placeholders.symbol")}
+              autoComplete="off"
+            />
+            {showSuggestions && (
+              <ul className="absolute left-0 top-full z-50 mt-1 w-full max-h-48 overflow-y-auto rounded border border-slate-600 dark:border-slate-300 bg-slate-900 dark:bg-white shadow-xl">
+                {symbolSuggestions.map((tk) => (
+                  <li
+                    key={tk.id}
+                    onMouseDown={() => selectSymbol(tk)}
+                    className="flex cursor-pointer items-baseline gap-2 px-3 py-2 hover:bg-slate-700/60 dark:hover:bg-slate-100"
+                  >
+                    <span className="font-mono font-semibold text-teal-400 dark:text-teal-700 text-sm shrink-0">{tk.symbol}</span>
+                    <span className="truncate text-xs text-slate-300 dark:text-slate-600">{tk.name}</span>
+                    <span className="ml-auto shrink-0 text-[10px] text-slate-500 dark:text-slate-400">{tk.market}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Quantity + Entry Price */}
+      <div className="grid grid-cols-2 gap-3">
+        <label className="text-sm text-slate-300 dark:text-slate-900">
+          <span className="inline-flex items-center mb-1">
+            {t("trades.new_trade.labels.quantity")}
+            <FieldHelp text={t("trades.new_trade.tooltips.quantity")} align="start" />
+          </span>
+          <input type="number" step="0.000001" value={quantity} onChange={(e) => setQuantity(e.target.value)}
+            className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2" />
+        </label>
+        <label className="text-sm text-slate-300 dark:text-slate-900">
+          <span className="inline-flex items-center mb-1">
+            {t("trades.new_trade.labels.entry_price")}
+            <FieldHelp text={t("trades.new_trade.tooltips.entry_price")} />
+          </span>
+          <input type="number" step="0.000001" value={entryPrice} onChange={(e) => setEntryPrice(e.target.value)}
+            className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2" />
+        </label>
+      </div>
+
+      {/* Direction + Fee */}
+      <div className="grid grid-cols-2 gap-3">
+        <label className="text-sm text-slate-300 dark:text-slate-900">
+          <span className="inline-flex items-center mb-1">
+            {t("trades.new_trade.labels.direction")}
+            <FieldHelp text={t("trades.new_trade.tooltips.direction")} align="start" />
+          </span>
+          <select value={direction} onChange={(e) => setDirection(e.target.value as Direction)}
+            className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2">
+            <option value="long">{t("trades.new_trade.options.direction.long")}</option>
+            <option value="short">{t("trades.new_trade.options.direction.short")}</option>
+          </select>
+        </label>
+        <div className="text-sm text-slate-300 dark:text-slate-900">
+          <span className="inline-flex items-center mb-1">
+            {t("trades.new_trade.labels.auto_fee")}
+            <FieldHelp text={t("trades.new_trade.tooltips.auto_fee")} />
+          </span>
+          <div className="rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 text-slate-200 dark:text-slate-900">
+            {estimatedFee === null ? "-" : `${estimatedFee.value.toLocaleString(numberLocale, { minimumFractionDigits: 2, maximumFractionDigits: 6 })} ${estimatedFee.currency}`}
+          </div>
+        </div>
+      </div>
+
+      {/* Take Profit */}
+      <div className="grid grid-cols-2 gap-3">
+        <label className="text-sm text-slate-300 dark:text-slate-900">
+          <span className="inline-flex items-center mb-1">
+            {t("trades.new_trade.labels.take_profit")}
+            <FieldHelp text={t("trades.new_trade.tooltips.take_profit")} align="start" />
+          </span>
+          <input type="number" step="0.000001" value={takeProfit} onChange={(e) => setTakeProfit(e.target.value)}
+            className="w-full rounded border border-emerald-500/50 bg-emerald-500/10 px-3 py-2 text-emerald-200" />
+        </label>
+        <div className="flex items-end">
+          <div className="w-full rounded border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
+            {t("trades.new_trade.metrics.tp_pct")} {tpPct === null ? "-" : tpPct.toFixed(2)}
+          </div>
+        </div>
+      </div>
+
+      {/* Stop Loss */}
+      <div className="grid grid-cols-2 gap-3">
+        <label className="text-sm text-slate-300 dark:text-slate-900">
+          <span className="inline-flex items-center mb-1">
+            {t("trades.new_trade.labels.stop_loss")}
+            <FieldHelp text={t("trades.new_trade.tooltips.stop_loss")} align="start" />
+          </span>
+          <input type="number" step="0.000001" value={stopLoss} onChange={(e) => setStopLoss(e.target.value)}
+            className="w-full rounded border border-red-500/50 bg-red-500/10 px-3 py-2 text-red-200" />
+        </label>
+        <div className="flex items-end">
+          <div className="w-full rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+            {t("trades.new_trade.metrics.sl_pct")} {slPct === null ? "-" : slPct.toFixed(2)}
+          </div>
+        </div>
+      </div>
+
+      {createTrade.error && (
+        <div className="rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+          {t("trades.new_trade.errors.create_failed")}
+        </div>
+      )}
+
+      {/* Footer */}
+      <div className="flex items-end gap-3 pt-2">
+        <label className="flex-1 text-sm text-slate-300 dark:text-slate-900">
+          <span className="inline-flex items-center mb-1">
+            {t("trades.new_trade.labels.execution")}
+            <FieldHelp text={t("trades.new_trade.tooltips.execution_type")} align="start" />
+          </span>
+          <select value={executionType} onChange={(e) => setExecutionType(e.target.value as ExecutionType)}
+            className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2">
+            <option value="open">{t("trades.new_trade.options.execution.open")}</option>
+            <option value="partial">{t("trades.new_trade.options.execution.partial")}</option>
+            <option value="close">{t("trades.new_trade.options.execution.close")}</option>
+          </select>
+        </label>
+        <button type="button" onClick={onClose}
+          className="rounded bg-slate-700 dark:bg-slate-200 dark:text-slate-900 px-4 py-2 text-sm font-semibold text-slate-200">
+          {t("trades.new_trade.cancel")}
+        </button>
+        <button type="button" onClick={() => createTrade.mutate()} disabled={createTrade.isPending || !isValid}
+          className="rounded bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-900 disabled:opacity-50">
+          {createTrade.isPending ? t("trades.new_trade.saving") : t("trades.new_trade.save")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function TradeCreateModal({ open, onClose }: Props) {
+  const { t, i18n } = useTranslation();
+  const qc = useQueryClient();
+
+  // ── Quick mode toggle ──
+  const [quickMode, setQuickMode] = useState(false);
+
+  // ── state ──
+  const [st, setSt] = useState<WizardState>({
+    step: 0,
+    accountId: 0,
+    symbolInput: "",
+    selectedTicker: null,
+    symbolSuggestions: [],
+    showSuggestions: false,
+    entryPrice: "",
+    quantityMode: "shares",
+    quantity: "1",
+    entryValue: "",
+    direction: "long",
+    tpMode: "percent",
+    tpPrice: "",
+    tpPercent: "",
+    slMode: "percent",
+    slPrice: "",
+    slPercent: "",
+    executionType: "open",
+  });
+
+  const symbolDebounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const symbolContainerRef = useRef<HTMLDivElement>(null);
+  const numberLocale = i18n.resolvedLanguage === "it" ? "it-IT" : "en-US";
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (symbolContainerRef.current && !symbolContainerRef.current.contains(e.target as Node)) {
+        setSt((p) => ({ ...p, showSuggestions: false }));
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  // Reset on open
+  useEffect(() => {
+    if (open) {
+      setQuickMode(false);
+      setSt({
+        step: 0,
+        accountId: 0,
+        symbolInput: "",
+        selectedTicker: null,
+        symbolSuggestions: [],
+        showSuggestions: false,
+        entryPrice: "",
+        quantityMode: "shares",
+        quantity: "1",
+        entryValue: "",
+        direction: "long",
+        tpMode: "percent",
+        tpPrice: "",
+        tpPercent: "",
+        slMode: "percent",
+        slPrice: "",
+        slPercent: "",
+        executionType: "open",
+      });
+    }
+  }, [open]);
+
+  // ── Data queries ──
   const { data: accounts } = useQuery({
     queryKey: ["accounts"],
     queryFn: () => api<Account[]>("/api/accounts"),
@@ -121,93 +596,79 @@ export function TradeCreateModal({ open, onClose }: Props) {
     enabled: open,
   });
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    reset,
-    setValue,
-    formState: { errors },
-  } = useForm<TradeModalPayload>({
-    resolver: zodResolverTyped(tradeModalSchema),
-    defaultValues: {
-      account_id: 0,
-      symbol: "",
-      quantity: 1,
-      direction: "long",
-      execution_type: "open",
-      entry_price: 0,
-      take_profit: undefined,
-      stop_loss: undefined,
-    },
-  });
+  // ── Symbol autocomplete ──
+  const handleSymbolInput = useCallback((value: string) => {
+    setSt((p) => ({ ...p, symbolInput: value, selectedTicker: null }));
+    clearTimeout(symbolDebounceRef.current);
+    if (value.trim().length < 1) {
+      setSt((p) => ({ ...p, symbolSuggestions: [], showSuggestions: false }));
+      return;
+    }
+    symbolDebounceRef.current = setTimeout(async () => {
+      const results = await tickersApi.search(value, 8);
+      setSt((p) => ({
+        ...p,
+        symbolSuggestions: results,
+        showSuggestions: results.length > 0,
+      }));
+    }, 300);
+  }, []);
 
-  const createTrade = useMutation({
-    mutationFn: async (values: TradeModalPayload) => {
-      const createdTrade = await api<Trade>("/api/trades", {
-        method: "POST",
-        body: JSON.stringify({
-          account_id: values.account_id,
-          market: "Euronext",
-          symbol: values.symbol,
-          ...(selectedTicker && { ticker_id: selectedTicker.id }),
-          instrument_type: "stock",
-          side: values.direction,
-          status: values.execution_type === "open" ? "open" : values.execution_type,
-          target_price: values.take_profit && values.take_profit > 0 ? values.take_profit : null,
-          stop_loss: values.stop_loss && values.stop_loss > 0 ? values.stop_loss : null,
-          tags: [],
-        }),
-      });
+  const selectSymbol = useCallback((ticker: Ticker) => {
+    setSt((p) => ({
+      ...p,
+      symbolInput: ticker.symbol,
+      selectedTicker: ticker,
+      showSuggestions: false,
+    }));
+  }, []);
 
-      await api(`/api/trades/${createdTrade.id}/executions`, {
-        method: "POST",
-        body: JSON.stringify({
-          action: inferAction(values.direction, values.execution_type),
-          executed_at: new Date().toISOString(),
-          quantity: values.quantity,
-          price: values.entry_price,
-          currency: "EUR",
-        }),
-      });
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["trades"] });
-      qc.invalidateQueries({ queryKey: ["recent-executions"] });
-      reset();
-      setSymbolInput("");
-      setSelectedTicker(null);
-      setSymbolSuggestions([]);
-      onClose();
-    },
-  });
+  // ── Derived values ──
+  const ep = parseFloat(st.entryPrice) || 0;
+  const qty = parseFloat(st.quantity) || 0;
+  const entryValueNum = parseFloat(st.entryValue) || 0;
 
-  const entryPrice = watch("entry_price");
-  const takeProfit = watch("take_profit");
-  const stopLoss = watch("stop_loss");
-  const direction = watch("direction");
-  const accountId = watch("account_id");
-  const quantity = watch("quantity");
-  const numberLocale = i18n.resolvedLanguage === "it" ? "it-IT" : "en-US";
+  // Auto-compute quantity when in "value" mode
+  const computedQty =
+    st.quantityMode === "value" && ep > 0 && entryValueNum > 0
+      ? entryValueNum / ep
+      : st.quantityMode === "shares"
+        ? qty
+        : 0;
 
+  const displayQuantity = st.quantityMode === "value" ? computedQty : qty;
+
+  // TP derived
+  const tpPriceNum = parseFloat(st.tpPrice) || 0;
+  const tpPercentNum = parseFloat(st.tpPercent) || 0;
+  const computedTpPrice = st.tpMode === "percent" && ep > 0 ? ep * (1 + tpPercentNum / 100) : tpPriceNum;
+  const computedTpPercent =
+    st.tpMode === "price" && ep > 0 && tpPriceNum > 0
+      ? ((tpPriceNum - ep) / ep) * 100
+      : tpPercentNum;
+
+  // SL derived
+  const slPriceNum = parseFloat(st.slPrice) || 0;
+  const slPercentNum = parseFloat(st.slPercent) || 0;
+  const computedSlPrice = st.slMode === "percent" && ep > 0 ? ep * (1 - slPercentNum / 100) : slPriceNum;
+  const computedSlPercent =
+    st.slMode === "price" && ep > 0 && slPriceNum > 0
+      ? ((st.direction === "long" ? ep - slPriceNum : slPriceNum - ep) / ep) * 100
+      : slPercentNum;
+
+  // ── Fee estimation ──
   const estimatedFee = useMemo(() => {
-    if (!accounts?.length || !brokers?.length || !accountId || accountId <= 0 || !entryPrice || !quantity) {
+    if (!accounts?.length || !brokers?.length || !st.accountId || st.accountId <= 0 || !ep || !displayQuantity) {
       return null;
     }
-    const account = accounts.find((item) => item.id === accountId);
-    if (!account?.broker_id) {
-      return null;
-    }
+    const account = accounts.find((item) => item.id === st.accountId);
+    if (!account?.broker_id) return null;
     const broker = brokers.find((item) => item.id === account.broker_id);
-    if (!broker) {
-      return null;
-    }
+    if (!broker) return null;
     const feeValue = Number(broker.fee_value || 0);
-    if (!Number.isFinite(feeValue) || feeValue < 0) {
-      return null;
-    }
+    if (!Number.isFinite(feeValue) || feeValue < 0) return null;
     if (broker.fee_mode === "percent") {
-      const notional = Number(entryPrice) * Number(quantity);
+      const notional = ep * displayQuantity;
       return {
         value: (notional * feeValue) / 100,
         currency: (broker.fee_currency || account.base_currency || "EUR").toUpperCase(),
@@ -217,117 +678,177 @@ export function TradeCreateModal({ open, onClose }: Props) {
       value: feeValue,
       currency: (broker.fee_currency || account.base_currency || "EUR").toUpperCase(),
     };
-  }, [accountId, accounts, brokers, entryPrice, quantity]);
+  }, [accounts, brokers, st.accountId, ep, displayQuantity]);
 
-  const tpPct = useMemo(() => {
-    if (!entryPrice || !takeProfit || entryPrice <= 0 || takeProfit <= 0) {
-      return null;
+  // ── Validation per step ──
+  const stepValid = useMemo((): boolean => {
+    switch (st.step) {
+      case 0:
+        return st.accountId > 0 && st.symbolInput.trim().length > 0;
+      case 1:
+        return ep > 0 && (st.quantityMode === "shares" ? qty > 0 : entryValueNum > 0);
+      case 2:
+        return true; // always valid (default long/short)
+      case 3:
+        return st.tpMode === "percent" ? st.tpPercent !== "" : st.tpPrice !== "";
+      case 4:
+        return st.slMode === "percent" ? st.slPercent !== "" : st.slPrice !== "";
+      case 5:
+        return true; // always valid (has defaults)
+      default:
+        return true;
     }
-    return ((takeProfit - entryPrice) / entryPrice) * 100;
-  }, [entryPrice, takeProfit]);
+  }, [st, ep, qty, entryValueNum]);
 
-  const slPct = useMemo(() => {
-    if (!entryPrice || !stopLoss || entryPrice <= 0 || stopLoss <= 0) {
-      return null;
-    }
-    if (direction === "long") {
-      return ((entryPrice - stopLoss) / entryPrice) * 100;
-    }
-    return ((stopLoss - entryPrice) / entryPrice) * 100;
-  }, [direction, entryPrice, stopLoss]);
+  // ── Submit ──
+  const createTrade = useMutation({
+    mutationFn: async () => {
+      const symbol = st.selectedTicker?.symbol || st.symbolInput.toUpperCase();
+      const createdTrade = await api<Trade>("/api/trades", {
+        method: "POST",
+        body: JSON.stringify({
+          account_id: st.accountId,
+          market: st.selectedTicker?.market || "Euronext",
+          symbol,
+          ...(st.selectedTicker && { ticker_id: st.selectedTicker.id }),
+          instrument_type: "stock",
+          side: st.direction,
+          status: st.executionType === "open" ? "open" : st.executionType,
+          target_price: computedTpPrice > 0 ? computedTpPrice : null,
+          stop_loss: computedSlPrice > 0 ? computedSlPrice : null,
+          tags: [],
+        }),
+      });
 
-  if (!open) {
-    return null;
-  }
+      const finalQuantity = st.quantityMode === "value" ? computedQty : qty;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 dark:bg-slate-100/90 p-4">
-      <div className="w-full max-w-xl overflow-y-auto rounded-xl border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white p-6 shadow-2xl">
-        <div className="mb-5">
-          <h2 className="text-xl font-semibold text-slate-100 dark:text-slate-900">{t("trades.new_trade.title")}</h2>
-          <p className="text-sm text-slate-400 dark:text-slate-900">{t("trades.new_trade.subtitle")}</p>
-        </div>
+      await api(`/api/trades/${createdTrade.id}/executions`, {
+        method: "POST",
+        body: JSON.stringify({
+          action: inferAction(st.direction, st.executionType),
+          executed_at: new Date().toISOString(),
+          quantity: finalQuantity,
+          price: ep,
+          currency: "EUR",
+        }),
+      });
 
-        <form className="space-y-4" onSubmit={handleSubmit((values) => createTrade.mutate(values))}>
+      return createdTrade;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["trades"] });
+      qc.invalidateQueries({ queryKey: ["recent-executions"] });
+      onClose();
+    },
+  });
 
-          {/* Account + Simbolo */}
-          <div className="grid grid-cols-2 gap-3">
-            <label className="text-sm text-slate-300 dark:text-slate-900">
-              <span className="inline-flex items-center mb-1">
-                {t("trades.new_trade.labels.account")}
-                <FieldHelp text={t("trades.new_trade.tooltips.account")} align="start" />
-              </span>
-              <select
-                {...register("account_id", { valueAsNumber: true })}
-                className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2"
-              >
-                <option value={0}>{t("trades.new_trade.placeholders.select_account")}</option>
-                {accounts?.map((account) => (
-                  <option key={account.id} value={account.id}>{account.name}</option>
-                ))}
-              </select>
-              {errors.account_id ? <span className="mt-1 block text-xs text-red-300">{errors.account_id.message}</span> : null}
-            </label>
-            <div className="text-sm text-slate-300 dark:text-slate-900" ref={symbolContainerRef}>
-              <span className="inline-flex items-center mb-1">
-                {t("trades.new_trade.labels.symbol")}
-                <FieldHelp text={t("trades.new_trade.tooltips.symbol")} />
-              </span>
-              {/* Hidden field for react-hook-form validation */}
-              <input type="hidden" {...register("symbol")} />
+  // ── Step nav ──
+  const goNext = useCallback(() => {
+    if (st.step < STEPS.length - 1) setSt((p) => ({ ...p, step: p.step + 1 }));
+  }, [st.step]);
 
-              <div className="relative">
-                <input
-                  type="text"
-                  value={symbolInput}
-                  onChange={(e) => handleSymbolInput(e.target.value)}
-                  onFocus={() => symbolSuggestions.length > 0 && setShowSuggestions(true)}
-                  className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 uppercase"
-                  placeholder={t("trades.new_trade.placeholders.symbol")}
-                  autoComplete="off"
-                />
-                {showSuggestions && (
-                  <ul className="absolute left-0 top-full z-50 mt-1 w-full max-h-48 overflow-y-auto rounded border border-slate-600 dark:border-slate-300 bg-slate-900 dark:bg-white shadow-xl">
-                    {symbolSuggestions.map((tk) => (
-                      <li
-                        key={tk.id}
-                        onMouseDown={() => selectSymbol(tk)}
-                        className="flex cursor-pointer items-baseline gap-2 px-3 py-2 hover:bg-slate-700/60 dark:hover:bg-slate-100"
-                      >
-                        <span className="font-mono font-semibold text-teal-400 dark:text-teal-700 text-sm shrink-0">
-                          {tk.symbol}
-                        </span>
-                        <span className="truncate text-xs text-slate-300 dark:text-slate-600">
-                          {tk.name}
-                        </span>
-                        <span className="ml-auto shrink-0 text-[10px] text-slate-500 dark:text-slate-400">
-                          {tk.market}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+  const goBack = useCallback(() => {
+    if (st.step > 0) setSt((p) => ({ ...p, step: p.step - 1 }));
+  }, [st.step]);
+
+  // ── Render helpers ──
+  const stepLabels = STEPS.map((s) => t(s.labelKey));
+
+  if (!open) return null;
+
+  // ── Step content ──
+  const renderStep = () => {
+    switch (st.step) {
+      // ═════════════════════════════════ STEP 1 ════════════════════════════
+      case 0:
+        return (
+          <StepCard title={t("trades.new_trade.labels.account") + " & " + t("trades.new_trade.labels.symbol")}>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Account */}
+              <label className="text-sm text-slate-300 dark:text-slate-900">
+                <span className="inline-flex items-center mb-1">
+                  {t("trades.new_trade.labels.account")}
+                  <FieldHelp text={t("trades.new_trade.tooltips.account")} />
+                </span>
+                <select
+                  value={st.accountId}
+                  onChange={(e) => setSt((p) => ({ ...p, accountId: parseInt(e.target.value) }))}
+                  className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2"
+                >
+                  <option value={0}>{t("trades.new_trade.placeholders.select_account")}</option>
+                  {accounts?.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
+                  ))}
+                </select>
+                {st.accountId <= 0 && (
+                  <span className="mt-1 block text-xs text-amber-400">{t("trades.new_trade.validation.account_required")}</span>
+                )}
+              </label>
+
+              {/* Symbol */}
+              <div className="text-sm" ref={symbolContainerRef}>
+                <span className="inline-flex items-center mb-1 text-slate-300 dark:text-slate-900">
+                  {t("trades.new_trade.labels.symbol")}
+                  <FieldHelp text={t("trades.new_trade.tooltips.symbol")} />
+                </span>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={st.symbolInput}
+                    onChange={(e) => handleSymbolInput(e.target.value)}
+                    onFocus={() =>
+                      st.symbolSuggestions.length > 0 &&
+                      setSt((p) => ({ ...p, showSuggestions: true }))
+                    }
+                    className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 uppercase"
+                    placeholder={t("trades.new_trade.placeholders.symbol")}
+                    autoComplete="off"
+                  />
+                  {st.showSuggestions && (
+                    <ul className="absolute left-0 top-full z-50 mt-1 w-full max-h-48 overflow-y-auto rounded border border-slate-600 dark:border-slate-300 bg-slate-900 dark:bg-white shadow-xl">
+                      {st.symbolSuggestions.map((tk) => (
+                        <li
+                          key={tk.id}
+                          onMouseDown={() => selectSymbol(tk)}
+                          className="flex cursor-pointer items-baseline gap-2 px-3 py-2 hover:bg-slate-700/60 dark:hover:bg-slate-100"
+                        >
+                          <span className="font-mono font-semibold text-teal-400 dark:text-teal-700 text-sm shrink-0">
+                            {tk.symbol}
+                          </span>
+                          <span className="truncate text-xs text-slate-300 dark:text-slate-600">
+                            {tk.name}
+                          </span>
+                          <span className="ml-auto shrink-0 text-[10px] text-slate-500 dark:text-slate-400">
+                            {tk.market}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                {st.symbolInput.trim().length === 0 && (
+                  <span className="mt-1 block text-xs text-amber-400">{t("trades.new_trade.validation.symbol_required")}</span>
                 )}
               </div>
-              {errors.symbol ? <span className="mt-1 block text-xs text-red-300">{errors.symbol.message}</span> : null}
             </div>
-          </div>
 
-          {/* Quantità + Prezzo ingresso */}
-          <div className="grid grid-cols-2 gap-3">
-            <label className="text-sm text-slate-300 dark:text-slate-900">
-              <span className="inline-flex items-center mb-1">
-                {t("trades.new_trade.labels.quantity")}
-                <FieldHelp text={t("trades.new_trade.tooltips.quantity")} align="start" />
-              </span>
-              <input
-                type="number"
-                step="0.000001"
-                {...register("quantity")}
-                className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2"
-              />
-              {errors.quantity ? <span className="mt-1 block text-xs text-red-300">{errors.quantity.message}</span> : null}
-            </label>
-            <label className="text-sm text-slate-300 dark:text-slate-900">
+            {st.selectedTicker && (
+              <div className="rounded-lg border border-teal-500/30 bg-teal-500/5 px-3 py-2 text-xs text-teal-200 dark:text-teal-800">
+                <span className="font-semibold">{st.selectedTicker.symbol}</span> — {st.selectedTicker.name}
+                <span className="ml-2 text-slate-400 dark:text-slate-600">{st.selectedTicker.market}</span>
+              </div>
+            )}
+          </StepCard>
+        );
+
+      // ═════════════════════════════════ STEP 2 ════════════════════════════
+      case 1:
+        return (
+          <StepCard title={t("trades.new_trade.labels.entry_price") + " & " + t("trades.new_trade.labels.quantity")}>
+            {/* Entry price */}
+            <label className="block text-sm text-slate-300 dark:text-slate-900">
               <span className="inline-flex items-center mb-1">
                 {t("trades.new_trade.labels.entry_price")}
                 <FieldHelp text={t("trades.new_trade.tooltips.entry_price")} />
@@ -335,126 +856,457 @@ export function TradeCreateModal({ open, onClose }: Props) {
               <input
                 type="number"
                 step="0.000001"
-                {...register("entry_price")}
-                className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2"
+                value={st.entryPrice}
+                onChange={(e) => setSt((p) => ({ ...p, entryPrice: e.target.value }))}
+                className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 text-lg font-semibold"
+                placeholder="0.00"
               />
-              {errors.entry_price ? <span className="mt-1 block text-xs text-red-300">{errors.entry_price.message}</span> : null}
+              {ep <= 0 && (
+                <span className="mt-1 block text-xs text-amber-400">{t("trades.new_trade.validation.entry_price_positive")}</span>
+              )}
             </label>
-          </div>
 
-          {/* Direzione + Fee automatica */}
-          <div className="grid grid-cols-2 gap-3">
-            <label className="text-sm text-slate-300 dark:text-slate-900">
-              <span className="inline-flex items-center mb-1">
-                {t("trades.new_trade.labels.direction")}
-                <FieldHelp text={t("trades.new_trade.tooltips.direction")} align="start" />
-              </span>
-              <select {...register("direction")} className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2">
-                <option value="long">{t("trades.new_trade.options.direction.long")}</option>
-                <option value="short">{t("trades.new_trade.options.direction.short")}</option>
-              </select>
-            </label>
-            <div className="text-sm text-slate-300 dark:text-slate-900">
-              <span className="inline-flex items-center mb-1">
-                {t("trades.new_trade.labels.auto_fee")}
-                <FieldHelp text={t("trades.new_trade.tooltips.auto_fee")} />
-              </span>
-              <div className="rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2 text-slate-200 dark:text-slate-900">
-                {estimatedFee === null
-                  ? "-"
-                  : `${estimatedFee.value.toLocaleString(numberLocale, { minimumFractionDigits: 2, maximumFractionDigits: 6 })} ${estimatedFee.currency}`}
-              </div>
-              <span className="mt-1 block text-xs text-slate-400 dark:text-slate-900">{t("trades.new_trade.estimated_fee_note")}</span>
-            </div>
-          </div>
-
-          {/* Take Profit */}
-          <div className="grid grid-cols-2 gap-3">
-            <label className="text-sm text-slate-300 dark:text-slate-900">
-              <span className="inline-flex items-center mb-1">
-                {t("trades.new_trade.labels.take_profit")}
-                <FieldHelp text={t("trades.new_trade.tooltips.take_profit")} align="start" />
-              </span>
-              <input
-                type="number"
-                step="0.000001"
-                {...register("take_profit")}
-                className="w-full rounded border border-emerald-500/50 bg-emerald-500/10 px-3 py-2 text-emerald-200"
+            {/* Quantity mode toggle */}
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-slate-400 dark:text-slate-600">{t("trades.new_trade.labels.quantity")}</span>
+              <ModeToggle
+                options={[
+                  { value: "shares", label: t("trades.new_trade.wizard.shares_btn") },
+                  { value: "value", label: t("trades.new_trade.wizard.value_btn") },
+                ]}
+                value={st.quantityMode}
+                onChange={(v) => setSt((p) => ({ ...p, quantityMode: v as "shares" | "value" }))}
               />
-              {errors.take_profit ? <span className="mt-1 block text-xs text-red-300">{errors.take_profit.message}</span> : null}
-            </label>
-            <div className="flex items-end">
-              <div className="w-full rounded border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
-                {t("trades.new_trade.metrics.tp_pct")} {tpPct === null ? "-" : tpPct.toFixed(2)}
-              </div>
             </div>
-          </div>
 
-          {/* Stop Loss */}
-          <div className="grid grid-cols-2 gap-3">
-            <label className="text-sm text-slate-300 dark:text-slate-900">
-              <span className="inline-flex items-center mb-1">
-                {t("trades.new_trade.labels.stop_loss")}
-                <FieldHelp text={t("trades.new_trade.tooltips.stop_loss")} align="start" />
-              </span>
-              <input
-                type="number"
-                step="0.000001"
-                {...register("stop_loss")}
-                className="w-full rounded border border-red-500/50 bg-red-500/10 px-3 py-2 text-red-200"
+            {st.quantityMode === "shares" ? (
+              <label className="block text-sm text-slate-300 dark:text-slate-900">
+                <span className="mb-1 block">{t("trades.new_trade.labels.quantity")}</span>
+                <input
+                  type="number"
+                  step="0.000001"
+                  value={st.quantity}
+                  onChange={(e) => setSt((p) => ({ ...p, quantity: e.target.value, entryValue: "" }))}
+                  className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2"
+                  placeholder="100"
+                />
+                {qty <= 0 && (
+                  <span className="mt-1 block text-xs text-amber-400">{t("trades.new_trade.validation.quantity_positive")}</span>
+                )}
+                {ep > 0 && qty > 0 && (
+                  <p className="mt-1 text-xs text-slate-400 dark:text-slate-600">
+                    {t("trades.new_trade.wizard.notional")}: {(ep * qty).toLocaleString(numberLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                )}
+              </label>
+            ) : (
+              <label className="block text-sm text-slate-300 dark:text-slate-900">
+                <span className="mb-1 block">{t("trades.new_trade.wizard.value_label")}</span>
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-600">
+                    €
+                  </span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={st.entryValue}
+                    onChange={(e) => setSt((p) => ({ ...p, entryValue: e.target.value, quantity: "" }))}
+                    className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white pl-8 pr-3 py-2"
+                    placeholder="1000"
+                  />
+                </div>
+                {entryValueNum <= 0 && (
+                  <span className="mt-1 block text-xs text-amber-400">{t("trades.new_trade.wizard.value_required")}</span>
+                )}
+                {ep > 0 && entryValueNum > 0 && (
+                  <p className="mt-1 text-xs text-slate-400 dark:text-slate-600">
+                    {t("trades.new_trade.wizard.shares_estimate")}: ~{computedQty.toLocaleString(numberLocale, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                  </p>
+                )}
+              </label>
+            )}
+
+            {/* Fee estimate */}
+            {estimatedFee && (
+              <div className="rounded-lg border border-slate-600/50 bg-slate-800/50 dark:bg-slate-100/80 px-3 py-2 text-xs">
+                <span className="text-slate-400 dark:text-slate-600">{t("trades.new_trade.labels.auto_fee")}: </span>
+                <span className="font-semibold text-slate-200 dark:text-slate-900">
+                  {estimatedFee.value.toLocaleString(numberLocale, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}{" "}
+                  {estimatedFee.currency}
+                </span>
+              </div>
+            )}
+          </StepCard>
+        );
+
+      // ═════════════════════════════════ STEP 3 ════════════════════════════
+      case 2:
+        return (
+          <StepCard title={t("trades.new_trade.labels.direction")}>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => setSt((p) => ({ ...p, direction: "long" }))}
+                className={`flex flex-col items-center gap-2 rounded-xl border-2 p-6 transition-all ${
+                  st.direction === "long"
+                    ? "border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-500/20"
+                    : "border-slate-700 dark:border-slate-300 bg-slate-800/50 dark:bg-slate-100/50 hover:border-slate-500"
+                }`}
+              >
+                <svg viewBox="0 0 24 24" className={`h-10 w-10 ${st.direction === "long" ? "text-emerald-400" : "text-slate-500"}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 5v14" />
+                  <path d="m19 12-7 7-7-7" />
+                </svg>
+                <span className={`text-base font-bold ${st.direction === "long" ? "text-emerald-300" : "text-slate-300 dark:text-slate-900"}`}>
+                  {t("trades.new_trade.options.direction.long")}
+                </span>
+                <span className="text-xs text-slate-400 dark:text-slate-600 text-center">
+                  {t("trades.new_trade.wizard.long_desc")}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSt((p) => ({ ...p, direction: "short" }))}
+                className={`flex flex-col items-center gap-2 rounded-xl border-2 p-6 transition-all ${
+                  st.direction === "short"
+                    ? "border-red-500 bg-red-500/10 shadow-lg shadow-red-500/20"
+                    : "border-slate-700 dark:border-slate-300 bg-slate-800/50 dark:bg-slate-100/50 hover:border-slate-500"
+                }`}
+              >
+                <svg viewBox="0 0 24 24" className={`h-10 w-10 ${st.direction === "short" ? "text-red-400" : "text-slate-500"}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 19V5" />
+                  <path d="m5 12 7-7 7 7" />
+                </svg>
+                <span className={`text-base font-bold ${st.direction === "short" ? "text-red-300" : "text-slate-300 dark:text-slate-900"}`}>
+                  {t("trades.new_trade.options.direction.short")}
+                </span>
+                <span className="text-xs text-slate-400 dark:text-slate-600 text-center">
+                  {t("trades.new_trade.wizard.short_desc")}
+                </span>
+              </button>
+            </div>
+          </StepCard>
+        );
+
+      // ═════════════════════════════════ STEP 4 ════════════════════════════
+      case 3:
+        return (
+          <StepCard title={t("trades.new_trade.labels.take_profit")}>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-xs text-slate-400 dark:text-slate-600">{t("trades.new_trade.wizard.mode")}</span>
+              <ModeToggle
+                options={[
+                  { value: "percent", label: t("trades.new_trade.wizard.percent_btn") },
+                  { value: "price", label: t("trades.new_trade.wizard.price_btn") },
+                ]}
+                value={st.tpMode}
+                onChange={(v) => setSt((p) => ({ ...p, tpMode: v as PercentMode }))}
               />
-              {errors.stop_loss ? <span className="mt-1 block text-xs text-red-300">{errors.stop_loss.message}</span> : null}
-            </label>
-            <div className="flex items-end">
-              <div className="w-full rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-                {t("trades.new_trade.metrics.sl_pct")} {slPct === null ? "-" : slPct.toFixed(2)}
+            </div>
+
+            {st.tpMode === "percent" ? (
+              <PercentSliderInput
+                value={st.tpPercent}
+                onChange={(v) => setSt((p) => ({ ...p, tpPercent: v }))}
+                min={0.25}
+                max={100}
+                label={t("trades.new_trade.wizard.percent_label")}
+              />
+            ) : (
+              <label className="block text-sm text-slate-300 dark:text-slate-900">
+                <span className="mb-1 block">{t("trades.new_trade.wizard.price_label")}</span>
+                <input
+                  type="number"
+                  step="0.000001"
+                  value={st.tpPrice}
+                  onChange={(e) => setSt((p) => ({ ...p, tpPrice: e.target.value }))}
+                  className="w-full rounded border border-emerald-500/50 bg-emerald-500/10 px-3 py-2 text-emerald-200"
+                  placeholder="0.00"
+                />
+              </label>
+            )}
+
+            {/* Derived values */}
+            {ep > 0 && (tpPriceNum > 0 || tpPercentNum > 0) && (
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2">
+                  <span className="text-slate-400 dark:text-slate-600">{t("trades.new_trade.labels.take_profit")}: </span>
+                  <span className="font-semibold text-emerald-200 dark:text-emerald-800">
+                    {computedTpPrice.toLocaleString(numberLocale, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                  </span>
+                </div>
+                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2">
+                  <span className="text-slate-400 dark:text-slate-600">{t("trades.new_trade.metrics.tp_pct")}: </span>
+                  <span className="font-semibold text-emerald-200 dark:text-emerald-800">
+                    +{computedTpPercent.toFixed(2)}%
+                  </span>
+                </div>
+              </div>
+            )}
+          </StepCard>
+        );
+
+      // ═════════════════════════════════ STEP 5 ════════════════════════════
+      case 4:
+        return (
+          <StepCard title={t("trades.new_trade.labels.stop_loss")}>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-xs text-slate-400 dark:text-slate-600">{t("trades.new_trade.wizard.mode")}</span>
+              <ModeToggle
+                options={[
+                  { value: "percent", label: t("trades.new_trade.wizard.percent_btn") },
+                  { value: "price", label: t("trades.new_trade.wizard.price_btn") },
+                ]}
+                value={st.slMode}
+                onChange={(v) => setSt((p) => ({ ...p, slMode: v as PercentMode }))}
+              />
+            </div>
+
+            {st.slMode === "percent" ? (
+              <PercentSliderInput
+                value={st.slPercent}
+                onChange={(v) => setSt((p) => ({ ...p, slPercent: v }))}
+                min={0.25}
+                max={100}
+                label={t("trades.new_trade.wizard.percent_label")}
+              />
+            ) : (
+              <label className="block text-sm text-slate-300 dark:text-slate-900">
+                <span className="mb-1 block">{t("trades.new_trade.wizard.price_label")}</span>
+                <input
+                  type="number"
+                  step="0.000001"
+                  value={st.slPrice}
+                  onChange={(e) => setSt((p) => ({ ...p, slPrice: e.target.value }))}
+                  className="w-full rounded border border-red-500/50 bg-red-500/10 px-3 py-2 text-red-200"
+                  placeholder="0.00"
+                />
+              </label>
+            )}
+
+            {/* Derived values */}
+            {ep > 0 && (slPriceNum > 0 || slPercentNum > 0) && (
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-2">
+                  <span className="text-slate-400 dark:text-slate-600">{t("trades.new_trade.labels.stop_loss")}: </span>
+                  <span className="font-semibold text-red-200 dark:text-red-800">
+                    {computedSlPrice.toLocaleString(numberLocale, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                  </span>
+                </div>
+                <div className="rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-2">
+                  <span className="text-slate-400 dark:text-slate-600">{t("trades.new_trade.metrics.sl_pct")}: </span>
+                  <span className="font-semibold text-red-200 dark:text-red-800">
+                    -{computedSlPercent.toFixed(2)}%
+                  </span>
+                </div>
+              </div>
+            )}
+          </StepCard>
+        );
+
+      // ═════════════════════════════════ STEP 6 ════════════════════════════
+      case 5:
+        return (
+          <StepCard title={t("trades.new_trade.wizard.execution_title")}>
+            {/* Execution type */}
+            <div className="grid grid-cols-3 gap-3">
+              {(["open", "partial", "close"] as ExecutionType[]).map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setSt((p) => ({ ...p, executionType: type }))}
+                  className={`rounded-xl border-2 p-4 text-center transition-all ${
+                    st.executionType === type
+                      ? "border-teal-500 bg-teal-500/10 shadow-lg shadow-teal-500/20"
+                      : "border-slate-700 dark:border-slate-300 bg-slate-800/50 dark:bg-slate-100/50 hover:border-slate-500"
+                  }`}
+                >
+                  <span
+                    className={`text-lg font-bold ${
+                      st.executionType === type ? "text-teal-300 dark:text-teal-700" : "text-slate-300 dark:text-slate-900"
+                    }`}
+                  >
+                    {t(`trades.new_trade.options.execution.${type}`)}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Summary card */}
+            <div className="rounded-xl border border-slate-600/50 bg-slate-800/50 dark:bg-slate-100/80 p-4 space-y-2 text-sm">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-600">
+                {t("trades.new_trade.wizard.summary")}
+              </h4>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                <span className="text-slate-400 dark:text-slate-600">{t("trades.new_trade.labels.account")}</span>
+                <span className="text-right font-medium text-slate-200 dark:text-slate-900">
+                  {accounts?.find((a) => a.id === st.accountId)?.name || "-"}
+                </span>
+                <span className="text-slate-400 dark:text-slate-600">{t("trades.new_trade.labels.symbol")}</span>
+                <span className="text-right font-mono font-semibold text-teal-300 dark:text-teal-700">
+                  {st.selectedTicker?.symbol || st.symbolInput.toUpperCase()}
+                </span>
+                <span className="text-slate-400 dark:text-slate-600">{t("trades.new_trade.labels.entry_price")}</span>
+                <span className="text-right font-mono font-semibold text-slate-200 dark:text-slate-900">
+                  {ep.toLocaleString(numberLocale, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                </span>
+                <span className="text-slate-400 dark:text-slate-600">{t("trades.new_trade.labels.quantity")}</span>
+                <span className="text-right font-mono text-slate-200 dark:text-slate-900">
+                  {displayQuantity.toLocaleString(numberLocale, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                </span>
+                <span className="text-slate-400 dark:text-slate-600">{t("trades.new_trade.wizard.notional")}</span>
+                <span className="text-right font-mono text-slate-200 dark:text-slate-900">
+                  {(ep * displayQuantity).toLocaleString(numberLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+                <span className="text-slate-400 dark:text-slate-600">{t("trades.new_trade.labels.direction")}</span>
+                <span className="text-right font-semibold text-slate-200 dark:text-slate-900">
+                  {st.direction === "long" ? "🔼 Long" : "🔽 Short"}
+                </span>
+                {tpPriceNum > 0 && (
+                  <>
+                    <span className="text-slate-400 dark:text-slate-600">{t("trades.new_trade.labels.take_profit")}</span>
+                    <span className="text-right font-mono text-emerald-300 dark:text-emerald-700">
+                      {computedTpPrice.toLocaleString(numberLocale, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                      <span className="text-emerald-400 dark:text-emerald-600"> (+{computedTpPercent.toFixed(1)}%)</span>
+                    </span>
+                  </>
+                )}
+                {slPriceNum > 0 && (
+                  <>
+                    <span className="text-slate-400 dark:text-slate-600">{t("trades.new_trade.labels.stop_loss")}</span>
+                    <span className="text-right font-mono text-red-300 dark:text-red-700">
+                      {computedSlPrice.toLocaleString(numberLocale, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                      <span className="text-red-400 dark:text-red-600"> (-{computedSlPercent.toFixed(1)}%)</span>
+                    </span>
+                  </>
+                )}
+                {estimatedFee && (
+                  <>
+                    <span className="text-slate-400 dark:text-slate-600">{t("trades.new_trade.labels.auto_fee")}</span>
+                    <span className="text-right font-mono text-slate-200 dark:text-slate-900">
+                      {estimatedFee.value.toLocaleString(numberLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
+                      {estimatedFee.currency}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
-          </div>
 
-          {/* Errori */}
-          {Object.keys(errors).length > 0 ? (
-            <div className="rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-              {t("trades.new_trade.errors.fix_fields")}
-            </div>
-          ) : null}
-          {createTrade.error ? (
-            <div className="rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-              {t("trades.new_trade.errors.create_failed")}
-            </div>
-          ) : null}
+            {createTrade.error && (
+              <div className="rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                {t("trades.new_trade.errors.create_failed")}
+              </div>
+            )}
+          </StepCard>
+        );
 
-          {/* Footer: Eseguito + Bottoni */}
-          <div className="flex items-end gap-3">
-            <label className="flex-1 text-sm text-slate-300 dark:text-slate-900">
-              <span className="inline-flex items-center mb-1">
-                {t("trades.new_trade.labels.execution")}
-                <FieldHelp text={t("trades.new_trade.tooltips.execution_type")} align="start" />
-              </span>
-              <select {...register("execution_type")} className="w-full rounded border border-slate-700 dark:border-slate-300 bg-slate-950 dark:bg-white px-3 py-2">
-                <option value="open">{t("trades.new_trade.options.execution.open")}</option>
-                <option value="partial">{t("trades.new_trade.options.execution.partial")}</option>
-                <option value="close">{t("trades.new_trade.options.execution.close")}</option>
-              </select>
-            </label>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded bg-slate-700 dark:bg-slate-200 dark:text-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 dark:text-slate-900"
+      default:
+        return null;
+    }
+  };
+
+  // ── Main render ──
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 dark:bg-slate-100/90 p-4">
+      <div className="w-full max-w-xl overflow-y-auto rounded-xl border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white p-6 shadow-2xl">
+        {/* Header */}
+        <div className="mb-1 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-slate-100 dark:text-slate-900">
+            {t("trades.new_trade.title")}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded p-1 text-slate-500 hover:text-slate-200 dark:hover:text-slate-900 transition"
+            aria-label={t("trades.new_trade.close")}
+          >
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
+        <p className="mb-4 text-xs text-slate-500 dark:text-slate-500">
+          {t("trades.new_trade.subtitle")}
+        </p>
+
+        {quickMode ? (
+          <QuickTradeForm onClose={onClose} />
+        ) : (
+          <>
+            {/* Stepper */}
+            <StepIndicator current={st.step} total={STEPS.length} labels={stepLabels} />
+
+            {/* Step content */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (st.step < STEPS.length - 1) {
+                  goNext();
+                } else {
+                  createTrade.mutate();
+                }
+              }}
             >
-              {t("trades.new_trade.cancel")}
-            </button>
-            <button
-              type="submit"
-              disabled={createTrade.isPending}
-              className="rounded bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-900"
-            >
-              {createTrade.isPending ? t("trades.new_trade.saving") : t("trades.new_trade.save")}
-            </button>
-          </div>
+              {renderStep()}
 
-        </form>
+              {/* Navigation */}
+              <div className="mt-6 flex items-center justify-between border-t border-slate-700 dark:border-slate-300 pt-4">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={st.step === 0 ? onClose : goBack}
+                    className="rounded bg-slate-700 dark:bg-slate-200 dark:text-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-600 dark:hover:bg-slate-300"
+                  >
+                    {st.step === 0 ? t("trades.new_trade.cancel") : t("trades.new_trade.wizard.back")}
+                  </button>
+                  {st.step === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setQuickMode(true)}
+                      className="rounded border border-teal-500/50 px-4 py-2 text-sm font-semibold text-teal-300 dark:text-teal-700 transition hover:bg-teal-500/10"
+                    >
+                      {t("trades.new_trade.quick_btn")}
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {st.step === STEPS.length - 1 && (
+                    <button
+                      type="button"
+                      disabled={createTrade.isPending}
+                      onClick={() => createTrade.mutate()}
+                      className="rounded bg-teal-500 px-5 py-2 text-sm font-semibold text-slate-900 transition hover:bg-teal-400 disabled:opacity-50"
+                    >
+                      {createTrade.isPending
+                        ? t("trades.new_trade.saving")
+                        : t("trades.new_trade.save")}
+                    </button>
+                  )}
+                  {st.step < STEPS.length - 1 && (
+                    <button
+                      type="submit"
+                      disabled={!stepValid}
+                      className="rounded bg-teal-500 px-5 py-2 text-sm font-semibold text-slate-900 transition hover:bg-teal-400 disabled:opacity-50"
+                    >
+                      {t("trades.new_trade.wizard.next")}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </form>
+          </>
+        )}
       </div>
+
+      {/* Global fade-in animation keyframes */}
+      <style>{`
+        @keyframes fadeSlideIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

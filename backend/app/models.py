@@ -168,6 +168,7 @@ class DailyNote(TimestampMixin, Base):
     market_volatility: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     short_summary: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     rich_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    symbol: Mapped[Optional[str]] = mapped_column(String(32), index=True, nullable=True)
 
 
 class PositionDailySnapshot(TimestampMixin, Base):
@@ -195,6 +196,7 @@ class CashLedgerEntry(TimestampMixin, Base):
     entry_type: Mapped[str] = mapped_column(String(20))
     amount: Mapped[Decimal] = mapped_column(Numeric(18, 2))
     description: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    entry_date: Mapped[date] = mapped_column(Date, nullable=False, default=date.today, index=True)
 
 
 class Asset(TimestampMixin, Base):

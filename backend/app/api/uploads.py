@@ -2,7 +2,7 @@ import shutil
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, File, Query, Request, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
@@ -13,6 +13,17 @@ from app.i18n import localized_error
 from app.models import Trade, TradeImage, User
 
 router = APIRouter(prefix="/api/uploads", tags=["uploads"])
+
+# Images only, explicitly excluding scriptable types (SVG, HTML).
+ALLOWED_IMAGE_TYPES = {"image/png", "image/jpeg", "image/gif", "image/webp"}
+
+
+def _require_allowed_image_type(file: UploadFile) -> None:
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=415,
+            detail="Unsupported media type. Allowed: PNG, JPEG, GIF, WebP.",
+        )
 
 
 @router.post("/trade/{trade_id}")
@@ -26,6 +37,8 @@ def upload_trade_image(
     trade = db.get(Trade, trade_id)
     if not trade or trade.user_id != current_user.id:
         raise localized_error(status_code=404, code="errors.trade_not_found", request=request)
+
+    _require_allowed_image_type(file)
 
     media_root = Path(settings.media_root)
     media_root.mkdir(parents=True, exist_ok=True)
@@ -68,6 +81,8 @@ def save_annotated_trade_image(
     trade = db.get(Trade, image.trade_id)
     if not trade or trade.user_id != current_user.id:
         raise localized_error(status_code=404, code="errors.trade_not_found", request=request)
+
+    _require_allowed_image_type(file)
 
     media_root = Path(settings.media_root)
     media_root.mkdir(parents=True, exist_ok=True)
@@ -116,8 +131,15 @@ def get_trade_image_content(
     if not file_path.exists():
         raise localized_error(status_code=404, code="errors.image_file_not_found", request=request)
 
-    media_type = image.mime_type or "application/octet-stream"
     if variant == "annotated":
         media_type = "image/png"
+    elif image.mime_type in ALLOWED_IMAGE_TYPES:
+        media_type = image.mime_type
+    else:
+        media_type = "application/octet-stream"
 
-    return FileResponse(path=file_path, media_type=media_type)
+    headers = {"X-Content-Type-Options": "nosniff"}
+    if media_type == "application/octet-stream":
+        headers["Content-Disposition"] = f'attachment; filename="trade-image-{image_id}"'
+
+    return FileResponse(path=file_path, media_type=media_type, headers=headers)

@@ -2,6 +2,14 @@
 
 @import "tailwindcss";
 
+/*
+ * The codebase keeps dark-theme styles as the base Tailwind classes and the
+ * light-theme styles under the `dark:` variant. Bind `dark:` to the app's
+ * `data-theme` attribute (instead of Tailwind's default prefers-color-scheme)
+ * so the light-theme overrides fire when [data-theme="light"] is set.
+ */
+@custom-variant dark (&:where([data-theme="light"], [data-theme="light"] *));
+
 :root {
   --bg: #090d12;
   --bg-soft: #121925;
@@ -114,6 +122,12 @@ a {
   color: #cbd5e1;
   stroke: #cbd5e1;
   fill: #cbd5e1;
+}
+
+.notes-rich-content {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
 }
 
 .notes-rich-content p {

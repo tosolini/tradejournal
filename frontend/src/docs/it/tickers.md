@@ -10,7 +10,7 @@ Euronext pubblica giornalmente un file CSV aggiornato con tutti i titoli negozia
 
 **Come scaricare il file:**
 
-1. Vai su [euronext.com](https://www.euronext.com/it/products/equities/list)
+1. Vai su [euronext.com](https://live.euronext.com/en/products/equities/list)
 2. Scorri in fondo alla pagina e cerca il link per scaricare la lista completa in formato CSV
 3. Il file si chiama tipicamente `Euronext_Equities_YYYY-MM-DD.csv`
 
