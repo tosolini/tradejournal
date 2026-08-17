@@ -1,11 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolverTyped } from "../lib/zod-resolver";
 import { useTranslation } from "react-i18next";
-import { Account, ApiError, Broker, api } from "../lib/api";
+import { Account, ApiError, Broker, CashLedgerEntry, api, createLedgerEntry, deleteLedgerEntry, fetchLedgerEntries } from "../lib/api";
 import { ConfirmModal } from "../components/ConfirmModal";
+
+function asNumber(value: string | number | undefined): number {
+  if (value === undefined) return 0;
+  if (typeof value === "number") return value;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
 
 function formatMoney(value: string | number | undefined, currency?: string): string {
   const amount = Number(value ?? 0);
@@ -67,6 +74,230 @@ function CancelIcon() {
       <path d="M18 6 6 18" />
       <path d="m6 6 12 12" />
     </svg>
+  );
+}
+
+function LedgerSection({ accounts }: { accounts: Account[] }) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const [accountId, setAccountId] = useState<number>(0);
+  const [entryType, setEntryType] = useState<"deposit" | "withdrawal">("deposit");
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
+  const [entryDate, setEntryDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [deletePendingId, setDeletePendingId] = useState<number | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const activeAccountId = accountId > 0 ? accountId : undefined;
+
+  const { data: entries = [] } = useQuery({
+    queryKey: ["ledger", activeAccountId],
+    queryFn: () => fetchLedgerEntries(activeAccountId),
+    enabled: accounts.length > 0,
+  });
+
+  useEffect(() => {
+    if (!accountId && accounts.length > 0) {
+      setAccountId(accounts[0].id);
+    }
+  }, [accounts, accountId]);
+
+  const create = useMutation({
+    mutationFn: () =>
+      createLedgerEntry({
+        account_id: accountId,
+        entry_type: entryType,
+        amount,
+        description: description.trim() || null,
+        entry_date: entryDate,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["ledger"] });
+      setAmount("");
+      setDescription("");
+      setFormError(null);
+    },
+    onError: () => setFormError(t("accounts.ledger_error")),
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: number) => deleteLedgerEntry(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["ledger"] }),
+  });
+
+  const totals = useMemo(() => {
+    let deposits = 0;
+    let withdrawals = 0;
+    for (const e of entries) {
+      const n = asNumber(e.amount);
+      if (e.entry_type === "deposit") deposits += n;
+      else withdrawals += n;
+    }
+    return { deposits, withdrawals, net: deposits - withdrawals };
+  }, [entries]);
+
+  const selectedAccount = accounts.find((a) => a.id === accountId);
+  const currency = selectedAccount?.base_currency || "EUR";
+
+  const canSubmit = accountId > 0 && asNumber(amount) > 0 && entryDate;
+
+  return (
+    <section className="card p-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold">{t("accounts.ledger_title")}</h2>
+          <p className="text-sm text-slate-400 dark:text-slate-900">{t("accounts.ledger_subtitle")}</p>
+        </div>
+        <select
+          value={accountId}
+          onChange={(e) => setAccountId(Number(e.target.value))}
+          className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2 text-sm"
+          aria-label={t("accounts.ledger_account")}
+        >
+          {accounts.map((a) => (
+            <option key={a.id} value={a.id}>{a.name}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Add entry form */}
+      <form
+        className="mb-4 grid gap-3 md:grid-cols-5"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (canSubmit) create.mutate();
+        }}
+      >
+        <select
+          value={entryType}
+          onChange={(e) => setEntryType(e.target.value as "deposit" | "withdrawal")}
+          className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2 text-sm"
+        >
+          <option value="deposit">{t("accounts.ledger_deposit")}</option>
+          <option value="withdrawal">{t("accounts.ledger_withdrawal")}</option>
+        </select>
+        <input
+          type="date"
+          value={entryDate}
+          onChange={(e) => setEntryDate(e.target.value)}
+          className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2 text-sm"
+          aria-label={t("accounts.ledger_date")}
+        />
+        <input
+          type="number"
+          step="0.01"
+          min="0"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder={t("accounts.ledger_amount")}
+          className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2 text-sm"
+        />
+        <input
+          type="text"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder={t("accounts.ledger_description")}
+          className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2 text-sm"
+        />
+        <button
+          type="submit"
+          disabled={!canSubmit || create.isPending}
+          className="rounded bg-teal-500 px-3 py-2 text-sm font-semibold text-slate-950 disabled:opacity-50"
+        >
+          {create.isPending ? t("accounts.ledger_saving") : t("accounts.ledger_add")}
+        </button>
+      </form>
+      {formError ? <p className="mb-2 text-sm text-red-400">{formError}</p> : null}
+
+      {/* Totals */}
+      <div className="mb-3 flex flex-wrap gap-4 text-sm">
+        <span className="text-emerald-300 dark:text-emerald-700">
+          {t("accounts.ledger_totals_in")}: {formatMoney(totals.deposits, currency)}
+        </span>
+        <span className="text-red-400 dark:text-red-600">
+          {t("accounts.ledger_totals_out")}: {formatMoney(totals.withdrawals, currency)}
+        </span>
+        <span className="font-semibold text-slate-200 dark:text-slate-900">
+          {t("accounts.ledger_totals_net")}: {formatMoney(totals.net, currency)}
+        </span>
+      </div>
+
+      {/* Entries table */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="border-b border-slate-700 dark:border-slate-300 text-xs uppercase text-slate-400 dark:text-slate-900">
+              <th className="px-3 py-2">{t("accounts.ledger_date")}</th>
+              <th className="px-3 py-2">{t("accounts.ledger_type")}</th>
+              <th className="px-3 py-2">{t("accounts.ledger_amount")}</th>
+              <th className="px-3 py-2">{t("accounts.ledger_description")}</th>
+              <th className="px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-3 py-3 text-slate-400 dark:text-slate-900">
+                  {t("accounts.ledger_empty")}
+                </td>
+              </tr>
+            ) : (
+              entries.map((entry: CashLedgerEntry) => (
+                <tr key={entry.id} className="border-b border-slate-800/80">
+                  <td className="px-3 py-2">{entry.entry_date}</td>
+                  <td className="px-3 py-2">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                        entry.entry_type === "deposit"
+                          ? "bg-emerald-500/15 text-emerald-300 dark:text-emerald-700"
+                          : "bg-red-500/15 text-red-400 dark:text-red-600"
+                      }`}
+                    >
+                      {entry.entry_type === "deposit" ? t("accounts.ledger_deposit") : t("accounts.ledger_withdrawal")}
+                    </span>
+                  </td>
+                  <td className={`px-3 py-2 font-mono tabular-nums ${
+                    entry.entry_type === "deposit" ? "text-emerald-300 dark:text-emerald-700" : "text-red-400 dark:text-red-600"
+                  }`}>
+                    {entry.entry_type === "deposit" ? "+" : "-"}{formatMoney(entry.amount, currency)}
+                  </td>
+                  <td className="px-3 py-2 text-slate-300 dark:text-slate-900">{entry.description || "-"}</td>
+                  <td className="px-3 py-2">
+                    <button
+                      type="button"
+                      onClick={() => setDeletePendingId(entry.id)}
+                      className="rounded bg-red-500 p-1.5 text-white"
+                      title={t("accounts.ledger_delete")}
+                      aria-label={t("accounts.ledger_delete")}
+                    >
+                      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        <line x1="10" x2="10" y1="11" y2="17" />
+                        <line x1="14" x2="14" y1="11" y2="17" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {deletePendingId !== null && (
+        <ConfirmModal
+          message={t("accounts.ledger_delete_confirm")}
+          onConfirm={() => {
+            remove.mutate(deletePendingId);
+            setDeletePendingId(null);
+          }}
+          onCancel={() => setDeletePendingId(null)}
+          isPending={remove.isPending}
+        />
+      )}
+    </section>
   );
 }
 
@@ -412,6 +643,8 @@ export function AccountsPage() {
         {rowError ? <div className="px-4 py-3 text-sm text-red-400 dark:text-red-600">{rowError}</div> : null}
         {rowSuccess ? <div className="px-4 py-3 text-sm text-emerald-300">{rowSuccess}</div> : null}
       </section>
+
+      {data && data.length > 0 && <LedgerSection accounts={data} />}
       {deletePendingId !== null && (() => {
         const account = data?.find((a) => a.id === deletePendingId);
         return (

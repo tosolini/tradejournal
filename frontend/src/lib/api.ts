@@ -88,6 +88,7 @@ export type TradeDetail = {
   executions: Execution[];
   images: TradeImage[];
   pnl: Record<string, unknown> | null;
+  current_price?: number | null;
   closure?: {
     closed_at: string;
     close_reason?: string | null;
@@ -501,10 +502,100 @@ export type DashboardKpis = {
   capital_gain_currency: string;
   equity_curve: { date: string; value: number }[];
   portfolio_history: PortfolioHistoryPoint[];
+  all_assets_daily_pnl: AllAssetsPnlPoint[];
   asset_allocation: DashboardAllocation[];
   asset_classes: DashboardAllocation[];
 };
 
 export function dashboardKpis(): Promise<DashboardKpis> {
   return api("/api/dashboard/kpis");
+}
+
+// ── Data Export / Import ────────────────────────────
+export async function exportAllData(): Promise<Blob> {
+  const token = localStorage.getItem("token");
+  const response = await fetch(`${API_BASE}/api/data/export`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+  if (!response.ok) throw await parseApiError(response);
+  return response.blob();
+}
+
+export async function importAllData(file: File): Promise<{ imported: Record<string, number> }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return api("/api/data/import", {
+    method: "POST",
+    body: formData,
+  });
+}
+
+// ── Performance / Daily P&L ─────────────────────────
+export type DailyPnlPoint = {
+  date: string;
+  total_value: string;
+  total_cost: string;
+  total_return: string;
+  day_pnl: string;
+  day_pnl_pct: string;
+  cumulative_pnl: string;
+  net_cash_flow: string;
+};
+
+export function fetchDailyPnl(accountId?: number): Promise<DailyPnlPoint[]> {
+  const params = accountId ? `?account_id=${accountId}` : "";
+  return api(`/api/snapshots/daily/pnl${params}`);
+}
+
+export type AllAssetsPnlPoint = {
+  date: string;
+  holdings_value: string;
+  trades_value: string;
+  total_value: string;
+  day_pnl: string;
+  day_pnl_pct: string;
+  cumulative_pnl: string;
+  net_cash_flow: string;
+};
+
+// ── Cash Ledger ──────────────────────────────────────
+export type CashLedgerEntry = {
+  id: number;
+  account_id: number;
+  entry_type: "deposit" | "withdrawal";
+  amount: string;
+  description: string | null;
+  entry_date: string;
+};
+
+export function fetchLedgerEntries(accountId?: number): Promise<CashLedgerEntry[]> {
+  const params = accountId ? `?account_id=${accountId}` : "";
+  return api(`/api/ledger${params}`);
+}
+
+export function createLedgerEntry(payload: {
+  account_id: number;
+  entry_type: "deposit" | "withdrawal";
+  amount: string;
+  description?: string | null;
+  entry_date?: string;
+}): Promise<CashLedgerEntry> {
+  return api("/api/ledger", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateLedgerEntry(
+  id: number,
+  payload: Partial<Omit<CashLedgerEntry, "id" | "account_id">>
+): Promise<CashLedgerEntry> {
+  return api(`/api/ledger/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteLedgerEntry(id: number): Promise<{ ok: boolean }> {
+  return api(`/api/ledger/${id}`, { method: "DELETE" });
 }

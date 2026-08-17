@@ -2,75 +2,92 @@
 
 ## Broker
 
-I broker rappresentano gli intermediari finanziari attraverso cui operi sui mercati. Prima di creare un conto devi configurare almeno un broker.
+I broker rappresentano gli intermediari finanziari attraverso cui operi sui mercati. Devi configurare almeno un broker prima di creare un conto.
 
-### Aggiungere un broker
+### Aggiungere un Broker
 
-Vai su **Broker** nel menu laterale e clicca **+ Nuovo Broker**.
+Vai su **Broker** nella barra laterale e clicca **+ Nuovo broker**.
 
 **Campi disponibili:**
 
 | Campo | Descrizione |
 |---|---|
 | **Nome** | Nome del broker (es. "Directa SIM") |
-| **Sito web** | URL del sito del broker |
-| **Commissione** | Modalità: `Fissa` (importo fisso per trade) o `Percentuale` (% sul valore) |
-| **Valore commissione** | Importo o percentuale delle commissioni |
-| **Valuta commissioni** | Valuta in cui sono espresse le commissioni |
-| **Tassazione plus. cap.** | Modalità: `Immediata` (al momento della chiusura) o `Fine anno` |
-| **Aliquota** | Percentuale di tassazione delle plusvalenze (default 26%) |
+| **Commissione** | Modalità: `Fissa` (importo fisso per operazione) o `Percentuale` (% del controvalore) |
+| **Valore commissione** | Importo o percentuale |
+| **Valuta commissione** | Valuta delle commissioni (default EUR) |
+| **Tassazione plusvalenze** | Modalità: `Immediata` (alla chiusura) o `Fine anno` |
+| **Aliquota** | Aliquota sulle plusvalenze (default 26%) |
 
-### Mercati / Exchange
+### Mercati / Borse
 
-Ogni broker può avere uno o più **mercati** (exchange) abilitati. I mercati definiscono:
+Ogni broker può avere uno o più **mercati** (borse) abilitati. I mercati definiscono:
 
-- Su quali borse puoi negoziare tramite quel broker
-- Gli orari di apertura e chiusura del mercato
-- Il fuso orario di riferimento
-- Se il mercato è chiuso nel weekend
+- Su quali borse puoi operare tramite quel broker
+- Orari di apertura e chiusura
+- Fuso orario di riferimento
+- Se il mercato è chiuso nel fine settimana
 
-#### Aggiungere un mercato
+#### Aggiungere un Mercato
 
-Nella scheda del broker, clicca **+ Aggiungi Mercato** (tab "Mercati").
+Nella scheda del broker, clicca **+ Aggiungi mercato** (scheda Mercati).
 
-> 💡 Per Directa SIM è disponibile un **seed automatico** che importa tutti i mercati dalla pagina ufficiale [directa.it/mercati](https://www.directa.it/mercati). Clicca **Importa mercati Directa** per popolare automaticamente l'elenco.
+> 💡 Per Directa SIM è disponibile un **seed** automatico che importa tutti i mercati dalla pagina ufficiale [directa.it/mercati](https://www.directa.it/mercati). Clicca **Importa mercati Directa** per popolare l'elenco automaticamente.
 
-**Campi exchange:**
+**Campi del mercato (borsa):**
 
 | Campo | Descrizione |
 |---|---|
 | **Nome** | Nome del mercato (es. "Borsa Italiana") |
-| **MIC** | Market Identifier Code standard ISO 10383 (es. `XMIL`) |
-| **Suffisso** | Suffisso Yahoo Finance/ticker (es. `.MI` per Milano) |
+| **MIC** | Codice identificativo ISO 10383 (es. `XMIL`) |
+| **Suffisso** | Suffisso del ticker Yahoo Finance (es. `.MI` per Milano) |
 | **Paese** | Paese della borsa |
 | **Valuta** | Valuta di negoziazione |
-| **Fuso orario** | Timezone della borsa (es. `Europe/Rome`) |
-| **Apertura / Chiusura** | Orari di contrattazione locali |
-| **Chiuso nel weekend** | Se `Sì`, il mercato è considerato chiuso sabato e domenica |
+| **Fuso orario** | Fuso orario della borsa (es. `Europe/Rome`) |
+| **Apertura / Chiusura** | Orari di negoziazione locali |
+| **Chiuso nel weekend** | Se `Sì`, il mercato è considerato chiuso di sabato e domenica |
 
 ---
 
 ## Conti
 
-I conti rappresentano i singoli portafogli di trading, collegati a un broker.
+I conti rappresentano portafogli di trading individuali, collegati a un broker.
 
-### Aggiungere un conto
+### Aggiungere un Conto
 
-Vai su **Conti** e clicca **+ Nuovo Conto**.
+Vai su **Conti** e clicca **+ Nuovo conto**.
 
 **Campi disponibili:**
 
 | Campo | Descrizione |
 |---|---|
-| **Nome** | Nome identificativo del conto (es. "Conto principale", "Paper trading") |
-| **Broker** | Broker di riferimento per questo conto |
+| **Nome** | Nome identificativo (es. "Conto principale", "Paper trading") |
+| **Broker** | Broker di riferimento per questo conto (opzionale) |
 | **Valuta** | Valuta di denominazione del conto |
 | **Saldo iniziale** | Capitale iniziale del conto |
 | **Descrizione** | Note opzionali |
 
-### Collegamento broker-conto
+### Collegamento Broker-Conto
 
 Un conto è sempre associato a un singolo broker. Questa associazione:
-- Applica automaticamente le commissioni configurate nel broker
-- Usa l'aliquota di tassazione del broker per i calcoli di P&L netto
-- Limita i mercati disponibili all'autocompletamento dei simboli ai mercati del broker
+
+- Applica automaticamente le commissioni configurate sul broker
+- Usa l'aliquota fiscale del broker per i calcoli del P&L netto
+- Limita l'autocompletamento dei simboli ai mercati abilitati del broker
+
+### Libro Cassa (Cash Ledger)
+
+Seleziona un conto per gestirne il **libro cassa** (depositi e prelievi):
+
+- Registra un **deposito** o un **prelievo** con data, importo e descrizione opzionale
+- Il libro cassa mostra i totali **Entrate / Uscite / Saldo** per il conto
+- Le voci possono essere modificate o eliminate; il saldo del conto riflette i movimenti
+
+> ⚠️ Un conto con operazioni registrate non può essere eliminato. L'eliminazione di un conto rimuove anche i relativi snapshot e le voci di libro cassa.
+
+---
+
+## Sezioni
+
+- **Broker** — elenco broker con modifica inline e scheda **Mercati** per la gestione delle borse
+- **Mercati** — tutte le tue borse con il seed **Importa mercati Directa**

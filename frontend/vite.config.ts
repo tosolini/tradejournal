@@ -8,7 +8,7 @@ export default defineConfig({
     allowedHosts: ["localhost", "127.0.0.1"],
     proxy: {
       "/api": {
-        target: "http://backend:8000",
+        target: process.env.VITE_BACKEND_PROXY || "http://backend:8000",
         changeOrigin: true,
       },
     },

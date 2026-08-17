@@ -29,6 +29,7 @@ export function Layout({ children }: PropsWithChildren) {
       label: t("layout.nav.section_investments"),
       items: [
         { to: "/portfolio", label: t("layout.nav.portfolio") },
+        { to: "/performance", label: t("layout.nav.performance") },
         { to: "/assets", label: t("layout.nav.assets") },
       ],
     },
@@ -54,7 +55,7 @@ export function Layout({ children }: PropsWithChildren) {
         <aside className="flex flex-col border-r border-slate-700/60 bg-slate-950/70 p-5 backdrop-blur dark:border-slate-200/20 dark:bg-white">
           <div className="mb-8 flex items-center gap-2.5 text-xl font-semibold tracking-wide text-teal-300 dark:text-teal-900">
             <img src={bullVectLogo} alt="Bull logo" className="h-6 w-6 object-contain" loading="eager" />
-            <span className="titlelogo">TradeJournal</span>
+            <span className="titlelogo">TradingJournal</span>
           </div>
           <nav className="space-y-4">
             {navGroups.map((group, groupIndex) => (
@@ -108,7 +109,7 @@ export function Layout({ children }: PropsWithChildren) {
           <div className="mt-auto border-t border-slate-700/60 pt-4 dark:border-slate-300/30">
             <div className="flex items-center justify-between">
               <div className="text-xs text-slate-400 dark:text-slate-600">
-                {t("layout.version")} v{appVersion}
+                {t("layout.version")}: {appVersion}
               </div>
               <button
                 type="button"
@@ -137,7 +138,7 @@ export function Layout({ children }: PropsWithChildren) {
             </div>
             <div className="mt-2 text-xs text-slate-500 dark:text-slate-400 text-center">
               <a href="https://github.com/tosolini/tradejournal/issues" target="_blank" rel="noreferrer" className="underline">Bug Report</a> <br/>
-              © {currentYear} Walter Tosolini <br />{t("layout.copyright")}
+              © {currentYear} Walter Tosolini
             </div>
           </div>
         </aside>

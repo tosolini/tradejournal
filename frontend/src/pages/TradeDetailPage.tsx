@@ -405,6 +405,34 @@ export function TradeDetailPage() {
         </div>
       </section>
 
+      {trade.status === "open" && data.current_price != null ? (
+        <section className="card p-4 border border-teal-600/40">
+          <h2 className="mb-3 text-lg font-semibold text-teal-300">{t("trade_detail.current_market")}</h2>
+          <div className="grid gap-3 md:grid-cols-4">
+            <div>
+              <div className="text-xs text-slate-400">{t("trade_detail.fields.market_price")}</div>
+              <div className="text-lg font-semibold">{formatMoney(data.current_price, trade.account_currency)}</div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-400">{t("trade_detail.fields.market_value")}</div>
+              <div>{data.pnl ? formatMoney((data.pnl as Record<string, unknown>).market_value as string | number | undefined, trade.account_currency) : "-"}</div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-400">{t("trade_detail.fields.unrealized_pnl")}</div>
+              <div className={Number((data.pnl as Record<string, unknown>)?.unrealized_pnl || 0) >= 0 ? "text-emerald-300" : "text-red-400"}>
+                {data.pnl ? formatMoney((data.pnl as Record<string, unknown>).unrealized_pnl as string | number | undefined, trade.account_currency) : "-"}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-400">{t("trade_detail.fields.current_return_pct")}</div>
+              <div className={Number((data.pnl as Record<string, unknown>)?.return_pct || 0) >= 0 ? "text-emerald-300" : "text-red-400"}>
+                {data.pnl ? formatMetric((data.pnl as Record<string, unknown>).return_pct as string | number | undefined) : "-"}%
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       {trade.status === "close" && closeSummary ? (
         <section className="card p-4">
           <div className="mb-3 text-lg font-semibold">{t("trade_detail.close_summary")}</div>

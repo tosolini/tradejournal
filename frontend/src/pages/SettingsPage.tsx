@@ -1,16 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   AdminUserCreate, AdminUserUpdate,
   ApiError, User, UserUpdate,
   adminCreateUser, adminDeleteUser, adminListUsers, adminUpdateUser,
-  getMe, updateMe, api,
+  exportAllData, getMe, importAllData, updateMe, api,
 } from "../lib/api";
 
 type UserPreferencesPayload = {
-  preferences?: { onboarding_completed?: boolean };
+  preferences?: {
+    onboarding_completed?: boolean;
+    snapshot_time?: string;
+    [key: string]: unknown;
+  };
 };
 
 function OnboardingBanner({ user, onDismiss }: { user: User; onDismiss: () => void }) {
@@ -439,6 +443,156 @@ function AdminUsersSection({ currentUser }: { currentUser: User }) {
   );
 }
 
+function DataSection() {
+  const { t } = useTranslation();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [importMsg, setImportMsg] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+
+  const exportMutation = useMutation({
+    mutationFn: exportAllData,
+    onSuccess: (blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `tradejournal-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+  });
+
+  const importMutation = useMutation({
+    mutationFn: (file: File) => importAllData(file),
+    onSuccess: () => {
+      setImportMsg(t("settings.data.import_success"));
+      setImportError(null);
+    },
+    onError: () => {
+      setImportError(t("settings.data.import_error"));
+      setImportMsg(null);
+    },
+  });
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith(".json")) {
+      setImportError(t("settings.data.import_error"));
+      setImportMsg(null);
+      return;
+    }
+    setImportMsg(null);
+    setImportError(null);
+    importMutation.mutate(file);
+    e.target.value = "";
+  }
+
+  return (
+    <section className="card p-4">
+      <h2 className="mb-2 text-lg font-semibold">{t("settings.data.title")}</h2>
+      <p className="mb-4 text-sm text-slate-400 dark:text-slate-900">{t("settings.data.description")}</p>
+
+      <div className="flex flex-wrap gap-3">
+        <button
+          onClick={() => exportMutation.mutate()}
+          disabled={exportMutation.isPending}
+          className="rounded-lg bg-teal-500 px-3 py-2 text-sm font-semibold text-slate-900 disabled:opacity-50"
+        >
+          {exportMutation.isPending ? t("settings.data.exporting") : t("settings.data.export_btn")}
+        </button>
+
+        <label className="cursor-pointer rounded-lg bg-sky-500 px-3 py-2 text-sm font-semibold text-slate-950">
+          {t("settings.data.import_btn")}
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".json"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+        </label>
+      </div>
+
+      {importMutation.isPending && (
+        <p className="mt-3 text-sm text-slate-400">{t("settings.data.exporting")}</p>
+      )}
+      {importMsg && (
+        <p className="mt-3 text-sm text-teal-400">{importMsg}</p>
+      )}
+      {importError && (
+        <p className="mt-3 text-sm text-rose-400">{importError}</p>
+      )}
+    </section>
+  );
+}
+
+function SnapshotSettingsSection() {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const [time, setTime] = useState<string>("23:55");
+  const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+
+  const { data: prefData } = useQuery({
+    queryKey: ["user-preferences"],
+    queryFn: () => api<UserPreferencesPayload>("/api/auth/preferences"),
+  });
+
+  useEffect(() => {
+    const saved = prefData?.preferences?.snapshot_time;
+    if (typeof saved === "string" && saved.trim()) {
+      setTime(saved.trim());
+    }
+  }, [prefData]);
+
+  const save = useMutation({
+    mutationFn: (value: string) =>
+      api("/api/auth/preferences", {
+        method: "PATCH",
+        body: JSON.stringify({ preferences: { snapshot_time: value } }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["user-preferences"] });
+      setState("saved");
+    },
+    onError: () => setState("error"),
+  });
+
+  return (
+    <section className="card p-4">
+      <h2 className="mb-2 text-lg font-semibold">{t("settings.snapshots.title")}</h2>
+      <p className="mb-4 text-sm text-slate-400 dark:text-slate-900">{t("settings.snapshots.description")}</p>
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="text-sm text-slate-300 dark:text-slate-900">
+          <span className="mb-1 block">{t("settings.snapshots.time_label")}</span>
+          <input
+            type="time"
+            value={time}
+            onChange={(e) => {
+              setTime(e.target.value);
+              setState("idle");
+            }}
+            className="rounded border border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white px-3 py-2"
+          />
+        </label>
+        <button
+          type="button"
+          onClick={() => save.mutate(time)}
+          disabled={save.isPending}
+          className="rounded-lg bg-teal-500 px-3 py-2 text-sm font-semibold text-slate-900 disabled:opacity-50"
+        >
+          {save.isPending ? t("settings.snapshots.saving") : t("settings.snapshots.save")}
+        </button>
+        {state === "saved" && (
+          <span className="text-sm text-teal-400">{t("settings.snapshots.saved")}</span>
+        )}
+        {state === "error" && (
+          <span className="text-sm text-rose-400">{t("settings.snapshots.error")}</span>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export function SettingsPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -504,6 +658,10 @@ export function SettingsPage() {
           {t("settings.registry.brokers_button")}
         </Link>
       </section>
+
+      <DataSection />
+
+      <SnapshotSettingsSection />
 
       <section className="card p-4">
         <h2 className="mb-2 text-lg font-semibold">{t("settings.session.title")}</h2>

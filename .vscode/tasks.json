@@ -36,6 +36,35 @@
 			"label": "gh-list-open-prs-final",
 			"type": "shell",
 			"command": "out=$(gh pr list -R tosolini/tradejournal --state open --json number -q '.[].number'); if [ -z \"$out\" ]; then echo 'NESSUN_PR_APERTO'; else echo \"$out\"; fi"
+		},
+		{
+			"label": "start-backend",
+			"type": "shell",
+			"command": "cd /workspace/backend && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --no-access-log",
+			"group": "none",
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "start-frontend",
+			"type": "shell",
+			"command": "cd /workspace/frontend && npm run dev",
+			"group": "none",
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "run-migrations",
+			"type": "shell",
+			"command": "cd /workspace/backend && alembic upgrade head",
+			"group": "none",
+			"problemMatcher": []
 		}
 	]
 }

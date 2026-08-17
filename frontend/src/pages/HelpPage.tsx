@@ -5,12 +5,14 @@ import MarkdownPreview from "@uiw/react-markdown-preview";
 import { useTheme } from "../contexts/ThemeContext";
 
 // Import markdown files as raw strings via Vite ?raw suffix
+import itDashboard from "../docs/it/dashboard.md?raw";
 import itGettingStarted from "../docs/it/getting-started.md?raw";
 import itTrades from "../docs/it/trades.md?raw";
 import itAccounts from "../docs/it/accounts.md?raw";
 import itTickers from "../docs/it/tickers.md?raw";
 import itCalendar from "../docs/it/calendar.md?raw";
 import itSettings from "../docs/it/settings.md?raw";
+import enDashboard from "../docs/en/dashboard.md?raw";
 import enGettingStarted from "../docs/en/getting-started.md?raw";
 import enTrades from "../docs/en/trades.md?raw";
 import enAccounts from "../docs/en/accounts.md?raw";
@@ -28,6 +30,7 @@ type SectionDef = {
 
 const SECTIONS: SectionDef[] = [
   { id: "getting-started", labelKey: "help.nav.getting_started", icon: "🚀", it: itGettingStarted, en: enGettingStarted },
+  { id: "dashboard",       labelKey: "help.nav.dashboard",       icon: "📊", it: itDashboard,       en: enDashboard },
   { id: "trades",          labelKey: "help.nav.trades",          icon: "📈", it: itTrades,         en: enTrades },
   { id: "accounts",        labelKey: "help.nav.accounts",        icon: "🏦", it: itAccounts,       en: enAccounts },
   { id: "tickers",         labelKey: "help.nav.tickers",         icon: "🔍", it: itTickers,        en: enTickers },

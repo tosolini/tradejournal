@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.models import PositionDailySnapshot, Trade, TradeExecution
 from app.services.pnl import compute_weighted_average_pnl
-from app.services.price_provider import get_mock_close_price
+from app.services.price_provider import get_close_price
 
 
 def recompute_daily_snapshots(db: Session, snapshot_date: date) -> int:
@@ -19,7 +19,9 @@ def recompute_daily_snapshots(db: Session, snapshot_date: date) -> int:
         ).scalars().all()
         if not executions:
             continue
-        close_price = get_mock_close_price(trade.symbol, snapshot_date)
+        close_price = get_close_price(trade.symbol, snapshot_date, trade.market)
+        if close_price is None:
+            continue
         pnl = compute_weighted_average_pnl(executions, market_price=close_price)
         if pnl.position_qty <= 0:
             continue

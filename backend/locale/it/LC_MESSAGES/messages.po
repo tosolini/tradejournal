@@ -80,3 +80,9 @@ msgstr "File immagine non trovato"
 
 msgid "notes.tax_deferred_dashboard"
 msgstr "Calcolo fiscale rinviato a fine anno nel dashboard"
+
+msgid "errors.ledger_entry_not_found"
+msgstr "Movimento di cassa non trovato"
+
+msgid "errors.invalid_ledger_type"
+msgstr "Il tipo movimento deve essere 'deposit' o 'withdrawal'"

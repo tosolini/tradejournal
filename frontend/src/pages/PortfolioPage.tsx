@@ -13,6 +13,7 @@ import {
   fetchPortfolioHistory,
   fetchPortfolioSummary,
 } from "../lib/api";
+import { useTheme } from "../contexts/ThemeContext";
 
 function asNumber(value: string | number | undefined): number {
   if (value === undefined) return 0;
@@ -66,19 +67,27 @@ function colorForPct(value: string | number | undefined): string {
 
 function ChartPanel({ history }: { history: { date: string; value: number }[] }) {
   const ref = useRef<HTMLDivElement | null>(null);
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   useEffect(() => {
     if (!ref.current || history.length === 0) return;
     const chart = createChart(ref.current, {
       width: ref.current.clientWidth,
       height: 280,
-      layout: { background: { color: "#111827" }, textColor: "#94a3b8" },
-      grid: { vertLines: { color: "#1e293b" }, horzLines: { color: "#1e293b" } },
+      layout: {
+        background: { color: isDark ? "#111827" : "#ffffff" },
+        textColor: isDark ? "#94a3b8" : "#475569",
+      },
+      grid: {
+        vertLines: { color: isDark ? "#1e293b" : "rgba(100,116,139,0.14)" },
+        horzLines: { color: isDark ? "#1e293b" : "rgba(100,116,139,0.14)" },
+      },
     });
     const series = chart.addSeries(AreaSeries, {
-      lineColor: "#2dd4bf",
-      topColor: "rgba(45,212,191,0.25)",
-      bottomColor: "rgba(45,212,191,0.04)",
+      lineColor: isDark ? "#2dd4bf" : "#0d9488",
+      topColor: isDark ? "rgba(45,212,191,0.25)" : "rgba(13,148,136,0.2)",
+      bottomColor: isDark ? "rgba(45,212,191,0.04)" : "rgba(13,148,136,0.04)",
     });
     series.setData(history.map((p) => ({ time: p.date, value: p.value })));
 
@@ -88,9 +97,44 @@ function ChartPanel({ history }: { history: { date: string; value: number }[] })
       window.removeEventListener("resize", resize);
       chart.remove();
     };
-  }, [history]);
+  }, [history, isDark]);
 
   return <div ref={ref} className="card w-full overflow-hidden" />;
+}
+
+function DatePickerWidget({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const ref = useRef<HTMLInputElement>(null);
+  const openPicker = () => {
+    const input = ref.current;
+    if (!input) return;
+    const pickerInput = input as HTMLInputElement & { showPicker?: () => void };
+    if (typeof pickerInput.showPicker === "function") pickerInput.showPicker();
+  };
+  return (
+    <div className="relative">
+      <input
+        ref={ref}
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 pr-11 text-sm text-slate-200 dark:text-slate-900"
+      />
+      <button
+        type="button"
+        onClick={openPicker}
+        className="absolute right-1 top-1/2 -translate-y-1/2 rounded bg-slate-700 dark:bg-slate-200 px-2 py-1 text-xs text-slate-200 dark:text-slate-900 hover:bg-slate-600 dark:hover:bg-slate-300"
+        aria-label="Open date picker"
+        title="Open date picker"
+      >
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+      </button>
+    </div>
+  );
 }
 
 function HoldingFormModal({
@@ -196,21 +240,11 @@ function HoldingFormModal({
           </div>
           <div>
             <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("portfolio.entry_date")}</label>
-            <input
-              type="date"
-              value={entryDate}
-              onChange={(e) => setEntryDate(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200 dark:text-slate-900"
-            />
+            <DatePickerWidget value={entryDate} onChange={setEntryDate} />
           </div>
           <div>
             <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("portfolio.exit_date")}</label>
-            <input
-              type="date"
-              value={exitDate}
-              onChange={(e) => setExitDate(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200 dark:text-slate-900"
-            />
+            <DatePickerWidget value={exitDate} onChange={setExitDate} />
           </div>
         </div>
         <div className="mt-5 flex justify-end gap-3">
@@ -311,21 +345,11 @@ function HoldingEditFormModal({
           </div>
           <div>
             <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("portfolio.entry_date")}</label>
-            <input
-              type="date"
-              value={entryDate}
-              onChange={(e) => setEntryDate(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200 dark:text-slate-900"
-            />
+            <DatePickerWidget value={entryDate} onChange={setEntryDate} />
           </div>
           <div>
             <label className="mb-1 block text-xs text-slate-400 dark:text-slate-900">{t("portfolio.exit_date")}</label>
-            <input
-              type="date"
-              value={exitDate}
-              onChange={(e) => setExitDate(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 dark:border-slate-300 bg-slate-800 dark:bg-slate-100 p-2 text-sm text-slate-200 dark:text-slate-900"
-            />
+            <DatePickerWidget value={exitDate} onChange={setExitDate} />
           </div>
         </div>
         <div className="mt-5 flex justify-end gap-3">

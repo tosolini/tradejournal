@@ -3,7 +3,7 @@ import { AreaSeries, ColorType, LineSeries, createChart } from "lightweight-char
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../contexts/ThemeContext";
-import { DashboardAllocation, DashboardKpis, MonthlyPnlPoint, TradeStat, dashboardKpis } from "../lib/api";
+import { AllAssetsPnlPoint, DashboardAllocation, DashboardKpis, MonthlyPnlPoint, TradeStat, dashboardKpis } from "../lib/api";
 
 function asNumber(value: string | number | undefined): number {
   if (value === undefined) return 0;
@@ -139,15 +139,15 @@ function EquityChartPanel({ data }: { data: DashboardKpis["portfolio_history"] }
       rightPriceScale: { borderVisible: false },
       timeScale: { borderVisible: false, timeVisible: false },
       crosshair: {
-        vertLine: { color: isDark ? "rgba(45,212,191,0.4)" : "rgba(13,148,136,0.4)", labelBackgroundColor: "#14b8a6" },
-        horzLine: { color: isDark ? "rgba(45,212,191,0.4)" : "rgba(13,148,136,0.4)", labelBackgroundColor: "#14b8a6" },
+        vertLine: { color: isDark ? "rgba(45,212,191,0.4)" : "rgba(13,148,136,0.4)", labelBackgroundColor: isDark ? "#14b8a6" : "#0f766e" },
+        horzLine: { color: isDark ? "rgba(45,212,191,0.4)" : "rgba(13,148,136,0.4)", labelBackgroundColor: isDark ? "#14b8a6" : "#0f766e" },
       },
     });
 
     const area = chart.addSeries(AreaSeries, {
-      lineColor: "#2dd4bf",
-      topColor: "rgba(45,212,191,0.22)",
-      bottomColor: "rgba(45,212,191,0.02)",
+      lineColor: isDark ? "#2dd4bf" : "#0d9488",
+      topColor: isDark ? "rgba(45,212,191,0.22)" : "rgba(13,148,136,0.2)",
+      bottomColor: isDark ? "rgba(45,212,191,0.02)" : "rgba(13,148,136,0.03)",
       lineWidth: 2,
       priceFormat: { type: "price", precision: 2, minMove: 0.01 },
     });
@@ -156,7 +156,7 @@ function EquityChartPanel({ data }: { data: DashboardKpis["portfolio_history"] }
     const hasCost = visible.some((p) => p.cost != null && p.cost > 0);
     if (hasCost) {
       const cost = chart.addSeries(LineSeries, {
-        color: isDark ? "#64748b" : "#94a3b8",
+        color: isDark ? "#64748b" : "#475569",
         lineWidth: 1,
         lineStyle: 2 as const,
         priceLineVisible: false,
@@ -226,6 +226,8 @@ function EquityChartPanel({ data }: { data: DashboardKpis["portfolio_history"] }
 /* ─── Win / loss donut ───────────── */
 function OutcomeDonut({ kpis }: { kpis: DashboardKpis }) {
   const { t, i18n } = useTranslation();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const locale = i18n.resolvedLanguage === "it" ? "it-IT" : "en-US";
   const { wins, losses, breakeven } = kpis;
   const total = wins + losses + breakeven;
@@ -234,8 +236,8 @@ function OutcomeDonut({ kpis }: { kpis: DashboardKpis }) {
   const r = 52;
   const c = 2 * Math.PI * r;
   const segments = [
-    { value: wins, color: "#2dd4bf", label: t("dashboard.wins") },
-    { value: losses, color: "#f87171", label: t("dashboard.losses") },
+    { value: wins, color: isDark ? "#2dd4bf" : "#0d9488", label: t("dashboard.wins") },
+    { value: losses, color: isDark ? "#f87171" : "#dc2626", label: t("dashboard.losses") },
     { value: breakeven, color: "#64748b", label: t("dashboard.breakeven") },
   ];
   const sum = segments.reduce((s, seg) => s + seg.value, 0) || 1;
@@ -257,9 +259,9 @@ function OutcomeDonut({ kpis }: { kpis: DashboardKpis }) {
   ];
 
   const statTone = (s: (typeof stats)[number]): string => {
-    if (s.kind === "factor") return s.value >= 1 ? "#2dd4bf" : "#f87171";
-    if (s.kind === "win") return "#2dd4bf";
-    return "#f87171";
+    if (s.kind === "factor") return s.value >= 1 ? (isDark ? "#2dd4bf" : "#0d9488") : (isDark ? "#f87171" : "#dc2626");
+    if (s.kind === "win") return isDark ? "#2dd4bf" : "#0d9488";
+    return isDark ? "#f87171" : "#dc2626";
   };
 
   const statText = (s: (typeof stats)[number]): string => {
@@ -279,7 +281,7 @@ function OutcomeDonut({ kpis }: { kpis: DashboardKpis }) {
         <div className="flex h-full flex-col gap-4 p-4">
           <div className="relative mx-auto">
             <svg width="160" height="160" viewBox="0 0 120 120" role="img" aria-label={t("dashboard.outcomes")}>
-              <circle cx="60" cy="60" r={r} fill="none" stroke="#94a3b8" strokeWidth="11" opacity="0.15" />
+              <circle cx="60" cy="60" r={r} fill="none" stroke={isDark ? "#94a3b8" : "#64748b"} strokeWidth="11" opacity="0.15" />
               {arcs.map((arc) => (
                 <circle
                   key={arc.label}
@@ -332,9 +334,71 @@ function OutcomeDonut({ kpis }: { kpis: DashboardKpis }) {
   );
 }
 
+/* ─── All-assets daily PnL (trades + holdings) ───────────── */
+function AllAssetsDailyPnlPanel({ data }: { data: AllAssetsPnlPoint[] }) {
+  const { t, i18n } = useTranslation();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const locale = i18n.resolvedLanguage === "it" ? "it-IT" : "en-US";
+  const recent = data.slice(-30);
+  const cumulative = data.length > 0 ? asNumber(data[data.length - 1].cumulative_pnl) : 0;
+  const maxAbs = Math.max(1, ...recent.map((p) => Math.abs(asNumber(p.day_pnl))));
+  const W = 280;
+  const H = 130;
+  const pad = 10;
+  const zero = H / 2;
+  const scale = (H / 2 - pad) / maxAbs;
+  const barW = Math.min(10, (W - pad * 2) / Math.max(recent.length, 1) - 2);
+
+  return (
+    <Panel
+      title={t("dashboard.all_assets_pnl")}
+      aside={
+        <span className={`text-sm font-semibold tabular-nums ${pnlTone(cumulative)}`}>
+          {formatSignedMoney(cumulative, undefined, locale)}
+        </span>
+      }
+    >
+      {recent.length === 0 ? (
+        <div className="flex h-40 items-center justify-center px-6 text-center text-sm text-slate-400 dark:text-slate-500">
+          {t("dashboard.no_daily_pnl")}
+        </div>
+      ) : (
+        <div className="px-2 py-3">
+          <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img">
+            <line x1={pad} y1={zero} x2={W - pad} y2={zero} stroke="#64748b" strokeOpacity="0.35" strokeWidth="1" />
+            {recent.map((p, i) => {
+              const value = asNumber(p.day_pnl);
+              const h = Math.abs(value) * scale;
+              const x = pad + i * ((W - pad * 2) / recent.length) + (W - pad * 2) / recent.length / 2 - barW / 2;
+              const y = value >= 0 ? zero - h : zero;
+              return (
+                <rect
+                  key={p.date}
+                  x={x}
+                  y={y}
+                  width={barW}
+                  height={Math.max(h, 1.5)}
+                  rx="1.5"
+                  fill={value >= 0 ? (isDark ? "#2dd4bf" : "#0d9488") : (isDark ? "#f87171" : "#dc2626")}
+                  className="transition-opacity hover:opacity-80"
+                >
+                  <title>{`${p.date}: ${formatSignedMoney(asNumber(p.day_pnl), undefined, locale)}`}</title>
+                </rect>
+              );
+            })}
+          </svg>
+        </div>
+      )}
+    </Panel>
+  );
+}
+
 /* ─── Monthly PnL bars ───────────── */
 function MonthlyBars({ monthly }: { monthly: MonthlyPnlPoint[] }) {
   const { t, i18n } = useTranslation();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const locale = i18n.resolvedLanguage === "it" ? "it-IT" : "en-US";
   const months = monthly.slice(-12);
   const maxAbs = Math.max(1, ...months.map((m) => Math.abs(asNumber(m.realized))));
@@ -376,7 +440,7 @@ function MonthlyBars({ monthly }: { monthly: MonthlyPnlPoint[] }) {
                     width={barW}
                     height={Math.max(h, 1.5)}
                     rx="2"
-                    fill={value >= 0 ? "#2dd4bf" : "#f87171"}
+                    fill={value >= 0 ? (isDark ? "#2dd4bf" : "#0d9488") : (isDark ? "#f87171" : "#dc2626")}
                     className="transition-opacity hover:opacity-80"
                   >
                     <title>{`${monthLabel(m.month, locale)}: ${formatSignedMoney(m.realized)} (${m.count})`}</title>
@@ -386,7 +450,7 @@ function MonthlyBars({ monthly }: { monthly: MonthlyPnlPoint[] }) {
                     y={H - 3}
                     textAnchor="middle"
                     fontSize="9"
-                    fill="#94a3b8"
+                    fill={isDark ? "#94a3b8" : "#64748b"}
                   >
                     {monthLabel(m.month, locale)}
                   </text>
@@ -430,7 +494,7 @@ function AllocationPanel({ allocation, classes }: { allocation: DashboardAllocat
               </div>
               <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-700/40 dark:bg-slate-300/40">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-teal-400 to-sky-400"
+                  className="h-full rounded-full bg-gradient-to-r from-teal-600 to-sky-600 dark:from-teal-400 dark:to-sky-400"
                   style={{ width: `${Math.min(a.weight_pct, 100)}%` }}
                 />
               </div>
@@ -627,6 +691,7 @@ export function DashboardPage() {
 
           <section className="grid gap-4 xl:grid-cols-3">
             <MonthlyBars monthly={data?.monthly_pnl ?? []} />
+            <AllAssetsDailyPnlPanel data={data?.all_assets_daily_pnl ?? []} />
             <AllocationPanel allocation={data?.asset_allocation ?? []} classes={data?.asset_classes ?? []} />
           </section>
 

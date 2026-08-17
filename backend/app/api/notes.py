@@ -48,20 +48,6 @@ def upsert_note(
     payload_data = payload.model_dump()
     payload_data["market_condition"] = _normalize_market_condition(payload_data.get("market_condition"))
 
-    existing = db.execute(
-        select(DailyNote).where(
-            DailyNote.user_id == current_user.id,
-            DailyNote.note_date == payload.note_date,
-        )
-    ).scalar_one_or_none()
-
-    if existing:
-        for field, value in payload_data.items():
-            setattr(existing, field, value)
-        db.commit()
-        db.refresh(existing)
-        return existing
-
     note = DailyNote(user_id=current_user.id, **payload_data)
     db.add(note)
     db.commit()

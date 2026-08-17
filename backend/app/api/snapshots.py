@@ -7,8 +7,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.deps import get_current_user
 from app.models import PortfolioSnapshot, PositionDailySnapshot, User
-from app.schemas import PortfolioSnapshotResponse, SnapshotResponse
-from app.services.portfolio import recompute_portfolio_snapshot
+from app.schemas import DailyPnlPoint, PortfolioSnapshotResponse, SnapshotResponse
+from app.services.portfolio import get_daily_pnl_series, recompute_portfolio_snapshot
 from app.services.snapshot import recompute_daily_snapshots
 
 router = APIRouter(prefix="/api/snapshots", tags=["snapshots"])
@@ -50,3 +50,13 @@ def list_portfolio_snapshots(
     return db.execute(
         select(PortfolioSnapshot).order_by(PortfolioSnapshot.snapshot_date.desc())
     ).scalars().all()
+
+
+@router.get("/daily/pnl", response_model=list[DailyPnlPoint])
+def list_daily_pnl(
+    account_id: int | None = Query(default=None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Day-by-day portfolio P&L series built from daily snapshots."""
+    return get_daily_pnl_series(db, current_user.id, account_id)

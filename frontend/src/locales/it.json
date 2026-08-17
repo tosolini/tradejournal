@@ -5,6 +5,7 @@
       "calendar": "Calendario",
       "accounts": "Conti",
       "portfolio": "Portafoglio",
+      "performance": "Performance",
       "assets": "Asset",
       "trades": "Trade",
       "stats": "Statistiche",
@@ -48,6 +49,15 @@
       "description": "Gestione anagrafiche usate nei form operativi.",
       "brokers_button": "Gestisci Brokers"
     },
+    "data": {
+      "title": "Esportazione e importazione dati",
+      "description": "Esporta tutti i tuoi dati in un file JSON o ripristina da un'esportazione precedente.",
+      "export_btn": "Esporta tutti i dati",
+      "exporting": "Esportazione…",
+      "import_btn": "Importa dati",
+      "import_success": "Dati importati con successo. Ricarica la pagina per vedere le modifiche.",
+      "import_error": "Importazione fallita. Controlla il formato del file e riprova."
+    },
     "session": {
       "title": "Sessione",
       "description": "Logout locale JWT.",
@@ -90,6 +100,15 @@
       "you": "tu",
       "confirm_delete": "Sei sicuro di voler eliminare questo utente?",
       "save_error": "Errore durante il salvataggio."
+    },
+    "snapshots": {
+      "title": "Snapshot Giornalieri",
+      "description": "Configura quando il backend registra i valori giornalieri di portafoglio e asset. Predefinito: 23:55.",
+      "time_label": "Orario snapshot",
+      "save": "Salva",
+      "saving": "Salvataggio...",
+      "saved": "Orario snapshot salvato",
+      "error": "Errore nel salvataggio dell'orario snapshot"
     }
   },
   "tickers": {
@@ -169,7 +188,25 @@
     "error_create": "Errore creazione account.",
     "error_invalid_cash": "Capitale non valido",
     "error_invalid_data": "Dati account non validi",
-    "confirm_delete": "Eliminare account #{{id}} ({{name}})?"
+    "confirm_delete": "Eliminare account #{{id}} ({{name}})?",
+    "ledger_title": "Registro Cassa",
+    "ledger_subtitle": "Registra depositi e prelievi per mantenere corretto il P&L giornaliero.",
+    "ledger_account": "Account",
+    "ledger_deposit": "Deposito",
+    "ledger_withdrawal": "Prelievo",
+    "ledger_date": "Data",
+    "ledger_amount": "Importo",
+    "ledger_description": "Descrizione (opzionale)",
+    "ledger_add": "Aggiungi",
+    "ledger_saving": "Aggiunta...",
+    "ledger_delete": "Elimina movimento",
+    "ledger_delete_confirm": "Eliminare questo movimento di cassa?",
+    "ledger_error": "Errore nell'aggiunta del movimento.",
+    "ledger_empty": "Nessun movimento per questo account.",
+    "ledger_totals_in": "Totale entrate",
+    "ledger_totals_out": "Totale uscite",
+    "ledger_totals_net": "Saldo",
+    "ledger_type": "Tipo"
   },
   "common": {
     "cancel": "Annulla",
@@ -224,7 +261,9 @@
     "col_status": "Stato",
     "col_closed": "Chiusura",
     "col_return": "Rendimento",
-    "col_pnl": "PnL Netto"
+    "col_pnl": "PnL Netto",
+    "all_assets_pnl": "P&L Giornaliero (Tutti gli Asset)",
+    "no_daily_pnl": "Nessuno snapshot giornaliero disponibile."
   },
   "calendar": {
     "title": "Calendario",
@@ -356,8 +395,14 @@
       "net_pnl_after_fees": "Net PnL post fee",
       "capital_gain": "Capital gain",
       "tax_estimate": "Tax estimate",
-      "net_pnl_after_tax": "Net PnL post tax"
+      "net_pnl_after_tax": "Net PnL post tax",
+      "market_price": "Prezzo di Mercato",
+      "market_value": "Valore di Mercato",
+      "unrealized_pnl": "PnL Non Realizzato",
+      "current_return_pct": "Return % Corrente"
     },
+    "current_market": "Mercato Corrente",
+    "market_data_note": "I prezzi si aggiornano ogni 5 minuti tramite Yahoo Finance.",
     "columns": {
       "date": "Data",
       "action": "Action",
@@ -479,6 +524,32 @@
         "auto_fee": "Calcolata dal broker in base alla sua regola (fissa o percentuale).",
         "take_profit": "Lascia vuoto se non vuoi impostarlo ora.",
         "stop_loss": "Lascia vuoto se non vuoi impostarlo ora."
+      },
+      "quick_btn": "Veloce",
+      "wizard": {
+        "step1": "Account & Ticker",
+        "step2": "Entry & Size",
+        "step3": "Direzione",
+        "step4": "Take Profit",
+        "step5": "Stop Loss",
+        "step6": "Esegui",
+        "back": "Indietro",
+        "next": "Avanti",
+        "shares_btn": "Azioni",
+        "value_btn": "Valore",
+        "value_label": "Valore ingresso (€)",
+        "percent_label": "Percentuale",
+        "price_label": "Livello prezzo",
+        "percent_btn": "%",
+        "price_btn": "Prezzo",
+        "mode": "Modalità:",
+        "long_desc": "Compra a poco, vendi a tanto",
+        "short_desc": "Vendi a tanto, compra a poco",
+        "execution_title": "Esecuzione e Conferma",
+        "summary": "Riepilogo Trade",
+        "shares_estimate": "Azioni stimate",
+        "notional": "Nozionale",
+        "value_required": "Inserisci un valore maggiore di 0."
       }
     }
   },
@@ -524,7 +595,9 @@
     "rich_editor_placeholder": "Scrivi i dettagli della tua nota...",
     "rename_tag_prompt": "Nuovo nome tag",
     "delete_tag_confirm": "Eliminare il tag \"{{tag}}\" da tutte le note?",
-    "rename_tag_confirm": "Rinomina"
+    "rename_tag_confirm": "Rinomina",
+    "symbol": "Simbolo Ticker",
+    "symbol_placeholder": "Cerca ticker..."
   },
   "portfolio": {
     "title": "Portafoglio",
@@ -599,7 +672,25 @@
       "accounts": "Conti e Broker",
       "tickers": "Ticker",
       "calendar": "Calendario e Mercati",
-      "settings": "Impostazioni"
+      "settings": "Impostazioni",
+      "dashboard": "Dashboard, Performance e Portfolio"
     }
+  },
+  "performance": {
+    "title": "Performance",
+    "subtitle": "Snapshot giornalieri del portafoglio, P&L giorno per giorno e calendario mensile.",
+    "total_value": "Valore Portafoglio",
+    "cumulative_pnl": "P&L Cumulato",
+    "total_return": "Rendimento Totale",
+    "best_day": "Miglior Giorno",
+    "worst_day": "Peggior Giorno",
+    "equity_title": "Valore del Portafoglio nel Tempo",
+    "daily_title": "P&L Giornaliero (ultimi 30 giorni)",
+    "calendar_title": "Calendario P&L",
+    "day_detail": "Dettaglio — {{date}}",
+    "day_pnl": "P&L del Giorno",
+    "win_days": "{{pct}}% giorni positivi",
+    "prev_month": "Mese precedente",
+    "next_month": "Mese successivo"
   }
 }
