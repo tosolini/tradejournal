@@ -18,6 +18,7 @@ from app.models import (
 from app.deps import get_current_user
 
 router = APIRouter(prefix="/api/data", tags=["data"])
+logger = logging.getLogger(__name__)
 
 
 # ── Serialisation helpers ──────────────────────────────────────────────
@@ -308,7 +309,7 @@ def import_data(
     try:
         data = json.loads(raw)
     except (json.JSONDecodeError, UnicodeDecodeError):
-        return _import_error("Invalid JSON: the uploaded file could not be parsed.")
+        return _import_error("Invalid JSON payload.")
 
     if data.get("version") != 1:
         return _import_error("Unsupported export version; expected version 1")
@@ -641,9 +642,9 @@ def import_data(
                 db.add(obj)
 
         db.commit()
-    except Exception as e:
+    except Exception:
         db.rollback()
-        logging.getLogger(__name__).exception("Import failed: %s", e)
+        logger.exception("Import failed")
         return _import_error("An error occurred while importing data.")
 
     # Build summary counts
