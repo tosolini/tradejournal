@@ -215,8 +215,9 @@ def get_all_assets_pnl_series(
 ) -> list[AllAssetsPnlPoint]:
     """Day-by-day P&L across BOTH tracking systems: long-term holdings
     (PortfolioSnapshot) and open trade positions (PositionDailySnapshot),
-    cash-adjusted. `trades_value` follows the dashboard convention
-    market_value + realized + unrealized for open positions.
+    cash-adjusted. `trades_value` is the current market value of open
+    positions (PositionDailySnapshot.market_value); realized and unrealized
+    P&L are already embedded in market value, so they must not be added.
     """
     by_date: dict[date, dict[str, Decimal]] = {}
 
@@ -244,7 +245,7 @@ def get_all_assets_pnl_series(
             position.snapshot_date,
             {"holdings": Decimal("0"), "trades": Decimal("0")},
         )
-        entry["trades"] += position.market_value + position.realized_pnl + position.unrealized_pnl
+        entry["trades"] += position.market_value
 
     # Net cash flow per date: deposits (+) minus withdrawals (−)
     ledger_query = (

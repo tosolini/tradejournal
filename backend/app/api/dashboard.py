@@ -127,7 +127,7 @@ def dashboard_kpis(
     equity_curve = [
         {
             "date": s.snapshot_date.isoformat(),
-            "value": float(s.market_value + s.realized_pnl + s.unrealized_pnl),
+            "value": float(s.market_value),
         }
         for s in snapshots
     ]
