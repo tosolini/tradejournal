@@ -158,7 +158,7 @@ function HoldingFormModal({
 
   const createMutation = useMutation({
     mutationFn: () =>
-      api("/api/holdings", {
+      api("/api/holdings/", {
         method: "POST",
         body: JSON.stringify({
           account_id: Number(accountId),
@@ -296,6 +296,17 @@ function HoldingEditFormModal({
       setExitDate(holding.exit_date ?? "");
     }
   }, [holding]);
+
+  useEffect(() => {
+    if (!open) {
+      setAccountId("");
+      setAssetId("");
+      setQuantity("");
+      setAvgCost("");
+      setEntryDate("");
+      setExitDate("");
+    }
+  }, [open]);
 
   const updateMutation = useMutation({
     mutationFn: () =>
