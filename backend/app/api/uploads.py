@@ -7,6 +7,15 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.config import settings
+
+
+def _resolve_media_path(path: str | Path) -> Path:
+    media_root = Path(settings.media_root).resolve()
+    candidate = Path(path).resolve()
+
+    if media_root not in candidate.parents and candidate != media_root:
+        raise ValueError(f"Path escapes media root: {path}")
+    return candidate
 from app.database import get_db
 from app.deps import get_current_user
 from app.i18n import localized_error
@@ -127,7 +136,11 @@ def get_trade_image_content(
     if not path:
         raise localized_error(status_code=404, code="errors.image_variant_not_found", request=request)
 
-    file_path = Path(path)
+    try:
+        file_path = _resolve_media_path(path)
+    except ValueError:
+        raise localized_error(status_code=404, code="errors.image_file_not_found", request=request)
+
     if not file_path.exists():
         raise localized_error(status_code=404, code="errors.image_file_not_found", request=request)
 
