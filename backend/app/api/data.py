@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, date
 from decimal import Decimal
 import json
+import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, Request, UploadFile
@@ -17,6 +18,7 @@ from app.models import (
 from app.deps import get_current_user
 
 router = APIRouter(prefix="/api/data", tags=["data"])
+logger = logging.getLogger(__name__)
 
 
 # ── Serialisation helpers ──────────────────────────────────────────────
@@ -306,8 +308,8 @@ def import_data(
     raw = file.file.read()
     try:
         data = json.loads(raw)
-    except (json.JSONDecodeError, UnicodeDecodeError) as e:
-        return _import_error(f"Invalid JSON: {e}")
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return _import_error("Invalid JSON payload.")
 
     if data.get("version") != 1:
         return _import_error("Unsupported export version; expected version 1")
@@ -640,9 +642,10 @@ def import_data(
                 db.add(obj)
 
         db.commit()
-    except Exception as e:
+    except Exception:
         db.rollback()
-        return _import_error(str(e))
+        logger.exception("Import failed")
+        return _import_error("An error occurred while importing data.")
 
     # Build summary counts
     imported = {
