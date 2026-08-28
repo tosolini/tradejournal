@@ -6,6 +6,40 @@ import { useSearchParams } from "react-router-dom";
 import { TagInput } from "../components/TagInput";
 import { ConfirmModal } from "../components/ConfirmModal";
 import { Ticker, api, tickersApi } from "../lib/api";
+import DOMPurify from "dompurify";
+
+function sanitizeRichText(value?: string | null): string {
+  if (!value) {
+    return "";
+  }
+  return DOMPurify.sanitize(value, {
+    ALLOWED_TAGS: [
+      "p",
+      "br",
+      "strong",
+      "b",
+      "em",
+      "i",
+      "u",
+      "s",
+      "ul",
+      "ol",
+      "li",
+      "a",
+      "h1",
+      "h2",
+      "h3",
+      "h4",
+      "blockquote",
+      "code",
+      "pre",
+      "span",
+      "div",
+      "hr",
+    ],
+    ALLOWED_ATTR: ["href", "target", "rel", "class"],
+  });
+}
 
 type NotePayload = {
   note_date: string;
@@ -916,9 +950,12 @@ export function NotesPage() {
                     {t("notes.notes")}
                   </div>
                   {note.rich_text ? (
-                    <div className="notes-rich-content mt-1 whitespace-pre-wrap text-slate-300 dark:text-slate-900">
-                      {note.rich_text}
-                    </div>
+                    <div
+                      className="notes-rich-content mt-1 whitespace-pre-wrap text-slate-300 dark:text-slate-900"
+                      dangerouslySetInnerHTML={{
+                        __html: sanitizeRichText(note.rich_text),
+                      }}
+                    />
                   ) : (
                     <div className="mt-1 text-slate-300 dark:text-slate-900">
                       {t("notes.no_details")}
