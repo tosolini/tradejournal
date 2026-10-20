@@ -16,9 +16,9 @@
         "i18next": "^26.4.7",
         "i18next-browser-languagedetector": "^8.0.0",
         "lightweight-charts": "^5.2.1",
-        "react": "^19.3.0",
-        "react-dom": "^19.3.0",
-        "react-hook-form": "^7.89.0",
+        "react": "^19.3.1",
+        "react-dom": "^19.3.1",
+        "react-hook-form": "^7.90.0",
         "react-i18next": "^17.0.19",
         "react-router-dom": "^7.18.4",
         "zod": "^4.6.7"
